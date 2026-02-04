@@ -1,0 +1,20 @@
+{
+    "name": "processace",
+    "version": "0.0.1",
+    "private": true,
+    "description": "AI-powered process discovery and documentation engine – from recordings and docs to BPMN 2.0, SIPOC and RACI. Self-hosted with bring-your-own LLM.",
+    "scripts": {
+        "dev": "node ./src/index.js",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier . --write",
+        "test": "echo \"No tests yet\" && exit 0"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "eslint": "^9.0.0",
+        "eslint-config-prettier": "^9.0.0",
+        "eslint-plugin-prettier": "^5.0.0",
+        "prettier": "^3.0.0"
+    }
+}

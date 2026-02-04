@@ -1,0 +1,17 @@
+# Text files: normalize to LF in repo
+* text=auto eol=lf
+
+# Mark binary files so Git won't try to diff them
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.mp4 binary
+*.mov binary
+*.pdf binary
+
+# Node dependencies
+package-lock.json text eol=lf
+
+# Shell scripts
+*.sh text eol=lf 
