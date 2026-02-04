@@ -29,6 +29,7 @@ app.use((req, res, next) => {
 
 const evidenceRoutes = require('./api/evidence');
 const jobsRoutes = require('./api/jobs');
+const artifactsRoutes = require('./api/artifacts');
 
 
 
@@ -37,6 +38,7 @@ const jobsRoutes = require('./api/jobs');
 app.use('/health', healthRoutes);
 app.use('/api/evidence', evidenceRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/artifacts', artifactsRoutes);
 
 
 // 404 handler

@@ -123,7 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="job-info">
                     <h4>${job.filename}</h4>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
-                    ${job.result && job.result.llmResponse ? `<div style="font-size:0.8rem; margin-top:5px; color:white; opacity:0.7">LLM: "${job.result.llmResponse}"</div>` : ''}
+                    ${job.result && job.result.artifactId ?
+                `<div style="margin-top:8px">
+                            <a href="/api/artifacts/${job.result.artifactId}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">Download BPMN</a>
+                        </div>`
+                : ''}
                 </div>
                 <div class="job-status status-${job.status}">
                     <span class="status-dot"></span>
