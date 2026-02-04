@@ -4,14 +4,12 @@ const logger = require('./logging/logger');
 
 const evidenceRoutes = require('./api/evidence');
 const { processEvidence } = require('./workers/evidenceWorker');
+const { evidenceQueue } = require('./services/queueInstance');
 
 const PORT = process.env.PORT || 3000;
 
-// Register worker (Hack: accessing the queue instance exported from the router)
-// In a real app, queue would be a singleton or injected service.
-if (evidenceRoutes.queue) {
-    evidenceRoutes.queue.registerWorker('process_evidence', processEvidence);
-}
+// Register worker using shared queue instance
+evidenceQueue.registerWorker('process_evidence', processEvidence);
 
 const server = app.listen(PORT, () => {
     logger.info({ port: PORT, env: process.env.NODE_ENV }, 'ProcessAce Server started');

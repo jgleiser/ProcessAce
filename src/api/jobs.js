@@ -1,0 +1,38 @@
+const express = require('express');
+const router = express.Router();
+// We need access to the same queue instance.
+// In a real app this would be imported from a shared module/singleton.
+// For now, we'll try to get it from the evidence route (hacky) or
+// better: create the queue instance in a shared file (but it is currently created in evidence.js).
+// Let's refactor slightly to export the queue instance from a shared place?
+// Or, efficiently, since JobQueue is just an abstraction, we can re-instantiate it IF it was backed by Redis.
+// BUT since it is in-memory for Phase 1/2, verify implementation details.
+// src/services/jobQueue.js creates a `new Map()`. So new instance = empty map.
+// WE MUST SHARE THE INSTANCE.
+
+// FIX: We need to move the queue instantiation to a shared module.
+// We will fix this by creating src/services/queueInstance.js 
+// But first, let's write this router assuming we can import `queue`.
+
+const { evidenceQueue } = require('../services/queueInstance');
+
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+    const job = await evidenceQueue.get(id);
+
+    if (!job) {
+        return res.status(404).json({ error: 'Job not found' });
+    }
+
+    res.json({
+        id: job.id,
+        type: job.type,
+        status: job.status,
+        result: job.result,
+        error: job.error,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt
+    });
+});
+
+module.exports = router;

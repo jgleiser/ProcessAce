@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const logger = require('./logging/logger');
 const healthRoutes = require('./api/health');
+const path = require('path');
 
 const app = express();
 
@@ -10,6 +11,9 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// Serve frontend
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -24,10 +28,15 @@ app.use((req, res, next) => {
 });
 
 const evidenceRoutes = require('./api/evidence');
+const jobsRoutes = require('./api/jobs');
+
+
+
 
 // Routes
 app.use('/health', healthRoutes);
 app.use('/api/evidence', evidenceRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 
 // 404 handler

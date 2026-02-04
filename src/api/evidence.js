@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { saveEvidence, Evidence } = require('../models/evidence');
-const JobQueue = require('../services/jobQueue');
+const { evidenceQueue } = require('../services/queueInstance');
 
 const router = express.Router();
 
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Initialize JobQueue (ideally simulated dependency injection)
-const evidenceQueue = new JobQueue('evidence-queue');
+// const evidenceQueue = new JobQueue('evidence-queue'); // REPLACED WITH SINGLETON
 
 router.post('/upload', upload.single('file'), async (req, res) => {
     try {
@@ -59,6 +59,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 // Expose queue instance for worker registration (hacky for Phase 1)
-router.queue = evidenceQueue;
+// router.queue = evidenceQueue; // REMOVED
 
 module.exports = router;
