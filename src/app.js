@@ -23,8 +23,12 @@ app.use((req, res, next) => {
     next();
 });
 
+const evidenceRoutes = require('./api/evidence');
+
 // Routes
 app.use('/health', healthRoutes);
+app.use('/api/evidence', evidenceRoutes);
+
 
 // 404 handler
 app.use((req, res) => {

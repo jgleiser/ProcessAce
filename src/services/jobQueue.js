@@ -50,6 +50,34 @@ class JobQueue {
 
         return job;
     }
+
+    registerWorker(type, handler) {
+        logger.info({ queue: this.name, job_type: type }, 'Worker registered');
+
+        // In a real Redis queue, we would set up a process handler here.
+        // For in-memory, we'll hook into the `add` method or poll.
+        // simpler for now: just override `add` to trigger handler next tick.
+
+        const originalAdd = this.add.bind(this);
+        this.add = async (jobType, data) => {
+            const job = await originalAdd(jobType, data);
+
+            if (jobType === type) {
+                // Run async without awaiting to not block the API response
+                setImmediate(async () => {
+                    try {
+                        await this.updateStatus(job.id, 'processing');
+                        const result = await handler(job);
+                        await this.updateStatus(job.id, 'completed', result);
+                    } catch (err) {
+                        logger.error({ err, job_id: job.id }, 'Job processing failed');
+                        await this.updateStatus(job.id, 'failed', null, err.message);
+                    }
+                });
+            }
+            return job;
+        };
+    }
 }
 
 // Singleton or factory could go here. For now, exporting the class.
