@@ -5,6 +5,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const jobsList = document.getElementById('jobsList');
     const jobCount = document.getElementById('jobCount');
 
+    // Modal Elements
+    const modal = document.getElementById('artifactModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const closeModal = document.querySelector('.close-modal');
+
+    // Modal Control Functions
+    function openArtifactModal() {
+        modal.classList.remove('hidden');
+        // Push a state so the back button can close the modal
+        history.pushState({ modalOpen: true }, '');
+    }
+
+    function closeArtifactModal() {
+        if (!modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Close Modal Events
+    closeModal.addEventListener('click', () => history.back());
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) history.back();
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            history.back();
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        // If the state doesn't have modalOpen, close the modal
+        closeArtifactModal();
+    });
+
     // Drag & Drop
     uploadZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -95,12 +132,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event Delegation for Delete
     jobsList.addEventListener('click', (e) => {
-        const btn = e.target.closest('.delete-job-btn');
-        if (btn) {
-            const jobId = btn.dataset.id;
+        // Delete Job
+        const deleteBtn = e.target.closest('.delete-job-btn');
+        if (deleteBtn) {
+            const jobId = deleteBtn.dataset.id;
             deleteJob(jobId);
+            return;
+        }
+
+        // View Artifact
+        const viewBtn = e.target.closest('.view-artifact-btn');
+        if (viewBtn) {
+            e.preventDefault();
+            const { id, type } = viewBtn.dataset;
+            viewArtifact(id, type);
         }
     });
+
+    async function viewArtifact(id, type) {
+        openArtifactModal();
+        modalBody.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+        modalTitle.textContent = `Viewing ${type.toUpperCase()}`;
+
+        try {
+            const res = await fetch(`/api/artifacts/${id}/content?view=true`);
+            if (!res.ok) throw new Error('Failed to load content');
+
+            let content;
+            const contentType = res.headers.get('content-type');
+
+            if (contentType.includes('application/json')) {
+                content = await res.json();
+            } else {
+                content = await res.text();
+            }
+
+            renderModalContent(type, content);
+        } catch (err) {
+            modalBody.innerHTML = `<p style="color:var(--error)">Error loading artifact: ${err.message}</p>`;
+        }
+    }
+
+    function renderModalContent(type, content) {
+        if (type === 'sipoc') { // JSON Array
+            if (!Array.isArray(content)) {
+                modalBody.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
+                return;
+            }
+            let html = '<table class="data-table"><thead><tr><th>Supplier</th><th>Input</th><th>Process</th><th>Output</th><th>Customer</th></tr></thead><tbody>';
+            content.forEach(row => {
+                html += `<tr>
+                    <td>${row.supplier || ''}</td>
+                    <td>${row.input || ''}</td>
+                    <td>${row.process_step || ''}</td>
+                    <td>${row.output || ''}</td>
+                    <td>${row.customer || ''}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            modalBody.innerHTML = html;
+        }
+        else if (type === 'raci') { // JSON Array
+            if (!Array.isArray(content)) {
+                modalBody.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
+                return;
+            }
+            let html = '<table class="data-table"><thead><tr><th>Activity</th><th>Responsible</th><th>Accountable</th><th>Consulted</th><th>Informed</th></tr></thead><tbody>';
+            content.forEach(row => {
+                html += `<tr>
+                    <td>${row.activity || ''}</td>
+                    <td>${row.responsible || ''}</td>
+                    <td>${row.accountable || ''}</td>
+                    <td>${row.consulted || ''}</td>
+                    <td>${row.informed || ''}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            modalBody.innerHTML = html;
+        }
+        else if (type === 'doc') { // Markdown
+            // Simple markdown-to-html for now (can use library later)
+            // Replacing Headers and lists simply for basic view
+            let html = content
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/\*\*(.*)\*\*/gim, '<b>$1</b>')
+                .replace(/^\- (.*$)/gim, '<li>$1</li>');
+
+            html = `<div class="markdown-content">${html}</div>`;
+            modalBody.innerHTML = html;
+        }
+        else {
+            modalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+        }
+    }
 
     function deleteJob(jobId) {
         if (!confirm('Permanently delete this job and file?')) return;
@@ -193,7 +319,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.artifacts && Array.isArray(result.artifacts)) {
             result.artifacts.forEach(art => {
                 const label = art.type.toUpperCase();
-                html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">${label}</a>`;
+
+                // container for buttons group
+                html += `<div style="display:inline-flex; gap:1px; margin-right:5px;">`;
+
+                // Download Button
+                html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px; border-top-right-radius:0; border-bottom-right-radius:0;">${label}</a>`;
+
+                // View Button (only for text types)
+                if (['sipoc', 'raci', 'doc'].includes(art.type)) {
+                    html += `<button class="btn-primary view-artifact-btn" data-id="${art.id}" data-type="${art.type}" style="border-left:1px solid rgba(0,0,0,0.2); font-size: 0.8rem; padding: 4px 8px; border-top-left-radius:0; border-bottom-left-radius:0;">👁️</button>`;
+                } else {
+                    // Just rounded corner fix if no view button
+                    html = html.replace('border-top-right-radius:0; border-bottom-right-radius:0;', '');
+                }
+
+                html += `</div>`;
             });
         }
 

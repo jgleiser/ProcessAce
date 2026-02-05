@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div class="app-container">
         <header class="main-header">
@@ -24,14 +26,19 @@
                 <div class="upload-zone" id="uploadZone">
                     <div class="upload-content">
                         <div class="icon-container">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 16V8M12 8L9 11M12 8L15 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M17 12V17C17 18.1046 16.1046 19 15 19H9C7.89543 19 7 18.1046 7 17V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 16V8M12 8L9 11M12 8L15 11" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M17 12V17C17 18.1046 16.1046 19 15 19H9C7.89543 19 7 18.1046 7 17V12"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
                             </svg>
                         </div>
                         <h3>Drop your evidence here</h3>
                         <p>Support for Audio, Video, and Documents</p>
-                        <input type="text" id="processNameInput" placeholder="Process Name (Optional)" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
+                        <input type="text" id="processNameInput" placeholder="Process Name (Optional)"
+                            style="margin-bottom: 15px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
                         <input type="file" id="fileInput" hidden>
                         <button class="btn-primary" id="browseBtn">Browse Files</button>
                     </div>
@@ -56,6 +63,17 @@
             </section>
         </main>
     </div>
+    <!-- Artifact View Modal -->
+    <div id="artifactModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Artifact View</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
     <script src="js/app.js"></script>
 </body>
+
 </html>

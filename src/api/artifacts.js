@@ -20,7 +20,12 @@ router.get('/:id/content', async (req, res) => {
     res.setHeader('Content-Type', mimeType);
 
     const downloadName = artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+
+    // If ?view=true is present, do NOT set Content-Disposition attachment
+    // This allows the browser/fetch to read it inline
+    if (req.query.view !== 'true') {
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    }
 
     res.send(artifact.content);
 });
