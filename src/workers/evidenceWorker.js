@@ -6,8 +6,21 @@ const { getEvidence } = require('../models/evidence');
 
 
 const processEvidence = async (job) => {
-    const { evidenceId, filename } = job.data;
+    const { evidenceId, filename, processName } = job.data;
     logger.info({ jobId: job.id, evidenceId }, 'Starting BPMN generation');
+
+    // Naming Logic
+    let baseName = processName || filename.replace(/\.[^/.]+$/, "");
+
+    // Normalize: remove accents, lowercase, replace non-alphanum with _, dedupe _
+    const normalizedName = baseName
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, ""); // trim underscores
+
+    logger.info({ jobId: job.id, normalizedName }, 'Using normalized process name');
 
     try {
         // 1. Retrieve Evidence record to get the full path
@@ -101,7 +114,7 @@ Return ONLY Markdown content.`;
         const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
 
         // Helper to generate and save
-        const generateAndSave = async (type, systemPrompt, prompt, extension) => {
+        const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
             const response = await llm.complete(prompt, systemPrompt);
             let content = response.trim();
             // Basic Cleanup
@@ -109,9 +122,12 @@ Return ONLY Markdown content.`;
                 content = content.replace(/^```[a-z]*\s*/, '').replace(/\s*```$/, '');
             }
 
+            const artifactFilename = `${normalizedName}_${suffix}.${extension}`;
+
             const artifact = new Artifact({
                 type,
                 content,
+                filename: artifactFilename,
                 metadata: {
                     sourceEvidenceId: evidenceId,
                     jobId: job.id,
@@ -125,10 +141,10 @@ Return ONLY Markdown content.`;
 
         // 4. Generate All Artifacts in Parallel
         const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
-            generateAndSave('bpmn', bpmnPrompt, `Generate BPMN XML:\n\n${fileContent}`, 'xml'),
-            generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json'),
-            generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json'),
-            generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md')
+            generateAndSave('bpmn', bpmnPrompt, `Generate BPMN XML:\n\n${fileContent}`, 'bpmn', 'diagram'),
+            generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json', 'sipoc'),
+            generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json', 'raci'),
+            generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md', 'document')
         ]);
 
         logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');

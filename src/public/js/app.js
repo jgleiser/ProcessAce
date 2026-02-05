@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData();
         formData.append('file', file);
 
+        const processNameInput = document.getElementById('processNameInput');
+        if (processNameInput && processNameInput.value.trim()) {
+            formData.append('processName', processNameInput.value.trim());
+        }
+
         try {
             const response = await fetch('/api/evidence/upload', {
                 method: 'POST',
@@ -52,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                addJobToTrack(data.jobId, file.name);
+                const processName = processNameInput ? processNameInput.value.trim() : null;
+                addJobToTrack(data.jobId, file.name, processName);
             } else {
                 alert('Upload failed: ' + (data.error || 'Unknown error'));
             }
@@ -75,8 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Job Tracking
     const trackedJobs = JSON.parse(localStorage.getItem('processAce_jobs') || '[]');
 
-    function addJobToTrack(jobId, filename) {
-        trackedJobs.unshift({ id: jobId, filename, timestamp: Date.now(), status: 'pending' });
+    function addJobToTrack(jobId, filename, processName) {
+        trackedJobs.unshift({ id: jobId, filename, processName, timestamp: Date.now(), status: 'pending' });
         // Keep last 10
         if (trackedJobs.length > 10) trackedJobs.pop();
         saveJobs();
@@ -125,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         job.status = data.status;
                         job.result = data.result;
                         job.error = data.error;
+                        if (data.processName) job.processName = data.processName;
+                        hasChanges = true;
+                    } else if (data.processName && !job.processName) {
+                        // Ensure processName is synced if missing locally
+                        job.processName = data.processName;
                         hasChanges = true;
                     }
                 } else if (res.status === 404) {
@@ -153,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="job-card">
                 <div class="job-info">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                        <h4>${job.filename}</h4>
+                        <h4>${job.processName ? `${job.processName} <span style="font-size:0.8em; color:#666; font-weight:normal">(${job.filename})</span>` : job.filename}</h4>
                         <button class="delete-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:1.2rem;">&times;</button>
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>

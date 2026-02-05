@@ -10,6 +10,7 @@ class Artifact {
         createdBy = 'system',
         createdAt = new Date(),
         previousVersionId = null,
+        filename = null, // New field
     }) {
         this.id = id;
         this.type = type; // 'bpmn', 'sipoc', 'raci', 'doc'
@@ -19,6 +20,7 @@ class Artifact {
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.previousVersionId = previousVersionId;
+        this.filename = filename;
     }
 }
 

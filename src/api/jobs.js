@@ -34,7 +34,8 @@ router.get('/:id', async (req, res) => {
         result: job.result,
         error: job.error,
         createdAt: job.createdAt,
-        updatedAt: job.updatedAt
+        updatedAt: job.updatedAt,
+        processName: job.data ? job.data.processName : null
     });
 });
 
