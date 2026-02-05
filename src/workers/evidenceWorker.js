@@ -19,9 +19,10 @@ const processEvidence = async (job) => {
         // 2. Read file content
         const fileContent = await fs.readFile(evidence.path, 'utf8');
 
-        // 3. Prepare Prompt
+        // 3. Define Prompts
         const llm = getLlmProvider();
-        const systemPrompt = `You are an expert BPMN 2.0 Architect.
+
+        const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
 Convert the process description into valid BPMN 2.0 XML with a PROFESSIONAL VISUAL LAYOUT.
 
 ### 1. NAMESPACE & SYNTAX (STRICT)
@@ -69,44 +70,84 @@ CORRECT EDGE SYNTAX:
 ### 5. OUTPUT FORMAT
 Return *only* the XML string. No markdown code blocks.`;
 
-        const userPrompt = `Generate a BPMN 2.0 XML diagram for the following process description:
-\n\n${fileContent}`;
+        const sipocPrompt = `You are a Six Sigma Process Expert.
+Generate a structured SIPOC table (Suppliers, Inputs, Process, Outputs, Customers) for the given process description.
+Output Format: JSON Array with keys: "supplier", "input", "process_step", "output", "customer".
+Example:
+[
+  { "supplier": "Sales", "input": "Order Form", "process_step": "Validate Order", "output": "Validated Order", "customer": "Warehouse" }
+]
+Return ONLY Valid JSON.`;
 
-        // 4. Call LLM
-        const xmlResponse = await llm.complete(userPrompt, systemPrompt);
+        const raciPrompt = `You are a Project Management Pro.
+Generate a RACI Matrix (Responsible, Accountable, Consulted, Informed) for the activities in the process.
+Output Format: JSON Array with keys: "activity", "responsible", "accountable", "consulted", "informed".
+Example:
+[
+  { "activity": "Validate Order", "responsible": "Sales Rep", "accountable": "Sales Manager", "consulted": "IT", "informed": "Customer" }
+]
+Return ONLY Valid JSON.`;
 
-        // 5. Clean / Validate
-        let cleanedXml = xmlResponse.trim();
-        if (cleanedXml.startsWith('```xml')) {
-            cleanedXml = cleanedXml.replace(/^```xml\s*/, '').replace(/\s*```$/, '');
-        } else if (cleanedXml.startsWith('```')) {
-            cleanedXml = cleanedXml.replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
+        const docPrompt = `You are a Technical Writer.
+Create a Professional Narrative Process Document in Markdown format.
+Include:
+- **Process Overview**: Goal and Scope.
+- **Key Roles**: Who is involved.
+- **Step-by-Step Procedure**: Detailed flow.
+- **Exceptions**: How to handle errors.
+- **Business Rules**: Critical constraints.
+Return ONLY Markdown content.`;
 
-        // 6. Save Artifact
-        const artifact = new Artifact({
-            type: 'bpmn',
-            content: cleanedXml,
-            metadata: {
-                sourceEvidenceId: evidenceId,
-                jobId: job.id,
-                generatedByModel: llm.config?.model,
-                layoutMethod: 'llm-generated'
+        const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
+
+        // Helper to generate and save
+        const generateAndSave = async (type, systemPrompt, prompt, extension) => {
+            const response = await llm.complete(prompt, systemPrompt);
+            let content = response.trim();
+            // Basic Cleanup
+            if (content.startsWith('```')) {
+                content = content.replace(/^```[a-z]*\s*/, '').replace(/\s*```$/, '');
             }
-        });
-        await saveArtifact(artifact);
 
-        logger.info({ jobId: job.id, evidenceId, artifactId: artifact.id }, 'BPMN Artifact generated');
+            const artifact = new Artifact({
+                type,
+                content,
+                metadata: {
+                    sourceEvidenceId: evidenceId,
+                    jobId: job.id,
+                    generatedByModel: llm.config?.model,
+                    extension
+                }
+            });
+            await saveArtifact(artifact);
+            return artifact;
+        };
 
-        // Return result including the artifact ID so the UI can fetch it
+        // 4. Generate All Artifacts in Parallel
+        const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
+            generateAndSave('bpmn', bpmnPrompt, `Generate BPMN XML:\n\n${fileContent}`, 'xml'),
+            generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json'),
+            generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json'),
+            generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md')
+        ]);
+
+        logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');
+
+        // Return all artifacts
         return {
             success: true,
             evidenceId,
-            artifactId: artifact.id
+            artifactId: bpmnArtifact.id, // Keep for backward compat
+            artifacts: [
+                { type: 'bpmn', id: bpmnArtifact.id, format: 'xml' },
+                { type: 'sipoc', id: sipocArtifact.id, format: 'json' },
+                { type: 'raci', id: raciArtifact.id, format: 'json' },
+                { type: 'doc', id: docArtifact.id, format: 'md' }
+            ]
         };
 
     } catch (err) {
-        logger.error({ jobId: job.id, err }, 'BPMN generation failed');
+        logger.error({ jobId: job.id, err }, 'Artifact generation failed');
         throw err;
     }
 };

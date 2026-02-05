@@ -47,8 +47,17 @@ router.delete('/:id', async (req, res) => {
         if (job.data && job.data.evidenceId) {
             await deleteEvidence(job.data.evidenceId);
         }
-        if (job.result && job.result.artifactId) {
-            await deleteArtifact(job.result.artifactId);
+        if (job.result) {
+            // Delete singular artifact (backward compat)
+            if (job.result.artifactId) {
+                await deleteArtifact(job.result.artifactId);
+            }
+            // Delete multiple artifacts (Phase 7)
+            if (job.result.artifacts && Array.isArray(job.result.artifacts)) {
+                for (const artifact of job.result.artifacts) {
+                    await deleteArtifact(artifact.id);
+                }
+            }
         }
         await evidenceQueue.delete(id);
     }

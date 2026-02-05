@@ -157,11 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="delete-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:1.2rem;">&times;</button>
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
-                    ${job.result && job.result.artifactId ?
-                `<div style="margin-top:8px">
-                            <a href="/api/artifacts/${job.result.artifactId}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">Download BPMN</a>
-                        </div>`
-                : ''}
+                    ${renderArtifacts(job.result)}
                     ${job.status === 'lost' ? `<div style="color:#d32f2f; font-size:0.8rem; margin-top:5px;">Job lost during server restart</div>` : ''}
                 </div>
                 <div class="job-status status-${job.status}">
@@ -170,6 +166,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `).join('');
+    }
+
+    function renderArtifacts(result) {
+        if (!result) return '';
+
+        let html = '<div style="margin-top:8px; display:flex; gap:5px; flex-wrap:wrap;">';
+
+        // Backward compatibility
+        if (result.artifactId && !result.artifacts) {
+            html += `<a href="/api/artifacts/${result.artifactId}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">Download BPMN</a>`;
+        }
+
+        // New formatted artifacts
+        if (result.artifacts && Array.isArray(result.artifacts)) {
+            result.artifacts.forEach(art => {
+                const label = art.type.toUpperCase();
+                html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">${label}</a>`;
+            });
+        }
+
+        html += '</div>';
+        return html;
     }
 
     // Initial render and polling
