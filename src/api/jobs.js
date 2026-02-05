@@ -16,6 +16,9 @@ const router = express.Router();
 
 const { evidenceQueue } = require('../services/queueInstance');
 
+const { deleteEvidence } = require('../models/evidence');
+const { deleteArtifact } = require('../models/artifact');
+
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
     const job = await evidenceQueue.get(id);
@@ -33,6 +36,25 @@ router.get('/:id', async (req, res) => {
         createdAt: job.createdAt,
         updatedAt: job.updatedAt
     });
+});
+
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+    const job = await evidenceQueue.get(id);
+
+    if (job) {
+        // Cascade delete
+        if (job.data && job.data.evidenceId) {
+            await deleteEvidence(job.data.evidenceId);
+        }
+        if (job.result && job.result.artifactId) {
+            await deleteArtifact(job.result.artifactId);
+        }
+        await evidenceQueue.delete(id);
+    }
+
+    // Always return success to allow frontend to clean up local storage even if job was already gone (404)
+    res.status(200).json({ success: true });
 });
 
 module.exports = router;

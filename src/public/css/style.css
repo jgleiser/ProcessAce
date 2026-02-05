@@ -10,12 +10,12 @@
     --success: #00e676;
     --error: #ff5252;
     --processing: #2979ff;
-    
+
     --radius-lg: 16px;
     --radius-md: 8px;
-    
-    --shadow-sm: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.2);
+
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -90,7 +90,8 @@ h1 {
     overflow: hidden;
 }
 
-.upload-zone:hover, .upload-zone.dragover {
+.upload-zone:hover,
+.upload-zone.dragover {
     border-color: var(--primary);
     background: var(--card-hover);
     transform: translateY(-2px);
@@ -176,7 +177,7 @@ h1 {
 
 .job-card:hover {
     transform: translateX(4px);
-    border-color: rgba(255,255,255,0.1);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .job-info h4 {
@@ -203,40 +204,92 @@ h1 {
     border-radius: 50%;
 }
 
-.status-pending .status-dot { background: var(--text-muted); }
-.status-pending { color: var(--text-muted); }
+.status-pending .status-dot {
+    background: var(--text-muted);
+}
 
-.status-processing .status-dot { background: var(--processing); box-shadow: 0 0 8px var(--processing); animation: pulse 1.5s infinite; }
-.status-processing { color: var(--processing); }
+.status-pending {
+    color: var(--text-muted);
+}
 
-.status-completed .status-dot { background: var(--success); }
-.status-completed { color: var(--success); }
+.status-processing .status-dot {
+    background: var(--processing);
+    box-shadow: 0 0 8px var(--processing);
+    animation: pulse 1.5s infinite;
+}
 
-.status-failed .status-dot { background: var(--error); }
-.status-failed { color: var(--error); }
+.status-processing {
+    color: var(--processing);
+}
+
+.status-completed .status-dot {
+    background: var(--success);
+}
+
+.status-completed {
+    color: var(--success);
+}
+
+.status-failed .status-dot {
+    background: var(--error);
+}
+
+.status-failed {
+    color: var(--error);
+}
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes pulse {
-    0% { opacity: 0.5; }
-    50% { opacity: 1; }
-    100% { opacity: 0.5; }
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
 }
 
 .empty-state {
     text-align: center;
     padding: 3rem;
     color: var(--text-muted);
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-md);
     border: 1px dashed var(--border-color);
+}
+
+.status-lost {
+    color: #ef5350;
+    /* Red */
+}
+
+.status-lost .status-dot {
+    background-color: #ef5350;
+    box-shadow: 0 0 8px rgba(239, 83, 80, 0.4);
 }

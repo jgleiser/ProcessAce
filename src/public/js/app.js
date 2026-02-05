@@ -87,10 +87,35 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('processAce_jobs', JSON.stringify(trackedJobs));
     }
 
+    // Event Delegation for Delete
+    jobsList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.delete-job-btn');
+        if (btn) {
+            const jobId = btn.dataset.id;
+            deleteJob(jobId);
+        }
+    });
+
+    function deleteJob(jobId) {
+        if (!confirm('Permanently delete this job and file?')) return;
+
+        // Optimistically remove from UI
+        const index = trackedJobs.findIndex(j => j.id === jobId);
+        if (index > -1) {
+            trackedJobs.splice(index, 1);
+            saveJobs();
+            renderJobs();
+        }
+
+        // Call backend to cleanup files
+        fetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
+            .catch(err => console.error('Delete failed on server', err));
+    }
+
     async function updateJobs() {
         let hasChanges = false;
         for (const job of trackedJobs) {
-            if (job.status === 'completed' || job.status === 'failed') continue;
+            if (job.status === 'completed' || job.status === 'failed' || job.status === 'lost') continue;
 
             try {
                 const res = await fetch(`/api/jobs/${job.id}`);
@@ -102,8 +127,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         job.error = data.error;
                         hasChanges = true;
                     }
+                } else if (res.status === 404) {
+                    // Job no longer exists on server (likely restart)
+                    job.status = 'lost';
+                    hasChanges = true;
                 }
-            } catch (ignore) { }
+            } catch (err) {
+                console.error('Poll error', err);
+            }
         }
         if (hasChanges) {
             saveJobs();
@@ -121,13 +152,17 @@ document.addEventListener('DOMContentLoaded', () => {
         jobsList.innerHTML = trackedJobs.map(job => `
             <div class="job-card">
                 <div class="job-info">
-                    <h4>${job.filename}</h4>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <h4>${job.filename}</h4>
+                        <button class="delete-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:1.2rem;">&times;</button>
+                    </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
                     ${job.result && job.result.artifactId ?
                 `<div style="margin-top:8px">
                             <a href="/api/artifacts/${job.result.artifactId}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">Download BPMN</a>
                         </div>`
                 : ''}
+                    ${job.status === 'lost' ? `<div style="color:#d32f2f; font-size:0.8rem; margin-top:5px;">Job lost during server restart</div>` : ''}
                 </div>
                 <div class="job-status status-${job.status}">
                     <span class="status-dot"></span>

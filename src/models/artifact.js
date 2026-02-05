@@ -22,11 +22,15 @@ class Artifact {
     }
 }
 
-// In-memory store for Phase 1
-const artifacts = new Map();
+const FileStore = require('../services/fileStore');
+
+// Persistence
+const store = new FileStore('artifacts.json');
+const artifacts = store.load();
 
 const saveArtifact = async (artifact) => {
     artifacts.set(artifact.id, artifact);
+    store.save(artifacts);
     return artifact;
 };
 
@@ -34,8 +38,15 @@ const getArtifact = async (id) => {
     return artifacts.get(id);
 };
 
+const deleteArtifact = async (id) => {
+    const deleted = artifacts.delete(id);
+    if (deleted) store.save(artifacts);
+    return deleted;
+};
+
 module.exports = {
     Artifact,
     saveArtifact,
-    getArtifact
+    getArtifact,
+    deleteArtifact
 };

@@ -1,0 +1,13 @@
+Order Fulfillment Process
+
+1. The process begins when the Customer places an order on the website.
+2. The System validates the payment details provided by the Customer.
+3. If the payment is invalid:
+    a. The System sends a "Payment Failed" notification to the Customer.
+    b. The process ends.
+4. If the payment is valid:
+    a. The System sends a "Payment Successful" notification.
+    b. The Warehouse receives the order details and packs the items.
+    c. The Carrier picks up the package and ships it to the Customer address.
+    d. The Customer receives the package.
+5. The process ends.

@@ -1,15 +1,17 @@
 const logger = require('../logging/logger');
 const { v4: uuidv4 } = require('uuid');
+const FileStore = require('./fileStore');
 
 /**
  * reliable job queue abstraction.
- * In Phase 1, this is an in-memory stub.
+ * In Phase 1, this is an in-memory stub with File persistence.
  * In the future, this will wrap Bull/BullMQ.
  */
 class JobQueue {
     constructor(name) {
         this.name = name;
-        this.jobs = new Map(); // In-memory store
+        this.store = new FileStore(`jobs-${name}.json`);
+        this.jobs = this.store.load();
     }
 
     async add(type, data) {
@@ -24,6 +26,7 @@ class JobQueue {
         };
 
         this.jobs.set(jobId, job);
+        this.store.save(this.jobs);
         logger.info({ job_id: jobId, queue: this.name, job_type: type }, 'Job queued');
 
         // Simulate processing for dev (optional, or left for workers)
@@ -46,9 +49,19 @@ class JobQueue {
         job.updatedAt = new Date();
 
         this.jobs.set(jobId, job);
+        this.store.save(this.jobs);
         logger.info({ job_id: jobId, queue: this.name, status }, 'Job status updated');
 
         return job;
+    }
+
+    async delete(jobId) {
+        const deleted = this.jobs.delete(jobId);
+        if (deleted) {
+            this.store.save(this.jobs);
+            logger.info({ job_id: jobId, queue: this.name }, 'Job deleted');
+        }
+        return deleted;
     }
 
     registerWorker(type, handler) {

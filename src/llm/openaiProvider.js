@@ -9,7 +9,7 @@ class OpenAIProvider extends LlmProvider {
             apiKey: config.apiKey,
             baseURL: config.baseURL, // Optional, for compatible endpoints like LocalAI
         });
-        this.model = config.model || 'gpt-3.5-turbo';
+        this.model = config.model || 'gpt-5-nano-2025-08-07';
     }
 
     async complete(prompt, system) {

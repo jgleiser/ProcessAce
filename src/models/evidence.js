@@ -26,11 +26,15 @@ class Evidence {
     }
 }
 
-// In-memory store
-const evidenceStore = new Map();
+const FileStore = require('../services/fileStore');
+
+// Persistence
+const store = new FileStore('evidence.json');
+const evidenceStore = store.load();
 
 const saveEvidence = async (evidence) => {
     evidenceStore.set(evidence.id, evidence);
+    store.save(evidenceStore);
     return evidence;
 };
 
@@ -38,8 +42,24 @@ const getEvidence = async (id) => {
     return evidenceStore.get(id);
 };
 
+const deleteEvidence = async (id) => {
+    const evidence = evidenceStore.get(id);
+    if (evidence) {
+        try {
+            await require('fs').promises.unlink(evidence.path);
+        } catch (err) {
+            // Ignore if file missing or already deleted
+        }
+        evidenceStore.delete(id);
+        store.save(evidenceStore);
+        return true;
+    }
+    return false;
+};
+
 module.exports = {
     Evidence,
     saveEvidence,
-    getEvidence
+    getEvidence,
+    deleteEvidence
 };
