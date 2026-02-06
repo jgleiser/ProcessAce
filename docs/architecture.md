@@ -1,11 +1,11 @@
 # ProcessAce Architecture
 
-> Status: early design – this document describes the **planned** architecture and will evolve as the implementation matures.
+> Status: **Beta Implementation** – this document describes the current architecture as of Phase 8.
 
 ProcessAce is a **self-hosted**, **BYO-LLM** process discovery and documentation engine.  
 It ingests heterogeneous “process evidence” (recordings, images, documents), normalizes it, and generates standard process artifacts such as **BPMN 2.0**, **SIPOC**, and **RACI**.
 
-Because processing large files (e.g. long videos, multi-hour recordings) and model calls can be slow, ProcessAce is designed around **asynchronous background workers** and **job queues** so that APIs remain responsive.
+ProcessAce runs as a set of Docker containers using **BullMQ (Redis)** for reliable background processing and **SQLite** for low-latency persistence.
 
 ---
 
@@ -88,78 +88,50 @@ Instead, it:
 
 To handle long-running tasks (large file processing, multi-step LLM workflows), ProcessAce uses:
 
-- A **job queue** (e.g. backed by Redis, or another queue system).
-- One or more **background worker** processes/containers that:
-  - Listen for jobs (e.g. `ingest_file`, `transcribe_media`, `analyze_evidence`, `generate_artifacts`).
-  - Perform CPU/IO intensive operations and model calls.
-  - Emit structured log events at each stage (for audit and process mining).
-  - Update job status (`pending`, `in_progress`, `completed`, `failed`) in the database.
+- **Job Queue**: **BullMQ** (Redis-backed) for reliable job processing and retries.
+- **Worker Process**:
+  - Listens for jobs (`process_evidence`).
+  - Performs prompts and parsing.
+  - Emits logs and updates job status in the SQLite database (for long-term history).
 
-This architecture keeps HTTP requests short and avoids timeouts when working with large videos or multiple model calls.
+This architecture keeps HTTP requests short and allows horizontal scaling of workers (future).
 
 ### 3.4. Processing pipeline
 
 The processing pipeline is implemented inside worker processes and consists of:
 
 1. **Ingestion & parsing**
-   - Audio/video → transcription (via external STT engine, e.g. Whisper / cloud STT).
-   - Images → basic OCR and metadata extraction (optional/phase 2).
-   - Text documents → parsing (PDF/DOCX/Markdown/etc.).
-   - Emits log events like `ingestion_started`, `ingestion_completed`.
+   - Text documents → reading file content.
+   - (Future) Audio/video → transcription.
+   - Emits log events.
 
-2. **Semantic analysis**
-   - Uses LLM prompts on parsed content to:
-     - Identify steps, actors, systems, decisions, and data.
-     - Derive a preliminary process flow and variants.
-   - Goes through the LLM abstraction layer.
-   - Emits `llm_call` and `analysis_completed` events.
+2. **LLM analysis (worker)**
+   - Content sent to LLM via **OpenAI-compatible provider**.
+   - Prompts for BPMN, SIPOC, RACI, and Narrative Docs.
 
-3. **Normalization**
-   - Maps raw LLM outputs into the Process Evidence model.
-   - Applies validation and consistency checks.
-   - Emits `evidence_normalized` events.
-
-4. **Artifact generation**
-   - Uses normalized evidence plus LLM assistance and deterministic logic to:
-     - Build BPMN 2.0 XML.
-     - Construct SIPOC and RACI tables.
-     - Generate narrative documentation.
-   - Each artifact creation updates the artifact version history.
-   - Emits `artifact_version_created` / `artifact_version_updated` events.
-
-The pipeline is modular so that steps can be extended or replaced.
+3. **Artifact generation**
+   - Responses parsed (JSON/XML/Markdown).
+   - Artifacts stored in **SQLite** with versions.
+   - Emits `artifact_version_created`.
 
 ### 3.5. LLM abstraction layer
 
-- A small adapter layer that hides vendor differences and exposes a uniform API such as:
-
-  ```ts
-  interface LlmProvider {
-    name: string;
-    complete(prompt: string, options?: CompletionOptions): Promise<string>;
-  }
-  ```
-
-- Configuration via environment variables or admin UI:
-  - `LLM_PROVIDER_URL`
-  - `LLM_API_KEY`
-  - `LLM_MODEL`
-- Supports:
-  - Hosted APIs (OpenAI, Azure OpenAI, Anthropic, etc.) via OpenAI-compatible endpoints.
-  - Local gateways (Ollama, OpenLLM, etc.) using the same interface.
-
-All feature code must go through this abstraction layer, never calling vendors directly.
+- Adapter pattern implementation (`src/llm/index.js`):
+  - `OpenAIProvider` handles communication.
+  - Configured via `LLM_API_KEY`, `LLM_MODEL`, `LLM_PROVIDER_URL`.
 
 ### 3.6. Persistence
 
-- **Database** (choice TBD; e.g. PostgreSQL) stores:
-  - Projects, users, and configurations.
-  - Process evidence records.
-  - Artifacts and their versions (BPMN, SIPOC, RACI, docs).
-  - Jobs and job status.
-- **Blob storage** (local or cloud) stores:
-  - Raw uploads (audio, video, documents, images).
-  - Generated files (BPMN XML, exports) when needed.
+- **Database**: **SQLite** (`better-sqlite3`) using WAL mode.
+  - Stores: `evidence`, `artifacts`, `jobs`.
+  - Schema managed via initialization checks in `src/services/db.js`.
+- **File Storage**:
+  - Local filesystem (`./uploads`) for raw evidence files.
+  - SQLite for generated content (Artifacts).
+
+Schema design supports:
+- Version history (`version`, `previousVersionId`).
+- Linking (`sourceEvidenceId`).
 
 Schema design should support:
 
