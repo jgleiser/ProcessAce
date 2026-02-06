@@ -38,20 +38,41 @@
 
 ---
 
-## Phase 7 – Advanced Analysis (SIPOC / RACI) [NEXT]
-- [ ] SIPOC Matrix Generation (Suppliers, Inputs, Process, Outputs, Customers)
-- [ ] RACI Matrix Generation (Responsible, Accountable, Consulted, Informed)
-- [ ] Narrative Documentation Generation (Markdown/HTML)
-- [ ] UI view for text-based artifacts
+## Phase 7 – Advanced Analysis (SIPOC / RACI) [COMPLETED]
+- [x] SIPOC Matrix Generation (Suppliers, Inputs, Process, Outputs, Customers)
+- [x] RACI Matrix Generation (Responsible, Accountable, Consulted, Informed)
+- [x] Narrative Documentation Generation (Markdown/HTML)
+- [x] UI view for text-based artifacts (Modal & Tables)
+- [x] Custom Artifact Naming & Parallel Generation
 
-## Phase 8 – Production Hardening [FUTURE]
-- [ ] Replace JSON FileStore with SQLite or PostgreSQL
-- [ ] Replace In-Memory/JSON Queue with Redis (BullMQ)
-- [ ] Structured Error Handling & Retries
-- [ ] Docker containerization
+## Phase 8 – Production Hardening [COMPLETED]
+- [x] Replace JSON FileStore with SQLite (better-sqlite3)
+- [x] Replace In-Memory/JSON Queue with Redis (BullMQ)
+- [x] Structured App-wide Error Handling
+- [x] Docker Containerization (App + Redis via Compose)
 
-## Phase 9 – Advanced Features [FUTURE]
-- [ ] Interactive BPMN Viewer (bpmn-js) integration
-- [ ] User Authentication
-- [ ] Multi-file evidence correlation
+---
+
+## Phase 9 – Interactive Visualization & Editing [NEXT]
+- [ ] **Interactive BPMN Viewer**: Integrate `bpmn-js` to view and edit diagrams directly in the browser.
+- [ ] **Rich Text Editor**: Edit Narrative Documentation within the UI (Markdown WYSIWYG).
+- [ ] **Interactive Tables**: Editable SIPOC and RACI grids.
+- [ ] **Validation Feedback**: Real-time validation of edits against BPMN standards.
+
+## Phase 10 – Process Intelligence & Insights [FUTURE]
+- [ ] **Gap Analysis**: Compare "As-Is" (Evidence) vs "To-Be" (Best Practices) processes.
+- [ ] **Optimization Engine**: AI-driven suggestions for reducing cycle time and bottlenecks.
+- [ ] **Automatic Risk Assessment**: Identify compliance risks or control gaps in the generated process.
+- [ ] **Report Generation**: Export comprehensive PDF/PPTX reports combining all artifacts.
+
+## Phase 11 – Collaboration & Security [FUTURE]
+- [ ] **User Authentication**: Simple email/password or SSO (OIDC/SAML).
+- [ ] **Multi-User Workspaces**: Shared projects and evidence libraries.
+- [ ] **Versioning V2**: Branching/Merging of process models.
+- [ ] **Role-Based Access**: Viewer vs Editor vs Admin permissions.
+
+## Phase 12 – Ecosystem Integration [FUTURE]
+- [ ] **Confluence/Jira Sync**: Push documentation directly to corporate wikis.
+- [ ] **Webhook Triggers**: Auto-generate processes from incoming emails or ticket updates.
+- [ ] **Public API**: External access to the generation engine.
 
