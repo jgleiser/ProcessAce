@@ -1,19 +1,20 @@
 const { v4: uuidv4 } = require('uuid');
+const db = require('../services/db');
 
 class Artifact {
     constructor({
         id = uuidv4(),
-        type,
+        type, // 'bpmn', 'sipoc', 'raci', 'doc'
         version = 1,
         content,
         metadata = {},
         createdBy = 'system',
         createdAt = new Date(),
         previousVersionId = null,
-        filename = null, // New field
+        filename = null,
     }) {
         this.id = id;
-        this.type = type; // 'bpmn', 'sipoc', 'raci', 'doc'
+        this.type = type;
         this.version = version;
         this.content = content;
         this.metadata = metadata;
@@ -24,26 +25,39 @@ class Artifact {
     }
 }
 
-const FileStore = require('../services/fileStore');
+// Prepared Statements
+const insertStmt = db.prepare(`
+    INSERT INTO artifacts (id, type, version, content, metadata, createdBy, createdAt, previousVersionId, filename)
+    VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename)
+`);
 
-// Persistence
-const store = new FileStore('artifacts.json');
-const artifacts = store.load();
+const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ?');
+const deleteStmt = db.prepare('DELETE FROM artifacts WHERE id = ?');
 
 const saveArtifact = async (artifact) => {
-    artifacts.set(artifact.id, artifact);
-    store.save(artifacts);
+    const data = {
+        ...artifact,
+        metadata: JSON.stringify(artifact.metadata || {}),
+        createdAt: artifact.createdAt.toISOString()
+    };
+    insertStmt.run(data);
     return artifact;
 };
 
 const getArtifact = async (id) => {
-    return artifacts.get(id);
+    const row = getStmt.get(id);
+    if (!row) return null;
+
+    return new Artifact({
+        ...row,
+        metadata: JSON.parse(row.metadata),
+        createdAt: new Date(row.createdAt)
+    });
 };
 
 const deleteArtifact = async (id) => {
-    const deleted = artifacts.delete(id);
-    if (deleted) store.save(artifacts);
-    return deleted;
+    const result = deleteStmt.run(id);
+    return result.changes > 0;
 };
 
 module.exports = {

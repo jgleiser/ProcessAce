@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const db = require('../services/db');
 
 class Evidence {
     constructor({
@@ -8,7 +9,7 @@ class Evidence {
         mimeType,
         size,
         path,
-        status = 'pending', // pending, processing, processed, error
+        status = 'pending',
         metadata = {},
         createdAt = new Date(),
         updatedAt = new Date(),
@@ -26,32 +27,71 @@ class Evidence {
     }
 }
 
-const FileStore = require('../services/fileStore');
+// Prepared Statements
+const insertStmt = db.prepare(`
+    INSERT INTO evidence (id, filename, originalName, mimeType, size, path, status, metadata, createdAt, updatedAt)
+    VALUES (@id, @filename, @originalName, @mimeType, @size, @path, @status, @metadata, @createdAt, @updatedAt)
+`);
 
-// Persistence
-const store = new FileStore('evidence.json');
-const evidenceStore = store.load();
+const updateStmt = db.prepare(`
+    UPDATE evidence SET 
+        status = @status, 
+        metadata = @metadata, 
+        updatedAt = @updatedAt 
+    WHERE id = @id
+`);
+
+const getStmt = db.prepare('SELECT * FROM evidence WHERE id = ?');
+
+const deleteStmt = db.prepare('DELETE FROM evidence WHERE id = ?');
 
 const saveEvidence = async (evidence) => {
-    evidenceStore.set(evidence.id, evidence);
-    store.save(evidenceStore);
+    // Check if exists
+    const existing = getStmt.get(evidence.id);
+
+    // Serialize objects
+    const data = {
+        ...evidence,
+        metadata: JSON.stringify(evidence.metadata || {}),
+        createdAt: evidence.createdAt.toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    if (existing) {
+        updateStmt.run({
+            id: data.id,
+            status: data.status,
+            metadata: data.metadata,
+            updatedAt: data.updatedAt
+        });
+    } else {
+        insertStmt.run(data);
+    }
     return evidence;
 };
 
 const getEvidence = async (id) => {
-    return evidenceStore.get(id);
+    const row = getStmt.get(id);
+    if (!row) return null;
+
+    // Deserialize
+    return new Evidence({
+        ...row,
+        metadata: JSON.parse(row.metadata),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
+    });
 };
 
 const deleteEvidence = async (id) => {
-    const evidence = evidenceStore.get(id);
+    const evidence = await getEvidence(id);
     if (evidence) {
         try {
             await require('fs').promises.unlink(evidence.path);
         } catch (err) {
-            // Ignore if file missing or already deleted
+            // Ignore missing file
         }
-        evidenceStore.delete(id);
-        store.save(evidenceStore);
+        deleteStmt.run(id);
         return true;
     }
     return false;

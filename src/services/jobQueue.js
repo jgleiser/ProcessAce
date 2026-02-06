@@ -1,97 +1,101 @@
+const { Queue, Worker } = require('bullmq');
+const connection = require('../config/redis');
 const logger = require('../logging/logger');
 const { v4: uuidv4 } = require('uuid');
-const FileStore = require('./fileStore');
+const { Job, saveJob, getJob, deleteJob } = require('../models/job');
 
-/**
- * reliable job queue abstraction.
- * In Phase 1, this is an in-memory stub with File persistence.
- * In the future, this will wrap Bull/BullMQ.
- */
 class JobQueue {
     constructor(name) {
         this.name = name;
-        this.store = new FileStore(`jobs-${name}.json`);
-        this.jobs = this.store.load();
+        this.queue = new Queue(name, { connection });
+        this.workers = [];
     }
 
     async add(type, data) {
         const jobId = uuidv4();
-        const job = {
+
+        // 1. Persist to SQLite (Source of Truth for API)
+        const jobRecord = new Job({
             id: jobId,
             type,
-            data,
-            status: 'pending',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+            data
+        });
+        saveJob(jobRecord);
 
-        this.jobs.set(jobId, job);
-        this.store.save(this.jobs);
-        logger.info({ job_id: jobId, queue: this.name, job_type: type }, 'Job queued');
+        // 2. Add to BullMQ
+        await this.queue.add(type, { ...data, jobId }, {
+            jobId: jobId, // Use same ID
+            removeOnComplete: 100, // Keep last 100 in Redis
+            removeOnFail: 200
+        });
 
-        // Simulate processing for dev (optional, or left for workers)
-        // this.process(jobId); 
-
-        return job;
+        logger.info({ jobId, queue: this.name }, 'Job added to queue');
+        return jobRecord;
     }
 
     async get(jobId) {
-        return this.jobs.get(jobId) || null;
-    }
-
-    async updateStatus(jobId, status, result = null, error = null) {
-        const job = this.jobs.get(jobId);
-        if (!job) return null;
-
-        job.status = status;
-        job.result = result;
-        job.error = error;
-        job.updatedAt = new Date();
-
-        this.jobs.set(jobId, job);
-        this.store.save(this.jobs);
-        logger.info({ job_id: jobId, queue: this.name, status }, 'Job status updated');
-
-        return job;
+        return getJob(jobId);
     }
 
     async delete(jobId) {
-        const deleted = this.jobs.delete(jobId);
-        if (deleted) {
-            this.store.save(this.jobs);
-            logger.info({ job_id: jobId, queue: this.name }, 'Job deleted');
+        // Remove from SQLite
+        const deleted = deleteJob(jobId);
+        // Try remove from BullMQ (best effort)
+        try {
+            const bullJob = await this.queue.getJob(jobId);
+            if (bullJob) await bullJob.remove();
+        } catch (err) {
+            logger.warn({ err, jobId }, 'Failed to remove job from Redis');
         }
         return deleted;
     }
 
     registerWorker(type, handler) {
-        logger.info({ queue: this.name, job_type: type }, 'Worker registered');
+        logger.info({ queue: this.name, type }, 'Registering worker');
 
-        // In a real Redis queue, we would set up a process handler here.
-        // For in-memory, we'll hook into the `add` method or poll.
-        // simpler for now: just override `add` to trigger handler next tick.
+        const worker = new Worker(this.name, async (bullJob) => {
+            const { jobId } = bullJob.data;
 
-        const originalAdd = this.add.bind(this);
-        this.add = async (jobType, data) => {
-            const job = await originalAdd(jobType, data);
-
-            if (jobType === type) {
-                // Run async without awaiting to not block the API response
-                setImmediate(async () => {
-                    try {
-                        await this.updateStatus(job.id, 'processing');
-                        const result = await handler(job);
-                        await this.updateStatus(job.id, 'completed', result);
-                    } catch (err) {
-                        logger.error({ err, job_id: job.id }, 'Job processing failed');
-                        await this.updateStatus(job.id, 'failed', null, err.message);
-                    }
-                });
+            // Sync status start
+            let jobRecord = getJob(jobId);
+            if (jobRecord) {
+                jobRecord.status = 'processing';
+                saveJob(jobRecord);
             }
-            return job;
-        };
+
+            try {
+                // Execute Handler
+                // Construct a job-like object compatible with old handler signature
+                const jobContext = { id: jobId, data: bullJob.data };
+                const result = await handler(jobContext);
+
+                // Sync success
+                jobRecord = getJob(jobId);
+                if (jobRecord) {
+                    jobRecord.status = 'completed';
+                    jobRecord.result = result;
+                    saveJob(jobRecord);
+                }
+                return result;
+
+            } catch (err) {
+                // Sync failure
+                jobRecord = getJob(jobId);
+                if (jobRecord) {
+                    jobRecord.status = 'failed';
+                    jobRecord.error = err.message;
+                    saveJob(jobRecord);
+                }
+                throw err;
+            }
+        }, { connection });
+
+        this.workers.push(worker);
+
+        worker.on('failed', (job, err) => {
+            logger.error({ jobId: job?.id, err }, 'Worker failed');
+        });
     }
 }
 
-// Singleton or factory could go here. For now, exporting the class.
 module.exports = JobQueue;

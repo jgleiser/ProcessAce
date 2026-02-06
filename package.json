@@ -11,10 +11,13 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
+        "better-sqlite3": "^12.6.2",
+        "bullmq": "^5.67.3",
         "cors": "^2.8.6",
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
         "helmet": "^8.1.0",
+        "ioredis": "^5.9.2",
         "multer": "^2.0.2",
         "openai": "^6.17.0",
         "pino": "^10.3.0",
