@@ -61,28 +61,38 @@ See [`docs/architecture.md`](./docs/architecture.md) for more details.
 
 ### Prerequisites
 
-- Node.js (version TBD)
-- Docker (for local or production deployment)
-- An LLM provider or local model:
-  - OpenAI / Azure OpenAI / other OpenAI-compatible API
-  - Or local gateway (e.g., Ollama, OpenLLM, etc.)
+- **Docker & Docker Compose** (Recommended)
+- OR Node.js v24+ and a running Redis instance (for local dev)
+- An LLM provider (OpenAI compatible)
 
-### Quick start (planned)
+### Quick Start (Docker)
 
-```bash
-# Clone the repo
-git clone https://github.com/<your-org>/processace.git
-cd processace
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/<your-org>/processace.git
+    cd processace
+    ```
 
-# Install dependencies
-npm install
+2.  Configure environment:
+    ```bash
+    cp .env.example .env
+    # Edit .env to set your LLM_API_KEY
+    ```
 
-# Run in development mode (API + UI where applicable)
-npm run dev
+3.  Run with Docker Compose:
+    ```bash
+    docker compose up -d --build
+    ```
 
-# (Later) Start workers and supporting services (e.g. queue, db) via Docker
-# docker compose up
-```
+4.  Open `http://localhost:3000`
+
+### Local Development (without Docker)
+
+If you prefer running locally:
+
+1.  Start a Redis instance on `localhost:6379`.
+2.  Install dependencies: `npm install`.
+3.  Run the server: `npm run dev`.
 
 Docker and production deployment instructions will be added once the initial services are in place.
 
