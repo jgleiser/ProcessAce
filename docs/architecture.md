@@ -63,7 +63,11 @@ Artifacts are versioned for auditability (e.g. `artifact_id`, `version`, `create
   - Uploading evidence (files, recordings, screenshots).
   - Triggering processing (which enqueues background jobs).
   - Displaying job and process status (pending, processing, completed, failed).
-  - Browsing and editing generated BPMN/SIPOC/RACI.
+  - Browsing and editing generated BPMN/SIPOC/RACI/Docs.
+  - **Interactive Editing**:
+    - **BPMN**: `bpmn-js` Modeler for graphical editing.
+    - **Markdown**: `EasyMDE` for rich text editing.
+    - **Tables**: Custom interactive HTML tables for SIPOC/RACI.
   - Triggering exports and downloads.
 
 ### 3.2. API Backend
@@ -73,7 +77,9 @@ Artifacts are versioned for auditability (e.g. `artifact_id`, `version`, `create
   - File uploads and metadata creation.
   - Job creation and status checks.
   - Process evidence retrieval and updates.
-  - Artifact retrieval and version history.
+  - Process evidence retrieval and updates.
+  - Artifact retrieval (`GET /api/artifacts/:id/content`) and updates (`PUT /api/artifacts/:id/content`).
+  - Version history (Artifacts are versioned on update).
   - Configuration management (LLM providers, projects, users).
 
 The backend **does not perform heavy work synchronously**.  

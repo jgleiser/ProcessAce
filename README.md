@@ -2,7 +2,106 @@
 
 AI-powered process discovery and documentation engine – from recordings and docs to BPMN 2.0, SIPOC and RACI. Self-hosted with bring-your-own LLM.
 
-> ⚠️ Status: Early-stage, work in progress. APIs and internals may change frequently.
+> ⚠️ Status: **Beta**. Core ingestion, generation, and editing features are functional. APIs may evolve.
+
+---
+
+## ✨ Features
+
+ProcessAce turns raw **process evidence** into standard, tool-agnostic process documentation.
+
+-   **Ingest Evidence**:
+    -   Text documents (SOPs, notes, emails)
+    -   *Planned: Audio/Video recordings, Images*
+-   **Analyze & Normalize**:
+    -   Uses LLMs (OpenAI, Azure, Local) to extract steps, actors, and systems.
+    -   Normalizes data into a structured evidence model.
+-   **Generate Artifacts**:
+    -   **BPMN 2.0 Diagrams**: Auto-generated and interactive.
+    -   **SIPOC Logic**: Supplier-Input-Process-Output-Customer matrices.
+    -   **RACI Models**: Responsible-Accountable-Consulted-Informed matrices.
+    -   **Narrative Docs**: Markdown-based process descriptions.
+-   **Interactive Editing**:
+    -   **BPMN Viewer/Editor**: View and modify diagrams directly in the browser (`bpmn-js`).
+    -   **Rich Text**: Edit narrative docs with a WYSIWYG Markdown editor.
+    -   **Tables**: Interactive SIPOC/RACI editing.
+-   **Robust Architecture**:
+    -   **Dockerized**: Easy deployment with Docker Compose.
+    -   **Async Processing**: Redis-backed job queue for long-running generative tasks.
+    -   **Persistence**: SQLite database for reliable data storage.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+-   **Docker & Docker Compose** (Recommended)
+-   **OpenAI API Key** (or compatible provider)
+
+### Quick Start (Docker)
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/<your-org>/processace.git
+    cd processace
+    ```
+
+2.  **Configure Environment**:
+    ```bash
+    cp .env.example .env
+    # Edit .env and set your LLM_API_KEY
+    ```
+
+3.  **Run with Docker Compose**:
+    ```bash
+    docker compose up -d --build
+    ```
+
+4.  **Open the Web UI**:
+    Navigate to `http://localhost:3000`.
+
+### Local Development
+
+1.  Start Redis: `docker run -d -p 6379:6379 redis`
+2.  Install dependencies: `npm install`
+3.  Run the server: `npm run dev`
+
+---
+
+## 🧱 Architecture
+
+ProcessAce is built for reliability and auditability.
+
+-   **Frontend**: HTML5/JS Single Page Application.
+-   **Backend**: Node.js Express API.
+-   **data**: SQLite (Metadata, Artifacts, Jobs).
+-   **queue**: Redis (BullMQ) for background job processing.
+-   **workers**: Dedicated processes for LLM interaction and artifact generation.
+
+See [`docs/architecture.md`](./docs/architecture.md) for a deep dive.
+
+---
+
+## 🗺️ Roadmap & Documentation
+
+-   [**Roadmap**](./docs/ROADMAP.md): See what's coming next.
+-   [**User Guide**](./docs/user_guide.md): How to use the application.
+-   [**Architecture**](./docs/architecture.md): System design.
+-   [**Agent Guidelines**](./docs/agent-guidelines.md): Coding standards for AI agents.
+
+---
+
+## 📄 License
+
+ProcessAce is **source-available** under the **ProcessAce Sustainable Use License**.
+See [`LICENSE`](./LICENSE) for details.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please check [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ---
 
