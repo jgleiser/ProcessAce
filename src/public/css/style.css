@@ -414,3 +414,131 @@ h1 {
 .hidden {
     display: none !important;
 }
+
+/* BPMN Viewer */
+#bpmn-canvas {
+    width: 100%;
+    height: 600px;
+    background-color: #ffffff;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.bpmn-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: flex-end;
+}
+
+.bpmn-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 5px 10px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.bpmn-btn:hover {
+    background: var(--card-hover);
+}
+
+.bjs-powered-by {
+    display: block !important;
+    /* Ensure adherence to license but style appropriately if needed */
+}
+
+/* Palette Overrides */
+.djs-palette {
+    background: #FFF !important;
+    border: 1px solid #CCC !important;
+    top: 20px !important;
+    left: 20px !important;
+}
+
+.bpmn-btn.primary {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.bpmn-btn.primary:hover {
+    background: var(--primary-hover);
+}
+
+/* EasyMDE Dark Mode Overrides */
+.editor-toolbar {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    opacity: 1 !important;
+}
+
+.editor-toolbar button {
+    color: var(--text-main) !important;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar button.active {
+    background-color: var(--card-hover) !important;
+    border-color: var(--border-color) !important;
+}
+
+.editor-toolbar i.separator {
+    border-color: var(--border-color) !important;
+}
+
+.CodeMirror {
+    background-color: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+.CodeMirror-cursor {
+    border-left: 1px solid var(--text-main) !important;
+}
+
+.editor-preview,
+.editor-preview-side {
+    background-color: var(--card-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.editor-preview pre,
+.editor-preview-side pre {
+    background: #000 !important;
+}
+
+.editor-statusbar {
+    color: var(--text-muted) !important;
+}
+
+/* Table Editing */
+.table-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.table-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.delete-row-btn {
+    background: transparent;
+    border: none;
+    color: var(--error);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.delete-row-btn:hover {
+    color: #ff8a80;
+}

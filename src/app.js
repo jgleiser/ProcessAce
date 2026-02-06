@@ -8,7 +8,15 @@ const path = require('path');
 const app = express();
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "script-src": ["'self'", "https://unpkg.com"],
+            "img-src": ["'self'", "data:", "blob:"], // Allow blob: for SVG download
+        },
+    },
+}));
 app.use(cors());
 app.use(express.json());
 

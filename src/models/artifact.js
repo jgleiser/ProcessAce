@@ -60,9 +60,27 @@ const deleteArtifact = async (id) => {
     return result.changes > 0;
 };
 
+const updateStmt = db.prepare(`
+    UPDATE artifacts 
+    SET content = @content, 
+        version = version + 1,
+        createdAt = @createdAt
+    WHERE id = @id
+`);
+
+const updateArtifact = async (id, content) => {
+    const info = updateStmt.run({
+        id,
+        content,
+        createdAt: new Date().toISOString()
+    });
+    return info.changes > 0;
+};
+
 module.exports = {
     Artifact,
     saveArtifact,
     getArtifact,
-    deleteArtifact
+    deleteArtifact,
+    updateArtifact
 };

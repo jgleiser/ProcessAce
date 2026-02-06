@@ -30,4 +30,26 @@ router.get('/:id/content', async (req, res) => {
     res.send(artifact.content);
 });
 
+router.put('/:id/content', async (req, res) => {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const { updateArtifact } = require('../models/artifact');
+
+    // Ensure content is a string for SQLite
+    const contentToSave = typeof content === 'object' ? JSON.stringify(content) : content;
+
+    const success = await updateArtifact(id, contentToSave);
+
+    if (!success) {
+        return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    res.json({ success: true });
+});
+
 module.exports = router;
