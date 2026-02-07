@@ -44,7 +44,23 @@
                         <h3>Drop your evidence here</h3>
                         <p>Support for Audio, Video, and Documents</p>
                         <input type="text" id="processNameInput" placeholder="Process Name (Optional)"
-                            style="margin-bottom: 15px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
+                            style="margin-bottom: 10px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
+
+                        <div style="display:flex; gap:10px; width:80%; margin-bottom:15px;">
+                            <select id="providerSelect"
+                                style="flex:1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                                <option value="openai">OpenAI</option>
+                                <option value="google">Google GenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                            </select>
+                            <input type="text" id="modelSelect" list="modelOptions" placeholder="Model (Default)"
+                                style="flex:1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
+                            <datalist id="modelOptions">
+                                <option value="gpt-5-nano-2025-08-07">
+                                <option value="gemini-2.5-flash-lite">
+                                <option value="claude-haiku-4-5-20251001">
+                            </datalist>
+                        </div>
                         <input type="file" id="fileInput" hidden>
                         <button class="btn-primary" id="browseBtn">Browse Files</button>
                     </div>

@@ -14,7 +14,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
     -   Text documents (SOPs, notes, emails)
     -   *Planned: Audio/Video recordings, Images*
 -   **Analyze & Normalize**:
-    -   Uses LLMs (OpenAI, Azure, Local) to extract steps, actors, and systems.
+    -   Uses LLMs (**OpenAI, Google Gemini, Anthropic Claude**) to extract steps, actors, and systems.
     -   Normalizes data into a structured evidence model.
 -   **Generate Artifacts**:
     -   **BPMN 2.0 Diagrams**: Auto-generated and interactive.
@@ -50,7 +50,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 2.  **Configure Environment**:
     ```bash
     cp .env.example .env
-    # Edit .env and set your LLM_API_KEY
+    # Edit .env and set your API keys (OPENAI_API_KEY, GOOGLE_API_KEY, ANTHROPIC_API_KEY)
     ```
 
 3.  **Run with Docker Compose**:
@@ -204,7 +204,7 @@ You configure your own provider and keys.
 
 Planned configuration model:
 
-- Environment variables (e.g. `LLM_PROVIDER_URL`, `LLM_API_KEY`, `LLM_MODEL`)
+- Environment variables (e.g. `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY`)
 - Profile-based configuration to support multiple providers
 
 Examples and templates will be added under `config/` and in the documentation.

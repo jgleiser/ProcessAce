@@ -6,8 +6,8 @@ const { getEvidence } = require('../models/evidence');
 
 
 const processEvidence = async (job) => {
-    const { evidenceId, filename, processName } = job.data;
-    logger.info({ jobId: job.id, evidenceId }, 'Starting BPMN generation');
+    const { evidenceId, filename, processName, provider, model } = job.data;
+    logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
 
     // Naming Logic
     let baseName = processName || filename.replace(/\.[^/.]+$/, "");
@@ -33,7 +33,7 @@ const processEvidence = async (job) => {
         const fileContent = await fs.readFile(evidence.path, 'utf8');
 
         // 3. Define Prompts
-        const llm = getLlmProvider();
+        const llm = getLlmProvider({ provider, model });
 
         const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
 Convert the process description into valid BPMN 2.0 XML with a PROFESSIONAL VISUAL LAYOUT.

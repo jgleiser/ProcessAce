@@ -8,8 +8,9 @@ ProcessAce helps you document and analyze processes by uploading evidence (docum
 ### 1. Uploading Evidence
 1.  Navigate to the **Upload** section on the main dashboard.
 2.  Drag and drop your file (e.g., text document, transcript) into the drop zone.
-3.  (Optional) Enter a specific **Process Name**.
-4.  The system will process the file in the background. You can track progress in the **Jobs** list.
+3.  **Select Provider & Model**: Choose between OpenAI, Google GenAI, or Anthropic, and specify a model if needed.
+4.  (Optional) Enter a specific **Process Name**.
+5.  The system will process the file in the background. You can track progress in the **Jobs** list.
 
 ### 2. Viewing Artifacts
 Once a job is **Completed**, you will see a list of generated artifacts:

@@ -9,8 +9,11 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_ENV=production
-      - LLM_API_KEY=${LLM_API_KEY}
-      - LLM_MODEL=${LLM_MODEL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LLM_PROVIDER_URL=${LLM_PROVIDER_URL}
+      - MOCK_LLM=${MOCK_LLM}
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data

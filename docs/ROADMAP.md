@@ -59,10 +59,11 @@
 - [x] **Interactive Tables**: Editable SIPOC and RACI grids.
 - [x] **Validation Feedback**: Real-time validation of edits against BPMN standards (via Modeler).
 
-## Phase 10 – Extended LLM Support [NEXT]
-- [ ] **Google GenAI Integration**: Support for Gemini models via `google-generativeai` SDK.
-- [ ] **Anthropic Integration**: Support for Claude models via `anthropic-sdk`.
-- [ ] **Provider Selection UI**: Allow users to switch providers per-project or per-job.
+## Phase 10 – Extended LLM Support [COMPLETED]
+- [x] **Google GenAI Integration**: Support for Gemini models via `@google/genai` SDK.
+- [x] **Anthropic Integration**: Support for Claude models via `anthropic-sdk`.
+- [x] **Provider Selection UI**: Allow users to switch providers per-project or per-job.
+- [x] **Model Selection UI**: Allow users to choose specific models (e.g., gpt-5-nano, gemini-2.5-flash-lite).
 
 ## Phase 11 – Process Intelligence & Insights [FUTURE]
 - [ ] **Gap Analysis**: Compare "As-Is" (Evidence) vs "To-Be" (Best Practices) processes.

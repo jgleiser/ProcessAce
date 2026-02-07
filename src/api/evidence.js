@@ -43,7 +43,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         const job = await evidenceQueue.add('process_evidence', {
             evidenceId: evidence.id,
             filename: evidence.filename,
-            processName: req.body.processName // Optional custom name
+            processName: req.body.processName, // Optional custom name
+            provider: req.body.provider,
+            model: req.body.model
         });
 
         res.status(202).json({

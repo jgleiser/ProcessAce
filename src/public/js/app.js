@@ -96,6 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('processName', processNameInput.value.trim());
         }
 
+        const providerSelect = document.getElementById('providerSelect');
+        const modelSelect = document.getElementById('modelSelect');
+
+        if (providerSelect) {
+            formData.append('provider', providerSelect.value);
+        }
+        if (modelSelect && modelSelect.value.trim()) {
+            formData.append('model', modelSelect.value.trim());
+        }
+
         try {
             const response = await fetch('/api/evidence/upload', {
                 method: 'POST',
