@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const { saveEvidence, Evidence } = require('../models/evidence');
 const { evidenceQueue } = require('../services/queueInstance');
+const settingsService = require('../services/settingsService');
 
 const router = express.Router();
 
@@ -41,14 +42,16 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         await saveEvidence(evidence);
 
+        const { provider, model } = settingsService.getLLMConfig();
+
         // 2. Enqueue Job
         const job = await evidenceQueue.add('process_evidence', {
             evidenceId: evidence.id,
             filename: evidence.filename,
             originalName: evidence.originalName, // Pass original filename for derivation
             processName: req.body.processName, // Optional custom name
-            provider: req.body.provider,
-            model: req.body.model
+            provider,
+            model
         }, {
             userId: req.user.id,
             workspaceId: req.body.workspaceId || null

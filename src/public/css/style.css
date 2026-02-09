@@ -36,42 +36,50 @@ body {
 
 .app-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
     padding: 2rem;
 }
 
-/* Header */
-.main-header {
-    text-align: center;
-    margin-bottom: 3rem;
-    animation: fadeIn 0.8s ease-out;
+
+/* Common Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
-.logo {
+.header-brand {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    text-decoration: none;
 }
 
-.logo-icon {
-    font-size: 2rem;
+.header-brand .logo-icon {
+    font-size: 1.5rem;
 }
 
-h1 {
-    font-weight: 600;
-    font-size: 2.5rem;
+.header-brand h1 {
+    font-size: 1.5rem;
+    margin: 0;
+    /* Use same gradient as before */
     background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
-.subtitle {
-    color: var(--text-muted);
-    font-size: 1.1rem;
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
+
+/* Specific adjustments for Index to override old centered styles if needed */
+/* But we are replacing them */
 
 /* Workspace Selector */
 .workspace-selector {
@@ -596,6 +604,83 @@ h1 {
     padding: 0 5px;
 }
 
+
 .delete-row-btn:hover {
+    color: #ff8a80;
+}
+
+/* User Menu Dropdown */
+.user-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.user-menu-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.user-menu-btn:hover {
+    background: var(--card-hover);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    width: 200px;
+    z-index: 1000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-dropdown.hidden {
+    display: none;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    color: var(--text-main);
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    width: 100%;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+    background: var(--card-hover);
+    color: var(--primary);
+}
+
+.user-dropdown button {
+    border-bottom: none;
+    color: var(--error);
+}
+
+.user-dropdown button:hover {
     color: #ff8a80;
 }

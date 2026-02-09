@@ -19,12 +19,12 @@
 
 <body>
     <div class="app-container">
-        <header class="main-header">
-            <div class="logo">
+        <header class="page-header">
+            <a href="/" class="header-brand">
                 <span class="logo-icon">✨</span>
                 <h1>ProcessAce</h1>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            </a>
+            <div class="header-controls">
                 <div class="workspace-selector" id="workspaceSelector">
                     <!-- View Mode (default) -->
                     <div id="workspaceViewMode" class="workspace-view-mode">
@@ -49,9 +49,19 @@
                             style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">Cancel</a>
                     </div>
                 </div>
-                <span id="userDisplay" style="font-size: 0.9rem; color: var(--text-color);"></span>
-                <button id="logoutBtn" class="btn-primary"
-                    style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</button>
+
+                <div class="user-menu-container">
+                    <button id="userMenuBtn" class="user-menu-btn">
+                        <span id="userDisplay">Loading...</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="/user-settings.html">User Settings</a>
+                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
+                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
+                        <button id="logoutBtn">Logout</button>
+                    </div>
+                </div>
             </div>
         </header>
         <div style="text-align: center; margin-bottom: 2rem;">
@@ -75,23 +85,7 @@
                         <h3>Drop your evidence here</h3>
                         <p>Support for Audio, Video, and Documents</p>
                         <input type="text" id="processNameInput" placeholder="Process Name (Optional)"
-                            style="margin-bottom: 10px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
-
-                        <div style="display:flex; gap:10px; width:80%; margin-bottom:15px;">
-                            <select id="providerSelect"
-                                style="flex:1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-                                <option value="openai">OpenAI</option>
-                                <option value="google">Google GenAI</option>
-                                <option value="anthropic">Anthropic</option>
-                            </select>
-                            <input type="text" id="modelSelect" list="modelOptions" placeholder="Model (Default)"
-                                style="flex:1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-                            <datalist id="modelOptions">
-                                <option value="gpt-5-nano-2025-08-07">
-                                <option value="gemini-2.5-flash-lite">
-                                <option value="claude-haiku-4-5-20251001">
-                            </datalist>
-                        </div>
+                            style="margin-bottom: 20px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 80%;">
                         <input type="file" id="fileInput" hidden>
                         <button class="btn-primary" id="browseBtn">Browse Files</button>
                     </div>
@@ -146,6 +140,8 @@
     <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
     <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
     <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
+
+    <script src="js/header.js"></script>
     <script src="js/app.js"></script>
 </body>
 

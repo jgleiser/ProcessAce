@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Settings - ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="page-header">
+            <a href="/" class="header-brand">
+                <span class="logo-icon">✨</span>
+                <h1>ProcessAce</h1>
+            </a>
+            <div class="header-controls">
+                <div class="user-menu-container">
+                    <button id="userMenuBtn" class="user-menu-btn">
+                        <span id="userDisplay">Loading...</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="/user-settings.html">User Settings</a>
+                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
+                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
+                        <button id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+            <h1>App Settings</h1>
+            <a href="/" class="back-link">← Back to Dashboard</a>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="card"
+            style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <form id="appSettingsForm">
+                <div class="form-group">
+                    <label class="form-label">Default LLM Provider</label>
+                    <select id="providerSelect" class="form-select">
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google GenAI</option>
+                        <option value="anthropic">Anthropic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Default Model</label>
+                    <input type="text" id="modelInput" list="modelOptions" class="form-input" placeholder="e.g. gpt-4o">
+                    <datalist id="modelOptions">
+                        <option value="gpt-5-nano-2025-08-07">
+                        <option value="gemini-2.5-flash-lite">
+                        <option value="claude-haiku-4-5-20251001">
+                    </datalist>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="js/header.js"></script>
+    <script src="js/app-settings.js"></script>
+</body>
+
+</html>

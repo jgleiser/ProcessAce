@@ -62,4 +62,16 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 });
 
+// Update Current User Profile
+router.put('/me', authenticateToken, async (req, res) => {
+    try {
+        const { name, password, currentPassword } = req.body;
+        const updatedUser = await authService.updateUserProfile(req.user.id, { name, password, currentPassword });
+        res.json(updatedUser);
+    } catch (error) {
+        logger.error({ err: error }, 'Failed to update profile');
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
 module.exports = router;

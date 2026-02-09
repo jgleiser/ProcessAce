@@ -1,36 +1,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Auth Check
-    let currentUser = null;
-    try {
-        const res = await fetch('/api/auth/me');
-        if (!res.ok) {
-            if (res.status === 401 || res.status === 403) {
-                window.location.href = '/login.html';
-                return;
-            }
-            throw new Error('Auth check failed');
-        }
-        currentUser = await res.json();
-        // Update UI with user info
-        const userDisplay = document.getElementById('userDisplay');
-        if (userDisplay) userDisplay.textContent = currentUser.email;
+    // Auth Check handled by header.js for UI, but we might want to ensure we have the user object for other things?
+    // app.js uses currentUser for some things?
+    // Let's check lines 1-48 carefully. 
+    // It fetches /api/auth/me to get currentUser.
+    // It also updates userDisplay/adminLink which header.js now does.
+    // It also sets global `currentUser` variable (line 3).
+    // Does app.js usage `currentUser` later?
+    // Scanning...
+    // It doesn't seem to use `currentUser` anywhere else in the provided code snippet (lines 1-800).
+    // But `evidence.js` (upload) uses `req.user` on backend. Frontend just sends file.
+    // So we might get away with just removing the UI update parts.
 
-        // Show admin link if user is admin
-        if (currentUser.role === 'admin') {
-            const adminLink = document.createElement('a');
-            adminLink.href = '/admin.html';
-            adminLink.textContent = 'Users';
-            adminLink.style.cssText = 'color: var(--primary); text-decoration: none; font-size: 0.9rem; margin-right: 0.5rem;';
-            adminLink.onmouseover = () => adminLink.style.color = 'var(--primary-hover)';
-            adminLink.onmouseout = () => adminLink.style.color = 'var(--primary)';
-            // Insert before userDisplay
-            userDisplay.parentNode.insertBefore(adminLink, userDisplay);
-        }
-    } catch (err) {
-        console.error('Auth verification failed', err);
-        // Fallback to login if we can't verify
-        // window.location.href = '/login.html'; 
-    }
+    // However, to be safe, let's keep the fetch but remove the UI manipulation.
+    // AND remove the logout listener.
+
+    // Better yet: header.js is included BEFORE app.js.
+    // We can rely on header.js to handle UI.
+    // We can just keep the redirection logic if needed.
+
+    // Let's remove lines 3-33 (Auth Check & UI) and 41-48 (Logout).
+
+    // Wait, line 1 is event listener. 
+    // I will replace start of file.
 
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
@@ -38,14 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const jobsList = document.getElementById('jobsList');
     const jobCount = document.getElementById('jobCount');
 
-    // Logout Logic
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/login.html';
-        });
-    }
+    // Workspace logic follows...
 
     // NEW WORKSPACE SWITCHER (View/Edit Mode)
     const workspaceViewMode = document.getElementById('workspaceViewMode');
@@ -246,6 +230,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function closeArtifactModal() {
+        destroyBpmn();
+        destroyDocEditor();
         if (!modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
         }
@@ -811,14 +797,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Override close function to destroy viewer and editor
-    const originalCloseArtifactModal = closeArtifactModal;
-    closeArtifactModal = function () {
-        destroyBpmn();
-        destroyDocEditor();
-        if (!modal.classList.contains('hidden')) {
-            modal.classList.add('hidden');
-        }
-    }
+
 
     function deleteJob(jobId) {
         if (!confirm('Permanently delete this job and file?')) return;

@@ -151,6 +151,14 @@ try {
         } catch (e) { /* ignore if exists */ }
     }
 
+    // App Settings Table
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    `).run();
+
     logger.info('SQLite Database initialized');
 } catch (err) {
     logger.error({ err }, 'Failed to initialize SQLite database');

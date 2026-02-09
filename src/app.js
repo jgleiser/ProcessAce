@@ -55,6 +55,7 @@ app.use('/api/evidence', authenticateToken, evidenceRoutes);
 app.use('/api/jobs', authenticateToken, jobsRoutes);
 app.use('/api/artifacts', authenticateToken, artifactsRoutes);
 app.use('/api/workspaces', authenticateToken, workspacesRoutes);
+app.use('/api/settings', authenticateToken, require('./api/settings'));
 app.use('/api/admin', adminRoutes); // Admin routes handle their own auth + admin check
 
 

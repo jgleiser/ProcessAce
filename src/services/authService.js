@@ -158,6 +158,43 @@ class AuthService {
 
         return this.getUserById(id);
     }
+
+    /**
+     * Update user profile (name, password)
+     * @param {string} id 
+     * @param {Object} updates { name, password }
+     */
+    async updateUserProfile(id, { name, password, currentPassword }) {
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id); // Need full user for password_hash
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        if (name) {
+            db.prepare('UPDATE users SET name = ? WHERE id = ?').run(name, id);
+        }
+
+        if (password) {
+            if (!currentPassword) {
+                throw new Error('Current password is required to set a new password');
+            }
+            const match = await bcrypt.compare(currentPassword, user.password_hash);
+            if (!match) {
+                throw new Error('Incorrect current password');
+            }
+
+            // Password Complexity Check
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            if (!passwordRegex.test(password)) {
+                throw new Error('Password must be at least 8 characters long and include uppercase, lowercase, and numbers.');
+            }
+
+            const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+            db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, id);
+        }
+
+        return this.getUserById(id);
+    }
 }
 
 module.exports = new AuthService();

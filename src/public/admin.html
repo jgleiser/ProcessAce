@@ -10,12 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .admin-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -211,8 +205,29 @@
 </head>
 
 <body>
-    <div class="admin-container">
-        <div class="admin-header">
+    <div class="app-container">
+        <div class="page-header">
+            <a href="/" class="header-brand">
+                <span class="logo-icon">✨</span>
+                <h1>ProcessAce</h1>
+            </a>
+            <div class="header-controls">
+                <div class="user-menu-container">
+                    <button id="userMenuBtn" class="user-menu-btn">
+                        <span id="userDisplay">Loading...</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="/user-settings.html">User Settings</a>
+                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
+                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
+                        <button id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
             <h1>👥 User Management</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
@@ -241,6 +256,7 @@
         </div>
     </div>
 
+    <script src="js/header.js"></script>
     <script src="js/admin.js"></script>
 </body>
 
