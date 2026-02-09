@@ -73,6 +73,31 @@ h1 {
     font-size: 1.1rem;
 }
 
+/* Workspace Selector */
+.workspace-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.workspace-view-mode,
+.workspace-edit-mode {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.workspace-view-mode a,
+.workspace-edit-mode a {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.workspace-view-mode a:hover,
+.workspace-edit-mode a:hover {
+    text-decoration: underline;
+}
+
 /* Upload Zone */
 .upload-section {
     margin-bottom: 3rem;
@@ -456,6 +481,38 @@ h1 {
     border: 1px solid #CCC !important;
     top: 20px !important;
     left: 20px !important;
+}
+
+/* Fix BPMN Icon Contrast */
+.djs-palette .entry,
+.djs-context-pad .entry {
+    color: #333 !important;
+}
+
+/* Fix BPMN Popup/Menu Text Contrast */
+.djs-popup .entry-label {
+    color: #333 !important;
+}
+
+.djs-popup .djs-popup-body .entry {
+    color: #333 !important;
+}
+
+/* Fix BPMN Direct Editing Text Contrast */
+.djs-direct-editing-content {
+    color: #333 !important;
+    background-color: #fff !important;
+    /* Ensure background is white */
+}
+
+.djs-palette .entry:hover,
+.djs-context-pad .entry:hover {
+    color: var(--primary) !important;
+}
+
+.djs-palette .djs-palette-entries i,
+.djs-context-pad .djs-context-pad-entries i {
+    color: #333 !important;
 }
 
 .bpmn-btn.primary {

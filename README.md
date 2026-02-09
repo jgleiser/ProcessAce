@@ -25,6 +25,10 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
     -   **BPMN Viewer/Editor**: View and modify diagrams directly in the browser (`bpmn-js`).
     -   **Rich Text**: Edit narrative docs with a WYSIWYG Markdown editor.
     -   **Tables**: Interactive SIPOC/RACI editing.
+-   **User Authentication & Workspaces**:
+    -   **Secure Login**: Email/password with JWT (HTTP-only cookies).
+    -   **Multi-User Support**: User data isolation - each user sees only their own jobs.
+    -   **Workspaces**: Create and switch between workspaces for organizing projects.
 -   **Robust Architecture**:
     -   **Dockerized**: Easy deployment with Docker Compose.
     -   **Async Processing**: Redis-backed job queue for long-running generative tasks.
@@ -60,6 +64,9 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
 4.  **Open the Web UI**:
     Navigate to `http://localhost:3000`.
+
+5.  **Create an Account**:
+    Go to `/register.html` to create your first user account, then login.
 
 ### Local Development
 

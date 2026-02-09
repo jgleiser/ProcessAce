@@ -9,9 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <!-- BPMN-JS -->
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.3.1/dist/assets/diagram-js.css" />
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.3.1/dist/assets/bpmn-js.css" />
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.3.1/dist/assets/bpmn-font/css/bpmn.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css" />
     <!-- EasyMDE -->
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -24,8 +24,39 @@
                 <span class="logo-icon">✨</span>
                 <h1>ProcessAce</h1>
             </div>
-            <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="workspace-selector" id="workspaceSelector">
+                    <!-- View Mode (default) -->
+                    <div id="workspaceViewMode" class="workspace-view-mode">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Workspace:</span>
+                        <span id="currentWorkspaceName"
+                            style="font-size: 0.85rem; font-weight: 500; color: var(--text-color);">Loading...</span>
+                        <a href="#" id="changeWorkspaceLink"
+                            style="font-size: 0.8rem; color: var(--primary); margin-left: 0.5rem;">Change</a>
+                    </div>
+                    <!-- Edit Mode (hidden by default) -->
+                    <div id="workspaceEditMode" class="workspace-edit-mode" style="display: none;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Workspace:</span>
+                        <select id="workspaceSelect"
+                            style="padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #555; font-size: 0.85rem; background: var(--bg-color); color: var(--text-color);">
+                            <option value="">Loading...</option>
+                        </select>
+                        <input type="text" id="newWorkspaceInput" placeholder="New workspace name..."
+                            style="display: none; padding: 0.4rem 0.6rem; border-radius: 6px; border: 1px solid #555; font-size: 0.85rem; width: 140px; background: var(--bg-color); color: var(--text-color);">
+                        <button id="workspaceActionBtn" class="btn-primary"
+                            style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Select</button>
+                        <a href="#" id="cancelWorkspaceLink"
+                            style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">Cancel</a>
+                    </div>
+                </div>
+                <span id="userDisplay" style="font-size: 0.9rem; color: var(--text-color);"></span>
+                <button id="logoutBtn" class="btn-primary"
+                    style="padding: 0.5rem 1rem; font-size: 0.8rem;">Logout</button>
+            </div>
         </header>
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
+        </div>
 
         <main>
             <section class="upload-section">
@@ -95,8 +126,24 @@
             <div id="modalBody" class="modal-body"></div>
         </div>
     </div>
-    <script src="https://unpkg.com/bpmn-js@18.3.1/dist/bpmn-viewer.production.min.js"></script>
-    <script src="https://unpkg.com/bpmn-js@18.3.1/dist/bpmn-modeler.production.min.js"></script>
+    <!-- Workspace Creation Modal -->
+    <div id="workspaceModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Create Workspace</h3>
+                <span class="close-workspace-modal" style="cursor: pointer; font-size: 1.5rem;">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <input type="text" id="newWorkspaceName" placeholder="Workspace Name"
+                    style="width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 1rem; box-sizing: border-box;">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button id="cancelWorkspaceBtn" class="btn-primary" style="background: #666;">Cancel</button>
+                    <button id="confirmCreateWorkspaceBtn" class="btn-primary">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
     <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
     <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
     <script src="js/app.js"></script>

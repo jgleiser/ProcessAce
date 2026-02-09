@@ -35,6 +35,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             mimeType: req.file.mimetype,
             size: req.file.size,
             path: req.file.path,
+            user_id: req.user.id,
+            workspace_id: req.body.workspaceId || null
         });
 
         await saveEvidence(evidence);
@@ -43,9 +45,13 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         const job = await evidenceQueue.add('process_evidence', {
             evidenceId: evidence.id,
             filename: evidence.filename,
+            originalName: evidence.originalName, // Pass original filename for derivation
             processName: req.body.processName, // Optional custom name
             provider: req.body.provider,
             model: req.body.model
+        }, {
+            userId: req.user.id,
+            workspaceId: req.body.workspaceId || null
         });
 
         res.status(202).json({

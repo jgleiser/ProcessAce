@@ -133,7 +133,9 @@ Return ONLY Markdown content.`;
                     jobId: job.id,
                     generatedByModel: llm.config?.model,
                     extension
-                }
+                },
+                user_id: job.user_id,
+                workspace_id: job.workspace_id
             });
             await saveArtifact(artifact);
             return artifact;

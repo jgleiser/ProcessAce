@@ -10,7 +10,10 @@ class Job {
         result = null,
         error = null,
         createdAt = new Date(),
-        updatedAt = new Date()
+        updatedAt = new Date(),
+        user_id = null,
+        workspace_id = null,
+        process_name = null
     }) {
         this.id = id;
         this.type = type;
@@ -20,16 +23,19 @@ class Job {
         this.error = error;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.user_id = user_id;
+        this.workspace_id = workspace_id;
+        this.process_name = process_name;
     }
 }
 
 const insertStmt = db.prepare(`
-    INSERT INTO jobs (id, type, data, status, result, error, createdAt, updatedAt)
-    VALUES (@id, @type, @data, @status, @result, @error, @createdAt, @updatedAt)
+    INSERT INTO jobs (id, type, data, status, result, error, createdAt, updatedAt, user_id, workspace_id, process_name)
+    VALUES (@id, @type, @data, @status, @result, @error, @createdAt, @updatedAt, @user_id, @workspace_id, @process_name)
 `);
 
 const updateStmt = db.prepare(`
-    UPDATE jobs SET status = @status, result = @result, error = @error, updatedAt = @updatedAt WHERE id = @id
+    UPDATE jobs SET status = @status, result = @result, error = @error, updatedAt = @updatedAt, user_id = @user_id, workspace_id = @workspace_id, process_name = @process_name WHERE id = @id
 `);
 
 const getStmt = db.prepare('SELECT * FROM jobs WHERE id = ?');
@@ -51,7 +57,10 @@ const saveJob = (job) => {
             status: payload.status,
             result: payload.result,
             error: payload.error,
-            updatedAt: payload.updatedAt
+            updatedAt: payload.updatedAt,
+            user_id: payload.user_id,
+            workspace_id: payload.workspace_id,
+            process_name: payload.process_name
         });
     } else {
         insertStmt.run(payload);
@@ -76,4 +85,31 @@ const deleteJob = (id) => {
     return res.changes > 0;
 };
 
-module.exports = { Job, saveJob, getJob, deleteJob };
+const listJobsByUserStmt = db.prepare('SELECT * FROM jobs WHERE user_id = ? ORDER BY createdAt DESC LIMIT 20');
+
+const getJobsByUserId = (userId) => {
+    const rows = listJobsByUserStmt.all(userId);
+    return rows.map(row => new Job({
+        ...row,
+        data: JSON.parse(row.data || '{}'),
+        result: JSON.parse(row.result || 'null'),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
+    }));
+};
+
+// Filter jobs by user AND workspace
+const listJobsByWorkspaceStmt = db.prepare('SELECT * FROM jobs WHERE user_id = ? AND workspace_id = ? ORDER BY createdAt DESC LIMIT 20');
+
+const getJobsByUserAndWorkspace = (userId, workspaceId) => {
+    const rows = listJobsByWorkspaceStmt.all(userId, workspaceId);
+    return rows.map(row => new Job({
+        ...row,
+        data: JSON.parse(row.data || '{}'),
+        result: JSON.parse(row.result || 'null'),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
+    }));
+};
+
+module.exports = { Job, saveJob, getJob, deleteJob, getJobsByUserId, getJobsByUserAndWorkspace };

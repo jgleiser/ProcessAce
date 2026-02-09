@@ -18,6 +18,34 @@ const { evidenceQueue } = require('../services/queueInstance');
 
 const { deleteEvidence } = require('../models/evidence');
 const { deleteArtifact } = require('../models/artifact');
+const { getJobsByUserId, getJobsByUserAndWorkspace, getJob, saveJob } = require('../models/job');
+
+// List all jobs for current user (optionally filtered by workspace)
+router.get('/', async (req, res) => {
+    try {
+        const { workspaceId } = req.query;
+
+        // If workspaceId is provided, filter by it; otherwise get all user's jobs
+        const jobs = workspaceId
+            ? getJobsByUserAndWorkspace(req.user.id, workspaceId)
+            : getJobsByUserId(req.user.id);
+
+        res.json(jobs.map(job => ({
+            id: job.id,
+            type: job.type,
+            status: job.status,
+            result: job.result,
+            error: job.error,
+            createdAt: job.createdAt,
+            updatedAt: job.updatedAt,
+            filename: job.data?.filename || null,
+            processName: job.process_name || job.data?.processName || null // Prefer column, fallback to data
+        })));
+    } catch (err) {
+        req.log.error({ err }, 'Failed to list jobs');
+        res.status(500).json({ error: 'Failed to list jobs' });
+    }
+});
 
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
@@ -25,6 +53,11 @@ router.get('/:id', async (req, res) => {
 
     if (!job) {
         return res.status(404).json({ error: 'Job not found' });
+    }
+
+    // Authorization Check
+    if (job.user_id && job.user_id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied' });
     }
 
     res.json({
@@ -35,8 +68,48 @@ router.get('/:id', async (req, res) => {
         error: job.error,
         createdAt: job.createdAt,
         updatedAt: job.updatedAt,
-        processName: job.data ? job.data.processName : null
+        processName: job.process_name || (job.data ? job.data.processName : null)
     });
+});
+
+// Update Job (e.g. processName)
+router.patch('/:id', async (req, res) => {
+    const { id } = req.params;
+    const { processName } = req.body;
+
+    try {
+        const job = getJob(id); // Use model directly for synchronous DB access or use queue.get(id) if preferred (queue.get calls getJob)
+
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+
+        // Authorization Check
+        if (job.user_id && job.user_id !== req.user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        // Update fields
+        if (processName !== undefined) {
+            job.process_name = processName;
+            // Also update data.processName for consistency if it exists there
+            if (job.data) {
+                job.data.processName = processName;
+            }
+        }
+
+        saveJob(job);
+
+        res.json({
+            id: job.id,
+            processName: job.process_name,
+            updatedAt: job.updatedAt
+        });
+
+    } catch (err) {
+        req.log.error({ err }, 'Failed to update job');
+        res.status(500).json({ error: 'Failed to update job' });
+    }
 });
 
 router.delete('/:id', async (req, res) => {
@@ -44,6 +117,11 @@ router.delete('/:id', async (req, res) => {
     const job = await evidenceQueue.get(id);
 
     if (job) {
+        // Authorization Check
+        if (job.user_id && job.user_id !== req.user.id) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
         // Cascade delete
         if (job.data && job.data.evidenceId) {
             await deleteEvidence(job.data.evidenceId);

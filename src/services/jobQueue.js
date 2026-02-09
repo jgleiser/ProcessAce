@@ -3,6 +3,7 @@ const connection = require('../config/redis');
 const logger = require('../logging/logger');
 const { v4: uuidv4 } = require('uuid');
 const { Job, saveJob, getJob, deleteJob } = require('../models/job');
+const { getEvidence, saveEvidence } = require('../models/evidence');
 
 class JobQueue {
     constructor(name) {
@@ -11,14 +12,23 @@ class JobQueue {
         this.workers = [];
     }
 
-    async add(type, data) {
+    async add(type, data, metadata = {}) {
         const jobId = uuidv4();
+
+        // Derive Process Name if not provided
+        let processName = data.processName;
+        if (!processName && data.originalName) {
+            processName = data.originalName.replace(/\.[^/.]+$/, ""); // strip extension
+        }
 
         // 1. Persist to SQLite (Source of Truth for API)
         const jobRecord = new Job({
             id: jobId,
             type,
-            data
+            data: { ...data, processName }, // Ensure data has processName
+            user_id: metadata.userId,
+            workspace_id: metadata.workspaceId,
+            process_name: processName // Persist to column
         });
         saveJob(jobRecord);
 
@@ -66,7 +76,12 @@ class JobQueue {
             try {
                 // Execute Handler
                 // Construct a job-like object compatible with old handler signature
-                const jobContext = { id: jobId, data: bullJob.data };
+                const jobContext = {
+                    id: jobId,
+                    data: bullJob.data,
+                    user_id: jobRecord?.user_id,
+                    workspace_id: jobRecord?.workspace_id
+                };
                 const result = await handler(jobContext);
 
                 // Sync success
@@ -75,6 +90,15 @@ class JobQueue {
                     jobRecord.status = 'completed';
                     jobRecord.result = result;
                     saveJob(jobRecord);
+
+                    // Sync Evidence Status
+                    if (jobRecord.data?.evidenceId) {
+                        const evidence = await getEvidence(jobRecord.data.evidenceId);
+                        if (evidence) {
+                            evidence.status = 'completed';
+                            await saveEvidence(evidence);
+                        }
+                    }
                 }
                 return result;
 
@@ -85,6 +109,15 @@ class JobQueue {
                     jobRecord.status = 'failed';
                     jobRecord.error = err.message;
                     saveJob(jobRecord);
+
+                    // Sync Evidence Status
+                    if (jobRecord.data?.evidenceId) {
+                        const evidence = await getEvidence(jobRecord.data.evidenceId);
+                        if (evidence) {
+                            evidence.status = 'failed';
+                            await saveEvidence(evidence);
+                        }
+                    }
                 }
                 throw err;
             }

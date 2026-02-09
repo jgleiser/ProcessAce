@@ -13,6 +13,8 @@ class Evidence {
         metadata = {},
         createdAt = new Date(),
         updatedAt = new Date(),
+        user_id = null,
+        workspace_id = null
     }) {
         this.id = id;
         this.filename = filename;
@@ -24,20 +26,24 @@ class Evidence {
         this.metadata = metadata;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.user_id = user_id;
+        this.workspace_id = workspace_id;
     }
 }
 
 // Prepared Statements
 const insertStmt = db.prepare(`
-    INSERT INTO evidence (id, filename, originalName, mimeType, size, path, status, metadata, createdAt, updatedAt)
-    VALUES (@id, @filename, @originalName, @mimeType, @size, @path, @status, @metadata, @createdAt, @updatedAt)
+    INSERT INTO evidence (id, filename, originalName, mimeType, size, path, status, metadata, createdAt, updatedAt, user_id, workspace_id)
+    VALUES (@id, @filename, @originalName, @mimeType, @size, @path, @status, @metadata, @createdAt, @updatedAt, @user_id, @workspace_id)
 `);
 
 const updateStmt = db.prepare(`
     UPDATE evidence SET 
         status = @status, 
         metadata = @metadata, 
-        updatedAt = @updatedAt 
+        updatedAt = @updatedAt,
+        user_id = @user_id,
+        workspace_id = @workspace_id
     WHERE id = @id
 `);
 
@@ -62,7 +68,9 @@ const saveEvidence = async (evidence) => {
             id: data.id,
             status: data.status,
             metadata: data.metadata,
-            updatedAt: data.updatedAt
+            updatedAt: data.updatedAt,
+            user_id: data.user_id,
+            workspace_id: data.workspace_id
         });
     } else {
         insertStmt.run(data);

@@ -5,7 +5,22 @@ ProcessAce helps you document and analyze processes by uploading evidence (docum
 
 ## Getting Started
 
-### 1. Uploading Evidence
+### 1. Create an Account & Login
+1.  Navigate to `/register.html` to create a new account.
+2.  Enter your **email** and **password**, then click **Register**.
+3.  After registration, go to `/login.html` and sign in.
+4.  You'll be redirected to the main dashboard.
+
+### 2. Workspaces
+Workspaces help you organize your processes and collaborate.
+
+1.  **View Current Workspace**: The workspace selector is in the top-right header.
+2.  **Switch Workspaces**: Select a different workspace from the dropdown.
+3.  **Create New Workspace**: Click the **+ New** button, enter a name, and click **Create**.
+
+> **Note**: Each user starts with a default workspace. Jobs and artifacts are scoped to the current workspace.
+
+### 3. Uploading Evidence
 1.  Navigate to the **Upload** section on the main dashboard.
 2.  Drag and drop your file (e.g., text document, transcript) into the drop zone.
 3.  **Select Provider & Model**: Choose between OpenAI, Google GenAI, or Anthropic, and specify a model if needed.

@@ -1,9 +1,226 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Auth Check
+    let currentUser = null;
+    try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) {
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error('Auth check failed');
+        }
+        currentUser = await res.json();
+        // Update UI with user info
+        const userDisplay = document.getElementById('userDisplay');
+        if (userDisplay) userDisplay.textContent = currentUser.email;
+
+        // Show admin link if user is admin
+        if (currentUser.role === 'admin') {
+            const adminLink = document.createElement('a');
+            adminLink.href = '/admin.html';
+            adminLink.textContent = 'Users';
+            adminLink.style.cssText = 'color: var(--primary); text-decoration: none; font-size: 0.9rem; margin-right: 0.5rem;';
+            adminLink.onmouseover = () => adminLink.style.color = 'var(--primary-hover)';
+            adminLink.onmouseout = () => adminLink.style.color = 'var(--primary)';
+            // Insert before userDisplay
+            userDisplay.parentNode.insertBefore(adminLink, userDisplay);
+        }
+    } catch (err) {
+        console.error('Auth verification failed', err);
+        // Fallback to login if we can't verify
+        // window.location.href = '/login.html'; 
+    }
+
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const browseBtn = document.getElementById('browseBtn');
     const jobsList = document.getElementById('jobsList');
     const jobCount = document.getElementById('jobCount');
+
+    // Logout Logic
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login.html';
+        });
+    }
+
+    // NEW WORKSPACE SWITCHER (View/Edit Mode)
+    const workspaceViewMode = document.getElementById('workspaceViewMode');
+    const workspaceEditMode = document.getElementById('workspaceEditMode');
+    const currentWorkspaceNameEl = document.getElementById('currentWorkspaceName');
+    const changeWorkspaceLink = document.getElementById('changeWorkspaceLink');
+    const cancelWorkspaceLink = document.getElementById('cancelWorkspaceLink');
+    const workspaceActionBtn = document.getElementById('workspaceActionBtn');
+    const newWorkspaceInput = document.getElementById('newWorkspaceInput');
+    const workspaceSelect = document.getElementById('workspaceSelect');
+
+    let currentWorkspaceId = null;
+    let currentWorkspaceName = 'Loading...';
+    let workspacesCache = [];
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    async function loadWorkspaces() {
+        try {
+            const res = await fetch('/api/workspaces');
+            if (res.ok) {
+                workspacesCache = await res.json();
+                populateWorkspaceSelect();
+
+                // Set current workspace: check cookie first, then default to first
+                const savedWorkspaceId = getCookie('processAce_workspaceId');
+                const validSavedWorkspace = savedWorkspaceId ? workspacesCache.find(w => w.id === savedWorkspaceId) : null;
+
+                if (!currentWorkspaceId) {
+                    if (validSavedWorkspace) {
+                        currentWorkspaceId = validSavedWorkspace.id;
+                        currentWorkspaceName = validSavedWorkspace.name;
+                    } else if (workspacesCache.length > 0) {
+                        currentWorkspaceId = workspacesCache[0].id;
+                        currentWorkspaceName = workspacesCache[0].name;
+                    }
+                }
+
+                // Update display
+                updateWorkspaceDisplay();
+
+                // Start polling now that we have a workspace
+                updateJobs();
+            }
+        } catch (err) {
+            console.error('Failed to load workspaces', err);
+        }
+    }
+
+    function populateWorkspaceSelect() {
+        workspaceSelect.innerHTML = '';
+
+        if (workspacesCache.length === 0) {
+            workspaceSelect.innerHTML = '<option value="">No workspaces</option>';
+        } else {
+            workspacesCache.forEach(ws => {
+                const option = document.createElement('option');
+                option.value = ws.id;
+                option.textContent = ws.name;
+                workspaceSelect.appendChild(option);
+            });
+        }
+        // Add "Create new" option
+        const newOption = document.createElement('option');
+        newOption.value = '__NEW__';
+        newOption.textContent = '+ Create new workspace...';
+        workspaceSelect.appendChild(newOption);
+
+        workspaceSelect.value = currentWorkspaceId || '';
+    }
+
+    function updateWorkspaceDisplay() {
+        const ws = workspacesCache.find(w => w.id === currentWorkspaceId);
+        currentWorkspaceName = ws ? ws.name : 'None';
+        if (currentWorkspaceNameEl) currentWorkspaceNameEl.textContent = currentWorkspaceName;
+    }
+
+    function showEditMode() {
+        if (workspaceViewMode) workspaceViewMode.style.display = 'none';
+        if (workspaceEditMode) workspaceEditMode.style.display = 'flex';
+        workspaceSelect.value = currentWorkspaceId || '';
+        if (newWorkspaceInput) newWorkspaceInput.style.display = 'none';
+        if (workspaceActionBtn) workspaceActionBtn.textContent = 'Select';
+    }
+
+    function showViewMode() {
+        if (workspaceViewMode) workspaceViewMode.style.display = 'flex';
+        if (workspaceEditMode) workspaceEditMode.style.display = 'none';
+    }
+
+    // Handle "Change" link click
+    if (changeWorkspaceLink) {
+        changeWorkspaceLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showEditMode();
+        });
+    }
+
+    // Handle "Cancel" link click
+    if (cancelWorkspaceLink) {
+        cancelWorkspaceLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showViewMode();
+        });
+    }
+
+    // Handle workspace select change (toggle new workspace input)
+    if (workspaceSelect) {
+        workspaceSelect.addEventListener('change', (e) => {
+            if (e.target.value === '__NEW__') {
+                if (newWorkspaceInput) {
+                    newWorkspaceInput.style.display = 'block';
+                    newWorkspaceInput.focus();
+                }
+                if (workspaceActionBtn) workspaceActionBtn.textContent = 'Add';
+            } else {
+                if (newWorkspaceInput) newWorkspaceInput.style.display = 'none';
+                if (workspaceActionBtn) workspaceActionBtn.textContent = 'Select';
+            }
+        });
+    }
+
+    // Handle action button (Select or Add)
+    if (workspaceActionBtn) {
+        workspaceActionBtn.addEventListener('click', async () => {
+            if (workspaceSelect.value === '__NEW__') {
+                // Create new workspace
+                const name = newWorkspaceInput ? newWorkspaceInput.value.trim() : '';
+                if (!name) {
+                    alert('Please enter a workspace name');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/workspaces', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    });
+
+                    if (res.ok) {
+                        const newWorkspace = await res.json();
+                        currentWorkspaceId = newWorkspace.id;
+                        // Save to cookie
+                        document.cookie = `processAce_workspaceId=${currentWorkspaceId}; path=/; max-age=31536000; SameSite=Strict`;
+
+                        await loadWorkspaces();
+                        showViewMode();
+                        loadJobsFromServer();
+                    } else {
+                        alert('Failed to create workspace');
+                    }
+                } catch (err) {
+                    console.error('Error creating workspace', err);
+                    alert('Error creating workspace');
+                }
+            } else {
+                // Select existing workspace
+                currentWorkspaceId = workspaceSelect.value;
+                // Save to cookie
+                document.cookie = `processAce_workspaceId=${currentWorkspaceId}; path=/; max-age=31536000; SameSite=Strict`;
+
+                updateWorkspaceDisplay();
+                showViewMode();
+                loadJobsFromServer();
+            }
+        });
+    }
+
+    // Load workspaces on page load - Moved to end of file to ensure polling logic is ready
+    // loadWorkspaces();
 
     // Modal Elements
     // Modal Elements
@@ -90,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('workspaceId', currentWorkspaceId);
 
         const processNameInput = document.getElementById('processNameInput');
         if (processNameInput && processNameInput.value.trim()) {
@@ -135,23 +353,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Job Tracking
-    const trackedJobs = JSON.parse(localStorage.getItem('processAce_jobs') || '[]');
+    // Job Tracking - Fetch from server (SQLite)
+    let trackedJobs = [];
 
-    function addJobToTrack(jobId, filename, processName) {
-        trackedJobs.unshift({ id: jobId, filename, processName, timestamp: Date.now(), status: 'pending' });
-        // Keep last 10
-        if (trackedJobs.length > 10) trackedJobs.pop();
-        saveJobs();
-        renderJobs();
+    async function loadJobsFromServer() {
+        try {
+            const url = currentWorkspaceId
+                ? `/api/jobs?workspaceId=${encodeURIComponent(currentWorkspaceId)}`
+                : '/api/jobs';
+            const res = await fetch(url);
+            if (res.ok) {
+                trackedJobs = await res.json();
+                renderJobs();
+            }
+        } catch (err) {
+            console.error('Failed to load jobs', err);
+        }
     }
 
-    function saveJobs() {
-        localStorage.setItem('processAce_jobs', JSON.stringify(trackedJobs));
+    // Load jobs on page load - REMOVED (waiting for workspace init)
+    // loadJobsFromServer();
+
+    function addJobToTrack(jobId, filename, processName) {
+        // Job will be fetched from server on next poll/reload
+        // Just trigger immediate refresh
+        loadJobsFromServer();
     }
 
     // Event Delegation for Delete
-    jobsList.addEventListener('click', (e) => {
+    jobsList.addEventListener('click', async (e) => {
+        // Edit Job Name (Toggle Mode)
+        const editBtn = e.target.closest('.edit-job-btn');
+        if (editBtn) {
+            const jobId = editBtn.dataset.id;
+            const container = document.getElementById(`job-title-container-${jobId}`);
+            const editContainer = document.getElementById(`job-edit-container-${jobId}`);
+            if (container && editContainer) {
+                container.style.display = 'none';
+                editContainer.style.display = 'flex';
+                editContainer.querySelector('input').focus();
+            }
+            return;
+        }
+
+        // Save Job Name
+        const saveBtn = e.target.closest('.save-job-btn');
+        if (saveBtn) {
+            const jobId = saveBtn.dataset.id;
+            const input = document.getElementById(`job-input-${jobId}`);
+            const newName = input.value.trim();
+
+            if (newName) {
+                try {
+                    const res = await fetch(`/api/jobs/${jobId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ processName: newName })
+                    });
+
+                    if (res.ok) {
+                        loadJobsFromServer(); // Refresh list
+                    } else {
+                        alert('Failed to update name');
+                    }
+                } catch (err) {
+                    console.error('Error updating job name', err);
+                }
+            } else {
+                // If empty, maybe just cancel? Or allow clearing?
+                // For now, let's treat empty as valid (clearing custom name, fallback to filename? 
+                // Backend logic: processName = "" -> updates DB. 
+                // Frontend render: processName || filename. So it works.
+                // But let's allow it.
+                try {
+                    const res = await fetch(`/api/jobs/${jobId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ processName: newName }) // empty string
+                    });
+                    if (res.ok) loadJobsFromServer();
+                } catch (e) { console.error(e); }
+            }
+            return;
+        }
+
+        // Cancel Edit
+        const cancelBtn = e.target.closest('.cancel-job-btn');
+        if (cancelBtn) {
+            const jobId = cancelBtn.dataset.id;
+            const container = document.getElementById(`job-title-container-${jobId}`);
+            const editContainer = document.getElementById(`job-edit-container-${jobId}`);
+            if (container && editContainer) {
+                container.style.display = 'flex';
+                editContainer.style.display = 'none';
+            }
+            return;
+        }
+
         // Delete Job
         const deleteBtn = e.target.closest('.delete-job-btn');
         if (deleteBtn) {
@@ -308,8 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // We will match the previous logic: if Modeler script is loaded, BpmnJS is the Modeler.
         bpmnInstance = new BpmnJS({
             container: '#bpmn-canvas',
-            height: 600,
-            keyboard: { bindTo: document }
+            height: 600
         });
 
         bpmnInstance.importXML(xml)
@@ -350,8 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize MODELER
         bpmnInstance = new BpmnJS({
             container: '#bpmn-canvas',
-            height: 600,
-            keyboard: { bindTo: document }
+            height: 600
         });
 
         bpmnInstance.importXML(currentArtifactContent)
@@ -527,52 +823,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function deleteJob(jobId) {
         if (!confirm('Permanently delete this job and file?')) return;
 
-        // Optimistically remove from UI
-        const index = trackedJobs.findIndex(j => j.id === jobId);
-        if (index > -1) {
-            trackedJobs.splice(index, 1);
-            saveJobs();
-            renderJobs();
-        }
-
-        // Call backend to cleanup files
+        // Call backend to cleanup files, then refresh from server
         fetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
+            .then(() => loadJobsFromServer())
             .catch(err => console.error('Delete failed on server', err));
     }
 
     async function updateJobs() {
-        let hasChanges = false;
-        for (const job of trackedJobs) {
-            if (job.status === 'completed' || job.status === 'failed' || job.status === 'lost') continue;
-
-            try {
-                const res = await fetch(`/api/jobs/${job.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.status !== job.status) {
-                        job.status = data.status;
-                        job.result = data.result;
-                        job.error = data.error;
-                        if (data.processName) job.processName = data.processName;
-                        hasChanges = true;
-                    } else if (data.processName && !job.processName) {
-                        // Ensure processName is synced if missing locally
-                        job.processName = data.processName;
-                        hasChanges = true;
-                    }
-                } else if (res.status === 404) {
-                    // Job no longer exists on server (likely restart)
-                    job.status = 'lost';
-                    hasChanges = true;
-                }
-            } catch (err) {
-                console.error('Poll error', err);
-            }
-        }
-        if (hasChanges) {
-            saveJobs();
-            renderJobs();
-        }
+        // Simply refresh from server - all job state is in SQLite
+        await loadJobsFromServer();
     }
 
     function renderJobs() {
@@ -586,7 +845,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="job-card">
                 <div class="job-info">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                        <h4>${job.processName ? `${job.processName} <span style="font-size:0.8em; color:#666; font-weight:normal">(${job.filename})</span>` : job.filename}</h4>
+                        <div class="job-title-container" id="job-title-container-${job.id}" style="display:flex; align-items:center; gap:8px;">
+                            <h4 style="margin:0;">${job.processName || job.filename}</h4>
+                            ${job.processName ? `<span style="font-size:0.8em; color:#666; font-weight:normal">(${job.filename})</span>` : ''}
+                            <button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.9rem; padding:0;">✏️</button>
+                        </div>
+                         <div id="job-edit-container-${job.id}" style="display:none; align-items:center; gap:5px;">
+                            <input type="text" id="job-input-${job.id}" value="${job.processName || ''}" placeholder="Process Name" style="padding:4px; border:1px solid #ccc; border-radius:4px; font-size:0.9rem;">
+                            <button class="save-job-btn btn-primary" data-id="${job.id}" style="padding:4px 8px; font-size:0.8rem;">Save</button>
+                            <button class="cancel-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.8rem; text-decoration:underline;">Cancel</button>
+                        </div>
                         <button class="delete-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:1.2rem;">&times;</button>
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
@@ -773,7 +1041,31 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Initial render and polling
+    // Initial render and polling
     renderJobs();
-    setInterval(updateJobs, 2000);
+
+    // Smart Polling
+    const ACTIVE_STATUSES = ['pending', 'processing', 'in_progress', 'queued'];
+    let pollTimeout = null;
+
+    function scheduleNextPoll() {
+        if (pollTimeout) clearTimeout(pollTimeout);
+
+        const hasActiveJobs = trackedJobs.some(job => ACTIVE_STATUSES.includes(job.status));
+        const interval = hasActiveJobs ? 5000 : 30000;
+
+        pollTimeout = setTimeout(updateJobs, interval);
+    }
+
+    // Override updateJobs to include rescheduling
+    const originalUpdateJobs = updateJobs;
+    updateJobs = async function () {
+        await originalUpdateJobs();
+        scheduleNextPoll();
+    };
+
+    // Start by loading workspaces, which will trigger the first updateJobs()
+    // This ensures we have the correct workspace ID before fetching jobs
+    loadWorkspaces();
 });
 

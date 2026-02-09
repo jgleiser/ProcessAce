@@ -12,6 +12,8 @@ class Artifact {
         createdAt = new Date(),
         previousVersionId = null,
         filename = null,
+        user_id = null,
+        workspace_id = null
     }) {
         this.id = id;
         this.type = type;
@@ -22,13 +24,15 @@ class Artifact {
         this.createdAt = createdAt;
         this.previousVersionId = previousVersionId;
         this.filename = filename;
+        this.user_id = user_id;
+        this.workspace_id = workspace_id;
     }
 }
 
 // Prepared Statements
 const insertStmt = db.prepare(`
-    INSERT INTO artifacts (id, type, version, content, metadata, createdBy, createdAt, previousVersionId, filename)
-    VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename)
+    INSERT INTO artifacts (id, type, version, content, metadata, createdBy, createdAt, previousVersionId, filename, user_id, workspace_id)
+    VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename, @user_id, @workspace_id)
 `);
 
 const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ?');
