@@ -32,8 +32,16 @@ const getLlmProvider = (options = {}) => {
 
     const config = {
         model,
-        // Allow passing specific API keys if needed in future, otherwise providers use process.env
     };
+
+    // Prioritize passed API Key, then fall back to env vars
+    if (options.apiKey) {
+        config.apiKey = options.apiKey;
+    }
+
+    if (options.baseURL) {
+        config.baseURL = options.baseURL;
+    }
 
     switch (providerName) {
         case 'google':
@@ -44,9 +52,6 @@ const getLlmProvider = (options = {}) => {
             return new AnthropicProvider(config);
         case 'openai':
         default:
-            // For OpenAI, we still support custom base URL from env for local models
-            config.apiKey = process.env.OPENAI_API_KEY;
-            config.baseURL = process.env.LLM_PROVIDER_URL;
             return new OpenAIProvider(config);
     }
 };

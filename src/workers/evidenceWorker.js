@@ -3,6 +3,7 @@ const logger = require('../logging/logger');
 const { getLlmProvider } = require('../llm');
 const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
+const settingsService = require('../services/settingsService');
 
 
 const processEvidence = async (job) => {
@@ -32,8 +33,14 @@ const processEvidence = async (job) => {
         // 2. Read file content
         const fileContent = await fs.readFile(evidence.path, 'utf8');
 
-        // 3. Define Prompts
-        const llm = getLlmProvider({ provider, model });
+        // 3. Get LLM config from settings (apiKey is stored encrypted in DB)
+        const llmConfig = settingsService.getLLMConfig();
+        const llm = getLlmProvider({
+            provider: provider || llmConfig.provider,
+            model: model || llmConfig.model,
+            apiKey: llmConfig.apiKey,
+            baseURL: llmConfig.baseUrl
+        });
 
         const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
 Convert the process description into valid BPMN 2.0 XML with a PROFESSIONAL VISUAL LAYOUT.

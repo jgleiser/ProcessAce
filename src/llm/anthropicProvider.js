@@ -5,12 +5,11 @@ const logger = require('../logging/logger');
 class AnthropicProvider extends LlmProvider {
     constructor(config = {}) {
         super(config);
-        const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY;
-        if (!apiKey) {
-            throw new Error('ANTHROPIC_API_KEY is not configured');
+        if (!config.apiKey) {
+            throw new Error('Anthropic API key is not configured. Please set it in App Settings.');
         }
         this.client = new Anthropic({
-            apiKey: apiKey,
+            apiKey: config.apiKey,
         });
         this.model = config.model || 'claude-haiku-4-5-20251001';
     }
@@ -45,6 +44,27 @@ class AnthropicProvider extends LlmProvider {
             return text;
         } catch (err) {
             logger.error({ err, model: this.model }, 'Anthropic API call failed');
+            throw err;
+        }
+    }
+
+    async listModels() {
+        try {
+            logger.info('Fetching available Anthropic models');
+            const models = [];
+
+            // Iterate through all pages of models
+            for await (const modelInfo of this.client.models.list()) {
+                models.push({
+                    id: modelInfo.id,
+                    name: modelInfo.display_name || modelInfo.id
+                });
+            }
+
+            logger.info({ count: models.length }, 'Anthropic models fetched');
+            return models;
+        } catch (err) {
+            logger.error({ err }, 'Failed to list Anthropic models');
             throw err;
         }
     }

@@ -5,6 +5,9 @@ const logger = require('../logging/logger');
 class OpenAIProvider extends LlmProvider {
     constructor(config = {}) {
         super(config);
+        if (!config.apiKey) {
+            throw new Error('OpenAI API key is not configured. Please set it in App Settings.');
+        }
         this.client = new OpenAI({
             apiKey: config.apiKey,
             baseURL: config.baseURL, // Optional, for compatible endpoints like LocalAI
@@ -37,6 +40,19 @@ class OpenAIProvider extends LlmProvider {
             return responseText;
         } catch (err) {
             logger.error({ err, model: this.model }, 'OpenAI API call failed');
+            throw err;
+        }
+    }
+
+    async listModels() {
+        try {
+            const list = await this.client.models.list();
+            return list.data.map(model => ({
+                id: model.id,
+                name: model.id // OpenAI models usually don't have separate display names
+            }));
+        } catch (err) {
+            logger.error({ err }, 'Failed to list OpenAI models');
             throw err;
         }
     }

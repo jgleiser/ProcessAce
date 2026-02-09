@@ -49,6 +49,94 @@
             color: var(--primary);
             text-decoration: none;
         }
+
+        /* Searchable Combobox Styles */
+        .combobox-container {
+            position: relative;
+        }
+
+        .combobox-input {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            font-family: inherit;
+        }
+
+        .combobox-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .combobox-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            z-index: 100;
+            display: none;
+        }
+
+        .combobox-dropdown.open {
+            display: block;
+        }
+
+        .combobox-option {
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            color: var(--text-main);
+        }
+
+        .combobox-option:hover,
+        .combobox-option.highlighted {
+            background: var(--primary);
+            color: white;
+        }
+
+        .combobox-no-results {
+            padding: 0.6rem 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* API Key Configured State */
+        .api-key-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--success);
+        }
+
+        .api-key-status .status-icon {
+            font-size: 1rem;
+        }
+
+        .btn-change {
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: auto;
+        }
+
+        .btn-change:hover {
+            background: var(--border-color);
+        }
     </style>
 </head>
 
@@ -93,14 +181,52 @@
                         <option value="anthropic">Anthropic</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <!-- Configured State -->
+                    <div id="apiKeyConfigured" style="display: none;">
+                        <div class="api-key-status">
+                            <span class="status-icon">✓</span>
+                            <span>API Key is configured</span>
+                            <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
+                            <button type="button" id="deleteApiKeyBtn" class="btn-change"
+                                style="color: var(--error);">Delete</button>
+                            <button type="button" id="loadModelsBtnConfigured" class="btn-secondary"
+                                style="white-space: nowrap; padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 0.85rem;">Load
+                                Models</button>
+                        </div>
+                    </div>
+                    <!-- Input State -->
+                    <div id="apiKeyInputContainer" style="display: flex; gap: 0.5rem;">
+                        <input type="password" id="apiKeyInput" class="form-input" placeholder="Enter API Key"
+                            autocomplete="off">
+                        <button type="button" id="loadModelsBtn" class="btn-secondary"
+                            style="white-space: nowrap; padding: 0.8rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer;">Load
+                            Models</button>
+                    </div>
+                    <small id="apiKeyHelp" style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Click
+                        "Load Models" to verify key and fetch available models.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Base URL (Optional)</label>
+                    <input type="text" id="baseUrlInput" class="form-input"
+                        placeholder="e.g., http://localhost:11434/v1 for Ollama">
+                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Leave empty for
+                        default provider URLs. Use for local LLMs like Ollama or LocalAI.</small>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Default Model</label>
-                    <input type="text" id="modelInput" list="modelOptions" class="form-input" placeholder="e.g. gpt-4o">
-                    <datalist id="modelOptions">
-                        <option value="gpt-5-nano-2025-08-07">
-                        <option value="gemini-2.5-flash-lite">
-                        <option value="claude-haiku-4-5-20251001">
-                    </datalist>
+                    <div class="combobox-container" id="modelCombobox">
+                        <input type="text" id="modelInput" class="combobox-input" placeholder="Type to search models..."
+                            autocomplete="off">
+                        <input type="hidden" id="modelValue">
+                        <div class="combobox-dropdown" id="modelDropdown"></div>
+                    </div>
+                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Type to filter models.
+                        Use "Load Models" to refresh options.</small>
                 </div>
                 <div style="text-align: right;">
                     <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
