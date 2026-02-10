@@ -36,8 +36,6 @@
 - [x] Persistence for Jobs, Evidence, and Artifacts
 - [x] Crash recovery (Jobs survive server restarts)
 
----
-
 ## Phase 7 – Advanced Analysis (SIPOC / RACI) [COMPLETED]
 - [x] SIPOC Matrix Generation (Suppliers, Inputs, Process, Outputs, Customers)
 - [x] RACI Matrix Generation (Responsible, Accountable, Consulted, Informed)
@@ -51,8 +49,6 @@
 - [x] Structured App-wide Error Handling
 - [x] Docker Containerization (App + Redis via Compose)
 
----
-
 ## Phase 9 – Interactive Visualization & Editing [COMPLETED]
 - [x] **Interactive BPMN Viewer**: Integrate `bpmn-js` to view and edit diagrams directly in the browser.
 - [x] **Rich Text Editor**: Edit Narrative Documentation within the UI (Markdown WYSIWYG).
@@ -65,18 +61,16 @@
 - [x] **Provider Selection UI**: Allow users to switch providers per-project or per-job.
 - [x] **Model Selection UI**: Allow users to choose specific models (e.g., gpt-5-nano, gemini-2.5-flash-lite).
 
-## Phase 11 – Collaboration & Security [IN_PROGRESS]
+## Phase 11 – Collaboration & Security [COMPLETED]
 - [x] **User Authentication**: Email/password with JWT (HTTP-only cookies).
 - [x] **Multi-User Workspaces**: Create workspaces and switch between them.
 - [x] **User Data Isolation**: Jobs and artifacts scoped per user (SQLite-backed).
 - [x] **Workspace Management UI**: Dropdown selector and creation modal.
-- [ ] **Versioning V2**: Branching/Merging of process models. *(Deferred)*
 - [x] **Role-Based Access**: Viewer vs Editor vs Admin permissions. First user is admin.
 
----
-
-## Phase 12 – App configuration [FUTURE]
-- [ ] **App configuration**: New page to configure model providers and models.
+## Phase 12 - Versioning [NEXT]
+- [ ] **Artifact versioning**: Track changes to artifacts over time.
+- [ ] **Versioning V2**: Branching/Merging of process models.
 
 ## Phase 13 – Process Intelligence & Insights [FUTURE]
 - [ ] **Gap Analysis**: Compare "As-Is" (Evidence) vs "To-Be" (Best Practices) processes.
@@ -84,7 +78,7 @@
 - [ ] **Automatic Risk Assessment**: Identify compliance risks or control gaps in the generated process.
 - [ ] **Report Generation**: Export comprehensive PDF/PPTX reports combining all artifacts.
 
-## Phase 14 – Ecosystem Integration [FUTURE]
+## Phase 1   – Ecosystem Integration [FUTURE]
 - [ ] **Confluence/Jira Sync**: Push documentation directly to corporate wikis.
 - [ ] **Webhook Triggers**: Auto-generate processes from incoming emails or ticket updates.
 - [ ] **Public API**: External access to the generation engine.
