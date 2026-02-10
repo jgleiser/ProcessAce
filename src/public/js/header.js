@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userDropdown = document.getElementById('userDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
     const adminLink = document.getElementById('adminLink');
+    const adminJobsLink = document.getElementById('adminJobsLink');
     const appSettingsLink = document.getElementById('appSettingsLink');
 
     // Toggle Dropdown
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Show Admin Links
             if (user.role === 'admin') {
                 if (adminLink) adminLink.style.display = 'block';
+                if (adminJobsLink) adminJobsLink.style.display = 'block';
                 if (appSettingsLink) appSettingsLink.style.display = 'block';
             }
         } else {

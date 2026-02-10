@@ -365,6 +365,19 @@ body {
     animation: slideUp 0.3s;
 }
 
+.modal-content-expanded {
+    width: 95% !important;
+    max-width: 95vw !important;
+    height: 95vh !important;
+    max-height: 95vh !important;
+}
+
+.modal-content-expanded .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none !important;
+}
+
 .modal-header {
     padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);

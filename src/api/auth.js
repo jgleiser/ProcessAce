@@ -19,6 +19,9 @@ router.post('/register', async (req, res) => {
         if (error.message === 'User already exists') {
             return res.status(409).json({ error: 'User already exists' });
         }
+        if (error.message.startsWith('Password must be')) {
+            return res.status(400).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Registration failed' });
     }
 });

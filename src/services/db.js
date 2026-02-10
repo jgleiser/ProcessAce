@@ -120,6 +120,12 @@ try {
         try {
             db.prepare("ALTER TABLE artifacts ADD COLUMN workspace_id TEXT").run();
         } catch (e) { /* ignore if exists */ }
+        try {
+            db.prepare("ALTER TABLE artifacts ADD COLUMN llm_provider TEXT").run();
+        } catch (e) { /* ignore if exists */ }
+        try {
+            db.prepare("ALTER TABLE artifacts ADD COLUMN llm_model TEXT").run();
+        } catch (e) { /* ignore if exists */ }
     }
 
     // Jobs Table

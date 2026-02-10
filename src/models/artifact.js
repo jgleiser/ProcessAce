@@ -13,7 +13,9 @@ class Artifact {
         previousVersionId = null,
         filename = null,
         user_id = null,
-        workspace_id = null
+        workspace_id = null,
+        llm_provider = null,
+        llm_model = null
     }) {
         this.id = id;
         this.type = type;
@@ -26,13 +28,15 @@ class Artifact {
         this.filename = filename;
         this.user_id = user_id;
         this.workspace_id = workspace_id;
+        this.llm_provider = llm_provider;
+        this.llm_model = llm_model;
     }
 }
 
 // Prepared Statements
 const insertStmt = db.prepare(`
-    INSERT INTO artifacts (id, type, version, content, metadata, createdBy, createdAt, previousVersionId, filename, user_id, workspace_id)
-    VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename, @user_id, @workspace_id)
+    INSERT INTO artifacts (id, type, version, content, metadata, createdBy, createdAt, previousVersionId, filename, user_id, workspace_id, llm_provider, llm_model)
+    VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename, @user_id, @workspace_id, @llm_provider, @llm_model)
 `);
 
 const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ?');

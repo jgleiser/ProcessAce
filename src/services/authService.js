@@ -7,6 +7,8 @@ const logger = require('../logging/logger');
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 const JWT_EXPIRES_IN = '24h';
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_ERROR_MSG = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
 
 class AuthService {
     /**
@@ -22,6 +24,11 @@ class AuthService {
             const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
             if (existingUser) {
                 throw new Error('User already exists');
+            }
+
+            // Validate password
+            if (!PASSWORD_REGEX.test(password)) {
+                throw new Error(PASSWORD_ERROR_MSG);
             }
 
             // Hash password
@@ -184,9 +191,8 @@ class AuthService {
             }
 
             // Password Complexity Check
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-            if (!passwordRegex.test(password)) {
-                throw new Error('Password must be at least 8 characters long and include uppercase, lowercase, and numbers.');
+            if (!PASSWORD_REGEX.test(password)) {
+                throw new Error(PASSWORD_ERROR_MSG);
             }
 
             const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);

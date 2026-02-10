@@ -454,6 +454,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     async function viewArtifact(id, type) {
+        const modalContent = document.querySelector('#artifactModal .modal-content');
+        if (type === 'bpmn') {
+            modalContent.classList.add('modal-content-expanded');
+        } else {
+            modalContent.classList.remove('modal-content-expanded');
+        }
         openArtifactModal();
         modalBody.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
         modalTitle.textContent = `Viewing ${type.toUpperCase()}`;

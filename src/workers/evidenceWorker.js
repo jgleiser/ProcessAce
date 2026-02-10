@@ -120,6 +120,10 @@ Return ONLY Markdown content.`;
 
         const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
 
+        // Determine provider name for traceability
+        const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
+        const modelName = llm.config?.model || model || llmConfig.model;
+
         // Helper to generate and save
         const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
             const response = await llm.complete(prompt, systemPrompt);
@@ -138,11 +142,12 @@ Return ONLY Markdown content.`;
                 metadata: {
                     sourceEvidenceId: evidenceId,
                     jobId: job.id,
-                    generatedByModel: llm.config?.model,
                     extension
                 },
                 user_id: job.user_id,
-                workspace_id: job.workspace_id
+                workspace_id: job.workspace_id,
+                llm_provider: providerName,
+                llm_model: modelName
             });
             await saveArtifact(artifact);
             return artifact;

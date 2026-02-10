@@ -93,7 +93,7 @@
     <div class="auth-container">
         <div class="auth-box">
             <div class="auth-header">
-                <h1>ProcessAce</h1>
+                <h1><span class="logo-icon">✨</span>ProcessAce</h1>
                 <p>Create your account</p>
             </div>
 
@@ -111,6 +111,9 @@
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" required placeholder="••••••••" minlength="8">
+                    <small style="color: #666; display: block; margin-top: 5px; font-size: 0.8rem;">
+                        Must be at least 8 characters, with lowercase, uppercase, and numbers.
+                    </small>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%">Create Account</button>
             </form>
@@ -132,6 +135,13 @@
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+            if (!passwordRegex.test(password)) {
+                errorMsg.textContent = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+                errorMsg.style.display = 'block';
+                return;
+            }
 
             try {
                 const response = await fetch('/api/auth/register', {
