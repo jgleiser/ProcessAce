@@ -10,10 +10,14 @@ npm-debug.log
 .DS_Store
 uploads/*
 processAce.db
+*.db-shm
+*.db-wal
 *.db-journal
 test
+tests
 docs
 samples
 local
 .editorconfig
 *.md
+data
