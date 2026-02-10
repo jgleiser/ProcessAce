@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Not authenticated - redirect to login unless on public page (which we don't really have)
             // But let's check if we are on a protected page.
             if (window.location.pathname !== '/login.html' && window.location.pathname !== '/register.html') {
-                // window.location.href = '/login.html'; // Let page specific logic handle redirect if needed or uncomment
+                window.location.href = '/login.html';
             }
         }
     } catch (err) {
