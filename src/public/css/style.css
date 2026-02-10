@@ -171,6 +171,41 @@ body {
     background: var(--primary-hover);
 }
 
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--card-hover);
+    border-color: var(--text-muted);
+}
+
+.btn-danger {
+    background: var(--error);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-danger:hover {
+    background: #ff8a80;
+}
+
 /* Jobs List */
 .jobs-section {
     animation: slideUp 0.6s ease-out 0.4s backwards;
@@ -207,6 +242,28 @@ body {
     justify-content: space-between;
     align-items: center;
     transition: transform 0.2s;
+    position: relative;
+}
+
+.delete-job-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.delete-job-btn:hover {
+    color: var(--error);
+    background: rgba(255, 82, 82, 0.1);
 }
 
 .job-card:hover {

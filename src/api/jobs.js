@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
             error: job.error,
             createdAt: job.createdAt,
             updatedAt: job.updatedAt,
-            filename: job.data?.filename || null,
+            filename: job.data?.originalName || job.data?.filename || null,
             processName: job.process_name || job.data?.processName || null // Prefer column, fallback to data
         })));
     } catch (err) {

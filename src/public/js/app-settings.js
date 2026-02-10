@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Delete button handler
     deleteApiKeyBtn.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete the API key? This cannot be undone.')) {
+        if (!await showConfirmModal('Are you sure you want to delete the API key? This cannot be undone.')) {
             return;
         }
 

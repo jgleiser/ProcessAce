@@ -281,6 +281,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleFiles(files) {
         const file = files[0]; // Process single file for now
 
+        // Read inputs BEFORE modifying DOM
+        const processNameInput = document.getElementById('processNameInput');
+        const processName = processNameInput ? processNameInput.value.trim() : '';
+
+        const providerSelect = document.getElementById('providerSelect');
+        const provider = providerSelect ? providerSelect.value : '';
+
+        const modelSelect = document.getElementById('modelSelect');
+        const model = modelSelect ? modelSelect.value.trim() : '';
+
         // Show loading state
         const originalContent = uploadZone.innerHTML;
         uploadZone.innerHTML = `
@@ -292,23 +302,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
 
         const formData = new FormData();
-        formData.append('file', file);
+
+        // Append metadata first
         formData.append('workspaceId', currentWorkspaceId);
 
-        const processNameInput = document.getElementById('processNameInput');
-        if (processNameInput && processNameInput.value.trim()) {
-            formData.append('processName', processNameInput.value.trim());
+        if (processName) {
+            formData.append('processName', processName);
         }
 
-        const providerSelect = document.getElementById('providerSelect');
-        const modelSelect = document.getElementById('modelSelect');
+        if (provider) {
+            formData.append('provider', provider);
+        }
+        if (model) {
+            formData.append('model', model);
+        }
 
-        if (providerSelect) {
-            formData.append('provider', providerSelect.value);
-        }
-        if (modelSelect && modelSelect.value.trim()) {
-            formData.append('model', modelSelect.value.trim());
-        }
+        // Append file last
+        formData.append('file', file);
 
         try {
             const response = await fetch('/api/evidence/upload', {
@@ -805,13 +815,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Override close function to destroy viewer and editor
 
 
-    function deleteJob(jobId) {
-        if (!confirm('Permanently delete this job and file?')) return;
+    async function deleteJob(jobId) {
+        if (!await showConfirmModal('Permanently delete this job and file?')) return;
 
         // Call backend to cleanup files, then refresh from server
-        fetch(`/api/jobs/${jobId}`, { method: 'DELETE' })
-            .then(() => loadJobsFromServer())
-            .catch(err => console.error('Delete failed on server', err));
+        try {
+            const res = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadJobsFromServer();
+            } else {
+                console.error('Delete failed');
+            }
+        } catch (err) {
+            console.error('Delete failed on server', err);
+        }
     }
 
     async function updateJobs() {
@@ -840,7 +857,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <button class="save-job-btn btn-primary" data-id="${job.id}" style="padding:4px 8px; font-size:0.8rem;">Save</button>
                             <button class="cancel-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.8rem; text-decoration:underline;">Cancel</button>
                         </div>
-                        <button class="delete-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:1.2rem;">&times;</button>
+                        <button class="delete-job-btn" data-id="${job.id}">&times;</button>
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
                     ${renderArtifacts(job.result)}
