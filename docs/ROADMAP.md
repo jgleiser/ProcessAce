@@ -64,9 +64,15 @@
 ## Phase 11 – Collaboration & Security [COMPLETED]
 - [x] **User Authentication**: Email/password with JWT (HTTP-only cookies).
 - [x] **Multi-User Workspaces**: Create workspaces and switch between them.
-- [x] **User Data Isolation**: Jobs and artifacts scoped per user (SQLite-backed).
-- [x] **Workspace Management UI**: Dropdown selector and creation modal.
-- [x] **Role-Based Access**: Viewer vs Editor vs Admin permissions. First user is admin.
+- [x] **User Data Isolation**: Jobs and artifacts scoped per user and workspace (SQLite-backed).
+- [x] **Workspace Management UI**: Dropdown selector and creation modal in header.
+- [x] **Role-Based Access**: Viewer / Editor / Admin permissions. First registered user is admin.
+- [x] **Admin Dashboard**: User management (roles, status) and all-jobs overview with pagination.
+- [x] **App Settings**: Admin-only LLM configuration UI with encrypted API key storage (AES-256-CBC).
+- [x] **User Settings**: Profile management (name, password with complexity validation).
+- [x] **Process Name Editing**: Update process name after job creation.
+- [x] **Custom Confirmation Modals**: Styled modals replacing native `window.confirm()`.
+- [x] **Standardized Header**: Consistent header across all pages with user menu.
 
 ## Phase 12 - Versioning [NEXT]
 - [ ] **Artifact versioning**: Track changes to artifacts over time.
@@ -78,7 +84,7 @@
 - [ ] **Automatic Risk Assessment**: Identify compliance risks or control gaps in the generated process.
 - [ ] **Report Generation**: Export comprehensive PDF/PPTX reports combining all artifacts.
 
-## Phase 1   – Ecosystem Integration [FUTURE]
+## Phase 14 – Ecosystem Integration [FUTURE]
 - [ ] **Confluence/Jira Sync**: Push documentation directly to corporate wikis.
 - [ ] **Webhook Triggers**: Auto-generate processes from incoming emails or ticket updates.
 - [ ] **Public API**: External access to the generation engine.

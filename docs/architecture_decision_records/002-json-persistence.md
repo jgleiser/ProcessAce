@@ -1,7 +1,7 @@
 # ADR 002: JSON File Persistence for Phase 1
 
 ## Status
-Accepted
+Superseded by ADR-003
 
 ## Context
 In Phase 1 development, we encountered an issue where restarting the server (e.g., during development or deployment updates) caused all application state (Jobs, Evidence, Artifacts) to be lost. This broke the link between tracked jobs and the physical files stored on disk, preventing cleanup and causing "Job Lost" errors in the UI.
