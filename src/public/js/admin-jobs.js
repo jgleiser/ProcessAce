@@ -319,10 +319,16 @@ document.addEventListener('DOMContentLoaded', () => {
 async function viewArtifact(id, type) {
     // Toggle expanded class based on type
     const modalContent = artifactModal.querySelector('.modal-content');
+
+    // Reset classes
+    modalContent.classList.remove('modal-content-expanded');
+    modalContent.classList.remove('modal-content-wide');
+
     if (type === 'bpmn') {
         modalContent.classList.add('modal-content-expanded');
     } else {
-        modalContent.classList.remove('modal-content-expanded');
+        // For tables and docs, use wide mode
+        modalContent.classList.add('modal-content-wide');
     }
 
     openArtifactModalFn();
@@ -402,12 +408,25 @@ function renderArtifactContent(type, content, artifactId) {
     currentArtifactContent = content;
     currentArtifactType = type;
 
+    // Helper to set classes
+    const setModalClasses = (isBpmn) => {
+        const modalContent = artifactModal.querySelector('.modal-content');
+        if (isBpmn) {
+            modalContent.classList.add('modal-content-expanded');
+            modalContent.classList.remove('modal-content-wide');
+        } else {
+            modalContent.classList.remove('modal-content-expanded');
+            modalContent.classList.add('modal-content-wide');
+        }
+    };
+
     if (type === 'bpmn') {
+        setModalClasses(true);
         artifactModalBody.innerHTML = `
             <div class="bpmn-controls">
                 <div id="viewControls" style="display:flex; gap:10px;">
-                    <button class="bpmn-btn" id="resetZoom">Fit to View</button>
-                    <button class="bpmn-btn" id="downloadSvg">Download SVG</button>
+                    <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
+                    <button class="bpmn-btn primary" id="downloadSvg">Download SVG</button>
                 </div>
             </div>
             <div id="bpmn-canvas"></div>
@@ -415,6 +434,7 @@ function renderArtifactContent(type, content, artifactId) {
         loadBpmnViewer(content);
     }
     else if (type === 'sipoc' || type === 'raci') {
+        setModalClasses(false);
         if (!Array.isArray(content)) {
             artifactModalBody.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
             return;
@@ -441,6 +461,7 @@ function renderArtifactContent(type, content, artifactId) {
         artifactModalBody.innerHTML = html;
     }
     else if (type === 'doc') {
+        setModalClasses(false);
         if (typeof marked === 'undefined') {
             artifactModalBody.innerHTML = '<p style="color:var(--error)">Error: Marked library not loaded.</p>';
             return;
@@ -450,33 +471,33 @@ function renderArtifactContent(type, content, artifactId) {
         `;
     }
     else {
+        setModalClasses(false);
         artifactModalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
     }
-}
-
-// BPMN Helper Functions
-function loadBpmnViewer(xml) {
-    destroyBpmn();
-    bpmnInstance = new BpmnJS({
-        container: '#bpmn-canvas',
-        height: 600
-    });
-
-    bpmnInstance.importXML(xml)
-        .then(() => {
-            const canvas = bpmnInstance.get('canvas');
-            canvas.zoom('fit-viewport');
-
-            const palette = document.querySelector('.djs-palette');
-            if (palette) palette.style.display = 'none';
-
-            document.getElementById('resetZoom')?.addEventListener('click', () => canvas.zoom('fit-viewport'));
-            document.getElementById('downloadSvg')?.addEventListener('click', downloadSvg);
-        })
-        .catch(err => {
-            console.error('BPMN Import Error', err);
-            document.getElementById('bpmn-canvas').innerHTML = `<p style="color:var(--error); padding:20px;">Error rendering BPMN: ${err.message}</p>`;
+    // BPMN Helper Functions
+    function loadBpmnViewer(xml) {
+        destroyBpmn();
+        bpmnInstance = new BpmnJS({
+            container: '#bpmn-canvas',
+            height: 600
         });
+
+        bpmnInstance.importXML(xml)
+            .then(() => {
+                const canvas = bpmnInstance.get('canvas');
+                canvas.zoom('fit-viewport');
+
+                const palette = document.querySelector('.djs-palette');
+                if (palette) palette.style.display = 'none';
+
+                document.getElementById('resetZoom')?.addEventListener('click', () => canvas.zoom('fit-viewport'));
+                document.getElementById('downloadSvg')?.addEventListener('click', downloadSvg);
+            })
+            .catch(err => {
+                console.error('BPMN Import Error', err);
+                document.getElementById('bpmn-canvas').innerHTML = `<p style="color:var(--error); padding:20px;">Error rendering BPMN: ${err.message}</p>`;
+            });
+    }
 }
 
 

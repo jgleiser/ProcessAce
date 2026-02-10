@@ -356,7 +356,7 @@ body {
     padding: 0;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
-    width: 80%;
+    width: 90%;
     max-width: 900px;
     max-height: 85vh;
     display: flex;

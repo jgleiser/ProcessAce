@@ -501,9 +501,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalBody.innerHTML = `
                 <div class="bpmn-controls">
                     <div id="viewControls" style="display:flex; gap:10px;">
-                        <button class="bpmn-btn" id="editBpmn">Edit Diagram</button>
-                        <button class="bpmn-btn" id="resetZoom">Fit to View</button>
-                        <button class="bpmn-btn" id="downloadSvg">Download SVG</button>
+                        <button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>
+                        <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
+                        <button class="bpmn-btn primary" id="downloadSvg">Download SVG</button>
                     </div>
                     <div id="editControls" class="hidden" style="display:none; gap:10px;">
                         <button class="bpmn-btn primary" id="saveBpmn">Save Changes</button>
@@ -524,9 +524,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isSipoc = type === 'sipoc';
             let html = `
                 <div class="table-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
-                    <button class="bpmn-btn" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>
+                    <button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>
                     <div id="editTableControls" class="hidden" style="display:none; gap:10px;">
-                         <button class="bpmn-btn" id="btn-add-row">+ Add Row</button>
+                         <button class="bpmn-btn primary" id="btn-add-row">+ Add Row</button>
                          <button class="bpmn-btn primary" id="btn-save-table">Save Changes</button>
                          <button class="bpmn-btn" id="btn-cancel-table">Cancel</button>
                     </div>
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             modalBody.innerHTML = `
                 <div class="doc-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
-                    <button class="bpmn-btn" id="editDoc">Edit Document</button>
+                    <button class="bpmn-btn primary" id="editDoc">Edit Document</button>
                     <div id="editDocControls" class="hidden" style="display:none; gap:10px;">
                          <button class="bpmn-btn primary" id="saveDoc">Save Changes</button>
                          <button class="bpmn-btn" id="cancelDocEdit">Cancel</button>
