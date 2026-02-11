@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 *.cer
 *.p7b
 *.p7c
+
+#
+uploads/
+samples/
