@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Settings - ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .workspaces-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .workspace-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .workspace-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .workspace-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .workspace-role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .workspace-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+        }
+
+        .action-btn.primary {
+            background: rgba(124, 77, 255, 0.1);
+            border-color: rgba(124, 77, 255, 0.3);
+            color: var(--primary);
+        }
+
+        .action-btn.primary:hover {
+            background: rgba(124, 77, 255, 0.2);
+        }
+
+        .action-btn.danger {
+            background: rgba(255, 82, 82, 0.1);
+            border-color: rgba(255, 82, 82, 0.3);
+            color: var(--error);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(255, 82, 82, 0.2);
+        }
+
+        .list-group {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        .role-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .role-admin {
+            background: rgba(124, 77, 255, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(124, 77, 255, 0.2);
+        }
+
+        .role-editor {
+            background: rgba(41, 121, 255, 0.1);
+            color: var(--processing);
+            border: 1px solid rgba(41, 121, 255, 0.2);
+        }
+
+        .role-viewer {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .role-owner {
+            background: #fff;
+            color: #000;
+            font-weight: 700;
+        }
+
+        .btn-icon {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-[Outfit] antialiased text-gray-900">
+    <div class="app-container">
+        <header class="page-header">
+            <a href="/" class="header-brand">
+                <span class="logo-icon">✨</span>
+                <h1>ProcessAce</h1>
+            </a>
+            <div class="header-controls">
+                <div class="user-menu-container">
+                    <button id="userMenuBtn" class="user-menu-btn">
+                        <span id="userDisplay">Loading...</span>
+                        <span>▼</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <a href="/user-settings.html">User Settings</a>
+                        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
+                        <a href="/admin-jobs.html" id="adminJobsLink" style="display:none;">Jobs Dashboard</a>
+                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
+                        <button id="logoutBtn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="header-row"
+            style="display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem;">
+            <h1 style="font-size: 2rem; margin: 0;">Workspace Dashboard</h1>
+            <p style="color: var(--text-muted); margin: 0;">Manage your workspaces and shared collaborations</p>
+            <a href="/" style="color: var(--primary); text-decoration: none; margin-top: 0.5rem;">&larr; Back to
+                Dashboard</a>
+        </div>
+
+        <!-- My Workspaces -->
+        <div class="section-header">
+            <h2>My Workspaces</h2>
+            <button id="create-workspace-btn" class="btn-primary"
+                style="font-size: 0.9rem; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                New Workspace
+            </button>
+        </div>
+        <div id="my-workspaces-list" class="workspaces-grid">
+            <!-- Populated by JS -->
+            <div class="empty-state" style="grid-column: 1 / -1;">Loading...</div>
+        </div>
+
+        <!-- Shared Workspaces -->
+        <div class="section-header" style="margin-top: 3rem;">
+            <h2>Shared Workspaces</h2>
+        </div>
+        <div id="shared-workspaces-list" class="workspaces-grid">
+            <!-- Populated by JS -->
+            <div class="empty-state" style="grid-column: 1 / -1;">No shared workspaces found.</div>
+        </div>
+    </div>
+
+    <!-- Manage Members Modal -->
+    <div id="manage-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Workspace: <span id="modal-workspace-name"></span></h3>
+                <span id="close-manage-modal" class="close-modal">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <!-- Invite Section -->
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Invite New Member
+                    </h4>
+                    <div id="inviteMessageContainer"></div>
+                    <form id="invite-form" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <input type="hidden" id="manage-workspace-id">
+                        <input type="email" id="invite-email" required placeholder="User email" class="form-input"
+                            style="flex: 2; min-width: 200px;">
+
+                        <select id="invite-role-select" class="form-input" style="flex: 1; min-width: 120px;">
+                            <option value="viewer">Viewer</option>
+                            <option value="editor">Editor</option>
+                            <option value="admin">Admin</option>
+                        </select>
+
+                        <button type="submit" class="btn-primary"
+                            style="padding: 0.5rem 1rem; white-space: nowrap;">Invite</button>
+                    </form>
+                </div>
+
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+                    <button class="tab-btn active" id="tab-members"
+                        style="padding: 0.5rem 1rem; background: transparent; border: none; color: var(--primary); border-bottom: 2px solid var(--primary); cursor: pointer; font-weight: 500;">Members</button>
+                    <button class="tab-btn" id="tab-invites"
+                        style="padding: 0.5rem 1rem; background: transparent; border: none; color: var(--text-muted); cursor: pointer;">Pending
+                        Invitations</button>
+                </div>
+
+                <!-- Webkit scrollbar styling could be added in css, for now just max-height -->
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <ul id="members-list" class="list-group">
+                        <!-- Members List -->
+                    </ul>
+
+                    <ul id="invitations-list" class="list-group hidden">
+                        <!-- Invitations List -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Workspace Modal -->
+    <div id="create-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Workspace</h3>
+                <span id="close-create-modal" class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="create-workspace-form">
+                    <div style="margin-bottom: 1rem;">
+                        <label class="form-label">Workspace Name</label>
+                        <input type="text" id="new-workspace-name" required class="form-input"
+                            placeholder="e.g. Finance Projects">
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                        <button type="button" id="cancel-create-btn" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Scripts -->
+    <script src="js/modal-utils.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/workspace-settings.js"></script>
+</body>
+
+</html>

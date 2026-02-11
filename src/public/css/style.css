@@ -375,6 +375,44 @@ body {
     border: 1px dashed var(--border-color);
 }
 
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translate(-50%, 20px);
+    background: var(--card-bg);
+    color: var(--text-main);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-color);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 500;
+}
+
+.toast.success {
+    border-color: var(--success);
+    color: var(--success);
+    background: rgba(0, 200, 83, 0.1);
+}
+
+.toast.error {
+    border-color: var(--error);
+    color: var(--error);
+    background: rgba(255, 61, 0, 0.1);
+}
+
+.toast.info {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(124, 77, 255, 0.1);
+}
+
 .status-lost {
     color: #ef5350;
     /* Red */
@@ -466,7 +504,6 @@ body {
     overflow-y: auto;
     color: var(--text-main);
     font-size: 0.95rem;
-    white-space: pre-wrap;
     /* For Markdown text default */
 }
 
@@ -665,6 +702,29 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
+.form-input {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 .delete-row-btn {
     background: transparent;
     border: none;
@@ -753,4 +813,104 @@ body {
 
 .user-dropdown button:hover {
     color: #ff8a80;
+}
+
+/* Notification Widget */
+.notification-container {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.notification-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background-color: var(--error);
+    border-radius: 50%;
+    border: 2px solid var(--bg-color);
+}
+
+/* Notifications Page Styles */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: slideUp 0.3s ease-out;
+}
+
+.notification-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.2s;
+}
+
+.notification-card:hover {
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.notification-card.unread {
+    border-left: 4px solid var(--primary);
+    background: rgba(124, 77, 255, 0.05);
+}
+
+.notification-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.notification-content p {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.notification-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.empty-notifications {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-color);
 }

@@ -65,6 +65,23 @@ try {
         )
     `).run();
 
+    // Workspace Invitations Table
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS workspace_invitations (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT,
+            inviter_id TEXT,
+            recipient_email TEXT,
+            role TEXT DEFAULT 'viewer',
+            token TEXT UNIQUE,
+            status TEXT DEFAULT 'pending', 
+            created_at TEXT,
+            expires_at TEXT,
+            FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
+            FOREIGN KEY(inviter_id) REFERENCES users(id)
+        )
+    `).run();
+
     // Evidence Table
     // Check if table exists to decide whether to create or alter
     const evidenceTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evidence'").get();
@@ -162,6 +179,21 @@ try {
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT
+        )
+    `).run();
+
+    // Notifications Table
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            type TEXT,
+            title TEXT,
+            message TEXT,
+            data TEXT,
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
         )
     `).run();
 

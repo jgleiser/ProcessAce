@@ -40,6 +40,32 @@ router.put('/:id/content', async (req, res) => {
 
     const { updateArtifact } = require('../models/artifact');
 
+    // Authorization Check
+    const artifact = await getArtifact(id);
+    if (!artifact) {
+        return res.status(404).json({ error: 'Artifact not found' });
+    }
+
+    // Check permissions
+    // Allow if Creator (user_id matches)
+    let canEdit = false;
+    if (artifact.user_id && artifact.user_id === req.user.id) {
+        canEdit = true;
+    }
+
+    // OR if Admin/Editor/Owner in workspace
+    if (!canEdit && artifact.workspace_id) {
+        const workspaceService = require('../services/workspaceService');
+        const role = workspaceService.getMemberRole(artifact.workspace_id, req.user.id);
+        if (['admin', 'editor', 'owner'].includes(role)) {
+            canEdit = true;
+        }
+    }
+
+    if (!canEdit) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
     // Ensure content is a string for SQLite
     const contentToSave = typeof content === 'object' ? JSON.stringify(content) : content;
 

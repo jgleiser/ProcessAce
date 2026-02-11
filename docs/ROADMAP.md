@@ -74,17 +74,31 @@
 - [x] **Custom Confirmation Modals**: Styled modals replacing native `window.confirm()`.
 - [x] **Standardized Header**: Consistent header across all pages with user menu.
 
-## Phase 12 - Versioning [NEXT]
+## Phase 12 - Workspace Sharing [COMPLETED]
+- [x] **Workspace sharing**: Share workspaces with other users.
+- [x] **Workspace invitations**: Invite users to join workspaces.
+- [x] **Member Management**: List and remove members from workspaces.
+- [x] **Workspace Dashboard**: "My Workspaces" and "Shared Workspaces" views with job counts.
+- [x] **Workspace Deletion**: Owners can delete workspaces and related data.
+
+## Phase 13 - Role based access control [NEXT]
+- [ ] **Role based access control**: Set permissions for appliccation.
+- [ ] **Editor user**: Can view and edit all jobs and artifacts that he is owner or that he has beeing invited to view through workspace sharing.
+- [ ] **Viewer user**: Can only view jobs and artifacts that he is owner or that he has beeing invited to view through workspace sharing.
+- [ ] **Viewer user**: Can't create jobs or artifacts.
+
+
+## Phase 14 - Versioning [FUTURE]
 - [ ] **Artifact versioning**: Track changes to artifacts over time.
 - [ ] **Versioning V2**: Branching/Merging of process models.
 
-## Phase 13 – Process Intelligence & Insights [FUTURE]
+## Phase 15 – Process Intelligence & Insights [FUTURE]
 - [ ] **Gap Analysis**: Compare "As-Is" (Evidence) vs "To-Be" (Best Practices) processes.
 - [ ] **Optimization Engine**: AI-driven suggestions for reducing cycle time and bottlenecks.
 - [ ] **Automatic Risk Assessment**: Identify compliance risks or control gaps in the generated process.
 - [ ] **Report Generation**: Export comprehensive PDF/PPTX reports combining all artifacts.
 
-## Phase 14 – Ecosystem Integration [FUTURE]
+## Phase 16 – Ecosystem Integration [FUTURE]
 - [ ] **Confluence/Jira Sync**: Push documentation directly to corporate wikis.
 - [ ] **Webhook Triggers**: Auto-generate processes from incoming emails or ticket updates.
 - [ ] **Public API**: External access to the generation engine.

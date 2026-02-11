@@ -109,6 +109,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ws = workspacesCache.find(w => w.id === currentWorkspaceId);
         currentWorkspaceName = ws ? ws.name : 'None';
         if (currentWorkspaceNameEl) currentWorkspaceNameEl.textContent = currentWorkspaceName;
+
+        // Restriction Check
+        const role = ws ? ws.role : 'viewer'; // Default to viewer if unknown
+        const uploadContainer = document.querySelector('.card:has(#uploadZone)') || document.getElementById('uploadZone')?.closest('.card');
+
+        // If we can't find by .card:has (firefox support?), try simpler selection if structure is known.
+        // Or just target #uploadZone and hide it, but the parent card looks better hidden.
+        // app.js has: const uploadZone = document.getElementById('uploadZone');
+        // Let's assume the upload is inside specific container.
+        // Inspecting structure from memory/view: Usually it's a "Upload Evidence" card.
+        // Let's hide uploadZone's parent if it's the main container.
+
+        // Simpler: Just hide/disable uploadZone.
+        if (role === 'viewer') {
+            if (uploadZone) {
+                uploadZone.style.display = 'none';
+                // Show a message
+                let msg = document.getElementById('viewer-msg');
+                if (!msg) {
+                    msg = document.createElement('div');
+                    msg.id = 'viewer-msg';
+                    msg.className = 'card';
+                    msg.style.textAlign = 'center';
+                    msg.style.color = '#888';
+                    msg.textContent = 'You have viewer access. You cannot start new jobs.';
+                    uploadZone.parentNode.insertBefore(msg, uploadZone);
+                } else {
+                    msg.style.display = 'block';
+                }
+            }
+        } else {
+            if (uploadZone) uploadZone.style.display = 'block';
+            const msg = document.getElementById('viewer-msg');
+            if (msg) msg.style.display = 'none';
+        }
     }
 
     function showEditMode() {
@@ -459,11 +494,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (viewBtn) {
             e.preventDefault();
             const { id, type } = viewBtn.dataset;
-            viewArtifact(id, type);
+            const canEdit = viewBtn.dataset.canEdit === 'true';
+            viewArtifact(id, type, canEdit);
         }
     });
 
-    async function viewArtifact(id, type) {
+    async function viewArtifact(id, type, canEdit) {
         const modalContent = document.querySelector('#artifactModal .modal-content');
         if (type === 'bpmn') {
             modalContent.classList.add('modal-content-expanded');
@@ -487,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 content = await res.text();
             }
 
-            renderModalContent(type, content, id);
+            renderModalContent(type, content, id, canEdit);
         } catch (err) {
             modalBody.innerHTML = `<p style="color:var(--error)">Error loading artifact: ${err.message}</p>`;
         }
@@ -500,7 +536,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentArtifactType = null; // Store type for re-rendering
     let isEditMode = false;
 
-    function renderModalContent(type, content, artifactId) {
+    function renderModalContent(type, content, artifactId, canEdit = false) {
         currentArtifactId = artifactId;
         currentArtifactContent = content;
         currentArtifactType = type;
@@ -511,7 +547,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalBody.innerHTML = `
                 <div class="bpmn-controls">
                     <div id="viewControls" style="display:flex; gap:10px;">
-                        <button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>
+                        ${canEdit ? `<button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>` : ''}
                         <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
                         <button class="bpmn-btn primary" id="downloadSvg">Download SVG</button>
                     </div>
@@ -534,7 +570,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isSipoc = type === 'sipoc';
             let html = `
                 <div class="table-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
-                    <button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>
+                    ${canEdit ? `<button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>` : ''}
                     <div id="editTableControls" class="hidden" style="display:none; gap:10px;">
                          <button class="bpmn-btn primary" id="btn-add-row">+ Add Row</button>
                          <button class="bpmn-btn primary" id="btn-save-table">Save Changes</button>
@@ -583,7 +619,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             modalBody.innerHTML = `
                 <div class="doc-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
-                    <button class="bpmn-btn primary" id="editDoc">Edit Document</button>
+                    ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">Edit Document</button>` : ''}
                     <div id="editDocControls" class="hidden" style="display:none; gap:10px;">
                          <button class="bpmn-btn primary" id="saveDoc">Save Changes</button>
                          <button class="bpmn-btn" id="cancelDocEdit">Cancel</button>
@@ -593,7 +629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <textarea id="markdown-editor" style="display:none;"></textarea>
             `;
 
-            document.getElementById('editDoc').onclick = () => switchToDocEditMode();
+            if (canEdit) document.getElementById('editDoc').onclick = () => switchToDocEditMode();
         }
         else {
             modalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
@@ -850,17 +886,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="job-title-container" id="job-title-container-${job.id}" style="display:flex; align-items:center; gap:8px;">
                             <h4 style="margin:0;">${job.processName || job.filename}</h4>
                             ${job.processName ? `<span style="font-size:0.8em; color:#666; font-weight:normal">(${job.filename})</span>` : ''}
-                            <button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.9rem; padding:0;">✏️</button>
+                            ${job.canEdit ? `<button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.9rem; padding:0;">✏️</button>` : ''}
                         </div>
                          <div id="job-edit-container-${job.id}" style="display:none; align-items:center; gap:5px;">
                             <input type="text" id="job-input-${job.id}" value="${job.processName || ''}" placeholder="Process Name" style="padding:4px; border:1px solid #ccc; border-radius:4px; font-size:0.9rem;">
                             <button class="save-job-btn btn-primary" data-id="${job.id}" style="padding:4px 8px; font-size:0.8rem;">Save</button>
                             <button class="cancel-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.8rem; text-decoration:underline;">Cancel</button>
                         </div>
-                        <button class="delete-job-btn" data-id="${job.id}">&times;</button>
+                        ${job.canDelete ? `<button class="delete-job-btn" data-id="${job.id}">&times;</button>` : ''}
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
-                    ${renderArtifacts(job.result)}
+                    ${renderArtifacts(job.result, job.canEdit)}
                     ${job.status === 'lost' ? `<div style="color:#d32f2f; font-size:0.8rem; margin-top:5px;">Job lost during server restart</div>` : ''}
                 </div>
                 <div class="job-status status-${job.status}">
@@ -871,7 +907,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `).join('');
     }
 
-    function renderArtifacts(result) {
+    function renderArtifacts(result, canEdit = false) {
         if (!result) return '';
 
         let html = '<div style="margin-top:8px; display:flex; gap:5px; flex-wrap:wrap;">';
@@ -892,9 +928,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Download Button
                 html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px; border-top-right-radius:0; border-bottom-right-radius:0;">${label}</a>`;
 
-                // View Button (only for text types and now bpmn)
                 if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
-                    html += `<button class="btn-primary view-artifact-btn" data-id="${art.id}" data-type="${art.type}" style="border-left:1px solid rgba(0,0,0,0.2); font-size: 0.8rem; padding: 4px 8px; border-top-left-radius:0; border-bottom-left-radius:0;">👁️</button>`;
+                    html += `<button class="btn-primary view-artifact-btn" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}" style="border-left:1px solid rgba(0,0,0,0.2); font-size: 0.8rem; padding: 4px 8px; border-top-left-radius:0; border-bottom-left-radius:0;">👁️</button>`;
                 } else {
                     // Just rounded corner fix if no view button
                     html = html.replace('border-top-right-radius:0; border-bottom-right-radius:0;', '');

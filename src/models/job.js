@@ -112,4 +112,18 @@ const getJobsByUserAndWorkspace = (userId, workspaceId) => {
     }));
 };
 
-module.exports = { Job, saveJob, getJob, deleteJob, getJobsByUserId, getJobsByUserAndWorkspace };
+// Get all jobs for a workspace (regardless of user)
+const listJobsByWorkspaceIdStmt = db.prepare('SELECT * FROM jobs WHERE workspace_id = ? ORDER BY createdAt DESC LIMIT 50');
+
+const getJobsByWorkspace = (workspaceId) => {
+    const rows = listJobsByWorkspaceIdStmt.all(workspaceId);
+    return rows.map(row => new Job({
+        ...row,
+        data: JSON.parse(row.data || '{}'),
+        result: JSON.parse(row.result || 'null'),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
+    }));
+};
+
+module.exports = { Job, saveJob, getJob, deleteJob, getJobsByUserId, getJobsByUserAndWorkspace, getJobsByWorkspace };
