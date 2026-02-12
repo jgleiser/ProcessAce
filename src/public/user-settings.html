@@ -1,122 +1,84 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Settings - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--text-main);
-            font-family: inherit;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .back-link {
-            color: var(--primary);
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Settings - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
-    <div class="app-container">
-        <div class="page-header">
-            <a href="/" class="header-brand">
-                <span class="logo-icon">✨</span>
-                <h1>ProcessAce</h1>
-            </a>
-            <div class="header-controls">
-                <div class="user-menu-container">
-                    <button id="userMenuBtn" class="user-menu-btn">
-                        <span id="userDisplay">Loading...</span>
-                        <span>▼</span>
-                    </button>
-                    <div id="userDropdown" class="user-dropdown hidden">
-                        <a href="/user-settings.html">User Settings</a>
-                        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
-                        <a href="/admin-jobs.html" id="adminJobsLink" style="display:none;">Jobs Dashboard</a>
-                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
-                        <button id="logoutBtn">Logout</button>
-                    </div>
-                </div>
-            </div>
+  <div class="app-container">
+    <div class="page-header">
+      <a href="/" class="header-brand">
+        <span class="logo-icon">✨</span>
+        <h1>ProcessAce</h1>
+      </a>
+      <div class="header-controls">
+        <div class="user-menu-container">
+          <button id="userMenuBtn" class="user-menu-btn">
+            <span id="userDisplay">Loading...</span>
+            <span>▼</span>
+          </button>
+          <div id="userDropdown" class="user-dropdown hidden">
+            <a href="/user-settings.html">User Settings</a>
+            <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+            <a href="/admin.html" id="adminLink" style="display: none">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <button id="logoutBtn">Logout</button>
+          </div>
         </div>
-
-        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-            <h1>User Settings</h1>
-            <a href="/" class="back-link">← Back to Dashboard</a>
-        </div>
-
-        <div id="messageContainer"></div>
-
-        <div class="card"
-            style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-            <form id="userSettingsForm">
-                <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" id="nameInput" class="form-input" placeholder="Your Name">
-                </div>
-
-                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 2rem 0;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-main);">Change Password</h3>
-
-                <div class="form-group">
-                    <label class="form-label">Current Password (Required to change password)</label>
-                    <input type="password" id="currentPasswordInput" class="form-input" placeholder="Current Password">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">New Password</label>
-                    <input type="password" id="passwordInput" class="form-input" placeholder="New Password">
-                    <small style="color: var(--text-muted); display: block; margin-top: 5px;">
-                        Must be at least 8 characters, with lowercase, uppercase, and numbers.
-                    </small>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm New Password</label>
-                    <input type="password" id="confirmPasswordInput" class="form-input"
-                        placeholder="Confirm New Password">
-                </div>
-                <div style="text-align: right;">
-                    <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
-                </div>
-            </form>
-        </div>
+      </div>
     </div>
-    <script src="js/header.js"></script>
-    <script src="js/user-settings.js"></script>
+
+    <div class="header-stacked">
+      <h1>User Settings</h1>
+      <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <div class="card">
+      <form id="userSettingsForm">
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" id="nameInput" class="form-input" placeholder="Your Name" />
+        </div>
+
+        <hr class="divider" />
+        <h3 class="section-title">
+          Change Password
+        </h3>
+
+        <div class="form-group">
+          <label class="form-label">Current Password (Required to change password)</label>
+          <input type="password" id="currentPasswordInput" class="form-input" placeholder="Current Password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" id="passwordInput" class="form-input" placeholder="New Password" />
+          <small class="text-muted mt-1 block">
+            Must be at least 8 characters, with lowercase, uppercase, and numbers.
+          </small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input type="password" id="confirmPasswordInput" class="form-input" placeholder="Confirm New Password" />
+        </div>
+        <div class="text-right">
+          <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="js/api-client.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/user-settings.js"></script>
 </body>
 
 </html>

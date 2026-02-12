@@ -8,7 +8,7 @@ By downloading, installing, accessing, or using the Software, you agree to be bo
 
 This License is **source-available** and **not** an OSI-approved open-source license.
 
-***
+---
 
 ## 1. Grant of rights
 
@@ -25,12 +25,13 @@ Deploy and operate the Software on infrastructure you control (on-premises or in
 
 1.4. **Distribute unmodified copies**  
 Share unmodified copies of the Software with others (e.g., colleagues, clients, or the public), provided you:
-- Distribute it under this same License; and  
+
+- Distribute it under this same License; and
 - Include a copy of this License and any applicable notices.
 
 No other rights are granted, whether by implication, estoppel, or otherwise.
 
-***
+---
 
 ## 2. Restrictions
 
@@ -41,8 +42,9 @@ You may **not** use the Software, or any modified version of it, to operate a **
 
 2.2. **No commercial resale or embedding as a product**  
 You may **not**:
-- Sell, license, or otherwise commercialize the Software as a standalone product; or  
-- Embed the Software (or substantial parts of it) as the primary component of a commercial product, platform, or service,  
+
+- Sell, license, or otherwise commercialize the Software as a standalone product; or
+- Embed the Software (or substantial parts of it) as the primary component of a commercial product, platform, or service,
 
 without a separate **commercial license** from Licensor.
 
@@ -55,7 +57,7 @@ You may not sublicense the Software. Any distribution of unmodified copies must 
 2.5. **No circumvention of license terms**  
 You may not circumvent or attempt to circumvent any technical or contractual limitations intended to enforce this License.
 
-***
+---
 
 ## 3. Acceptable commercial use
 
@@ -66,13 +68,14 @@ You may use the Software internally in a commercial organization (including for 
 
 3.2. **Project-specific hosting for clients**  
 You may deploy the Software as part of a project for a **specific client** (for example, hosting an instance dedicated to that client’s internal use), including in consulting, integration, or implementation projects, provided that:
-- The instance is dedicated to that client’s internal processes; and  
+
+- The instance is dedicated to that client’s internal processes; and
 - You are not marketing a general-purpose, multi-tenant ProcessAce platform to multiple unrelated customers without a commercial license.
 
-3.3. **Open-source or internal integrations**  
-You may integrate the Software with other tools, systems, and workflows, and you may publish open-source plugins, extensions, or automation scripts that interact with the Software.
+  3.3. **Open-source or internal integrations**  
+  You may integrate the Software with other tools, systems, and workflows, and you may publish open-source plugins, extensions, or automation scripts that interact with the Software.
 
-***
+---
 
 ## 4. Contributions
 
@@ -84,7 +87,7 @@ By submitting Contributions, you represent that you have the necessary rights to
 
 Licensor may, at its discretion, relicense the Software or parts of it, including your Contributions, under different terms (including proprietary or commercial terms).
 
-***
+---
 
 ## 5. Intellectual property
 
@@ -94,7 +97,7 @@ Licensor retains all right, title, and interest in and to the Software, includin
 5.2. **Trademarks**  
 “ProcessAce,” its logos, and related marks are trademarks or service marks of Licensor. This License does not grant you any rights to use these marks except as necessary for attribution (e.g., “Powered by ProcessAce”) in accordance with Licensor’s brand guidelines.
 
-***
+---
 
 ## 6. Warranty disclaimer
 
@@ -103,7 +106,7 @@ LICENSOR EXPRESSLY DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, STATUTORY
 
 Your use of the Software is at your sole risk.
 
-***
+---
 
 ## 7. Limitation of liability
 
@@ -111,7 +114,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT WILL LICENSOR BE LIABLE FOR 
 
 LICENSOR’S TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATED TO THIS LICENSE OR THE SOFTWARE WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID LICENSOR SPECIFICALLY FOR THE SOFTWARE DURING THE 12 MONTHS PRIOR TO THE CLAIM, OR (B) USD 100.
 
-***
+---
 
 ## 8. Term and termination
 
@@ -123,18 +126,19 @@ Licensor may terminate this License immediately if you breach any of its terms.
 
 8.3. **Effect of termination**  
 Upon termination:
-- All rights granted to you under this License will immediately cease; and  
+
+- All rights granted to you under this License will immediately cease; and
 - You must stop using the Software and destroy any copies in your possession or control.
 
 Provisions that by their nature should survive termination (including Sections 4–7, 9–12) will remain in effect.
 
-***
+---
 
 ## 9. Updates and changes
 
 Licensor may release updated versions of the Software and/or this License. Unless otherwise stated, updates to the Software will be governed by the License version that accompanies them. Licensor may, at its discretion, choose to relicense future versions under different terms.
 
-***
+---
 
 ## 10. Governing law and jurisdiction
 
@@ -142,26 +146,26 @@ This License will be governed by and construed in accordance with the laws of th
 
 Any disputes arising out of or related to this License shall be subject to the exclusive jurisdiction of the ordinary courts of justice located in **Santiago, Chile**.
 
-***
+---
 
 ## 11. Severability
 
 If any provision of this License is held to be invalid, illegal, or unenforceable by a court of competent jurisdiction, that provision shall be enforced to the maximum extent permissible, and the remaining provisions shall remain in full force and effect.
 
-***
+---
 
 ## 12. Language
 
 This License may be provided in multiple languages. In the event of any conflict or inconsistency between translations, the **English version** shall prevail.
 
-***
+---
 
 ## 13. Commercial licensing
 
 If you wish to:
 
-- Offer ProcessAce or a modified version as a hosted service to third parties (particularly as a multi-tenant SaaS or platform);  
-- Embed ProcessAce as a core part of a commercial product or platform; or  
+- Offer ProcessAce or a modified version as a hosted service to third parties (particularly as a multi-tenant SaaS or platform);
+- Embed ProcessAce as a core part of a commercial product or platform; or
 - Obtain additional rights beyond those granted in this License;
 
 you must obtain a separate **commercial/enterprise license** from Licensor.

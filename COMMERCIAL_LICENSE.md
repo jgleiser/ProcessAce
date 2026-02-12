@@ -22,18 +22,18 @@ The commercial license is designed for organizations that:
 
 Exact rights depend on the signed contract, but a commercial / enterprise license will generally allow you to:
 
-- **Operate ProcessAce as a hosted service**  
+- **Operate ProcessAce as a hosted service**
   - Run multi-tenant or white-label instances for multiple customers.
   - Offer ProcessAce-based features as part of your SaaS or product.
 
-- **Embed ProcessAce into commercial products**  
+- **Embed ProcessAce into commercial products**
   - Integrate ProcessAce deeply into your own platform.
   - Distribute ProcessAce as a component of your proprietary solution.
 
-- **Customize without Sustainable Use restrictions**  
+- **Customize without Sustainable Use restrictions**
   - Maintain private forks and customizations without being bound by the Sustainable Use License’s SaaS/redistribution limits (subject to contract).
 
-- **Access enterprise features and services** (if included in your plan)  
+- **Access enterprise features and services** (if included in your plan)
   - Priority support and incident response.
   - SLAs for uptime/response time.
   - Advanced security & compliance options.
@@ -99,5 +99,5 @@ It is a high-level description of how commercial licensing for ProcessAce is exp
 
 Your actual rights and obligations will be governed solely by:
 
-1. The **ProcessAce Sustainable Use License** (for the public/community edition); and  
+1. The **ProcessAce Sustainable Use License** (for the public/community edition); and
 2. Any **separate commercial / enterprise agreement** you sign with the Licensor.

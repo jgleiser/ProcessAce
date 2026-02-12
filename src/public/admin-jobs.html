@@ -1,385 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jobs Dashboard - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <!-- BPMN-JS -->
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css" />
     <!-- EasyMDE -->
-    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
 
-        .back-link {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        .back-link:hover {
-            text-decoration: underline;
-        }
-
-        .jobs-table-container {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .jobs-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-        }
-
-        .jobs-table th,
-        .jobs-table td {
-            padding: 0.875rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .jobs-table th {
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-muted);
-            font-weight: 500;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .jobs-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .jobs-table tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .user-name {
-            font-weight: 500;
-        }
-
-        .user-email {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .workspace-name {
-            color: var(--primary);
-        }
-
-        .process-name {
-            font-weight: 500;
-        }
-
-        .filename {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .llm-info {
-            font-size: 0.8rem;
-        }
-
-        .llm-provider {
-            color: #00e676;
-            font-weight: 500;
-            text-transform: capitalize;
-        }
-
-        .llm-model {
-            color: var(--text-muted);
-        }
-
-        .artifact-links {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .artifact-link {
-            background: var(--card-hover);
-            color: var(--primary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            text-decoration: none;
-            text-transform: uppercase;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .artifact-link:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .pagination-info {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .pagination-controls {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .page-btn {
-            background: var(--card-hover);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .page-btn:hover:not(:disabled) {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .page-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .page-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .limit-selector {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .limit-selector label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        .limit-select {
-            background: var(--card-hover);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.875rem;
-            cursor: pointer;
-        }
-
-        .limit-select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-
-        .error-message {
-            background: rgba(255, 82, 82, 0.1);
-            border: 1px solid var(--error);
-            color: var(--error);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-        }
-
-        .status-completed {
-            background: rgba(0, 230, 118, 0.15);
-            color: var(--success);
-        }
-
-        .status-pending {
-            background: rgba(161, 161, 170, 0.15);
-            color: var(--text-muted);
-        }
-
-        .status-processing {
-            background: rgba(41, 121, 255, 0.15);
-            color: var(--processing);
-        }
-
-        .status-failed {
-            background: rgba(255, 82, 82, 0.15);
-            color: var(--error);
-        }
-
-        .date-cell {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            white-space: nowrap;
-        }
-
-        .jobs-table tbody tr {
-            cursor: pointer;
-        }
-
-        /* Job Details Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            width: 90%;
-            max-width: 500px;
-            padding: 1.5rem;
-        }
-
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-header h2 {
-            font-size: 1.25rem;
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-
-        .modal-close:hover {
-            color: var(--text-main);
-        }
-
-        .modal-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .modal-label {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal-value {
-            font-size: 1rem;
-        }
-
-        .modal-artifacts {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .modal-artifact-btn {
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            text-decoration: none;
-            text-transform: uppercase;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .modal-artifact-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        .modal-no-artifacts {
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        /* Wide modal for tables */
-        .modal-content-wide {
-            width: 90% !important;
-            max-width: 900px !important;
-        }
-    </style>
 </head>
 
 <body>
@@ -398,16 +34,16 @@
                     <div id="userDropdown" class="user-dropdown hidden">
                         <a href="/user-settings.html">User Settings</a>
                         <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
-                        <a href="/admin-jobs.html" id="adminJobsLink" style="display:none;">Jobs Dashboard</a>
-                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
+                        <a href="/admin.html" id="adminLink" style="display: none">Users</a>
+                        <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
+                        <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
                         <button id="logoutBtn">Logout</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem">
             <h1>📋 Jobs Dashboard</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
@@ -416,7 +52,7 @@
 
         <div class="jobs-table-container">
             <div id="loadingState" class="loading">Loading jobs...</div>
-            <table class="jobs-table" id="jobsTable" style="display: none;">
+            <table class="jobs-table" id="jobsTable" style="display: none">
                 <thead>
                     <tr>
                         <th>User</th>
@@ -426,15 +62,11 @@
                         <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="jobsTableBody">
-                </tbody>
+                <tbody id="jobsTableBody"></tbody>
             </table>
-            <div class="pagination-container" id="paginationContainer" style="display: none;">
-                <div class="pagination-info" id="paginationInfo">
-                    Showing 0 of 0 jobs
-                </div>
-                <div class="pagination-controls" id="paginationControls">
-                </div>
+            <div class="pagination-container" id="paginationContainer" style="display: none">
+                <div class="pagination-info" id="paginationInfo">Showing 0 of 0 jobs</div>
+                <div class="pagination-controls" id="paginationControls"></div>
                 <div class="limit-selector">
                     <label for="limitSelect">Show:</label>
                     <select id="limitSelect" class="limit-select">
@@ -486,6 +118,7 @@
     <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
     <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
 
+    <script src="js/api-client.js"></script>
     <script src="js/header.js"></script>
     <script src="js/admin-jobs.js"></script>
 </body>

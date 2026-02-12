@@ -14,7 +14,8 @@ The goal is to keep governance **simple, transparent, and predictable**, especia
 - Has final say on **architectural decisions**, roadmap priorities, and releases.
 - Can grant or revoke maintainer status.
 
-> Current owner/lead maintainer:  
+> Current owner/lead maintainer:
+>
 > - `Jose Gleiser (@jgleiser)`
 
 ### 1.2. Maintainers
@@ -72,8 +73,8 @@ Maintainers are typically selected from active contributors who:
 
 The process:
 
-1. The owner/lead maintainer may invite a contributor to become a maintainer.  
-2. The invitation will be based on contribution history and community behavior.  
+1. The owner/lead maintainer may invite a contributor to become a maintainer.
+2. The invitation will be based on contribution history and community behavior.
 3. If accepted, the contributor will:
    - Be added with write access to the repository.
    - Be listed in this document (or a separate `MAINTAINERS.md`) as a maintainer.

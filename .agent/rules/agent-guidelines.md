@@ -45,7 +45,8 @@ The application must produce **event-style logs** suitable for process mining an
   - `project_id` / `process_id` if applicable
 - Logs should be easy to ingest into process mining tools later.
 
-When adding new features, always ask:  
+When adding new features, always ask:
+
 > “What event(s) should be logged so this can be reconstructed later?”
 
 ### 2.2. LLM interaction logging

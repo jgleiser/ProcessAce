@@ -1,143 +1,156 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Join Workspace - ProcessAce</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-</head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-<body class="bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-[Inter] min-h-screen">
+  <body
+    class="bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-[Inter] min-h-screen"
+  >
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">ProcessAce</h2>
+      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">ProcessAce</h2>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
-
-            <div id="loading" class="flex flex-col items-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
-                <p class="text-gray-500">Verifying invitation...</p>
-            </div>
-
-            <div id="content" class="hidden">
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Join Workspace</h3>
-                <p class="text-gray-600 mb-6">
-                    <span id="inviter-name" class="font-semibold"></span> has invited you to join
-                    <span id="workspace-name" class="font-semibold text-indigo-600"></span>
-                    as a <span id="role-name" class="font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-800"></span>.
-                </p>
-
-                <div id="action-area">
-                    <button id="accept-btn"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Accept Invitation
-                    </button>
-                    <p id="auth-warning" class="mt-4 text-xs text-red-500 hidden"></p>
-                </div>
-            </div>
-
-            <div id="error-view" class="hidden">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Invitation Invalid</h3>
-                <p id="error-msg" class="text-sm text-gray-500 mb-6"></p>
-                <a href="/" class="text-indigo-600 hover:text-indigo-500 font-medium">Go to Home</a>
-            </div>
-
+      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
+        <div id="loading" class="flex flex-col items-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
+          <p class="text-gray-500">Verifying invitation...</p>
         </div>
+
+        <div id="content" class="hidden">
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Join Workspace</h3>
+          <p class="text-gray-600 mb-6">
+            <span id="inviter-name" class="font-semibold"></span> has invited you to join
+            <span id="workspace-name" class="font-semibold text-indigo-600"></span>
+            as a
+            <span
+              id="role-name"
+              class="font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-800"
+            ></span
+            >.
+          </p>
+
+          <div id="action-area">
+            <button
+              id="accept-btn"
+              class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Accept Invitation
+            </button>
+            <p id="auth-warning" class="mt-4 text-xs text-red-500 hidden"></p>
+          </div>
+        </div>
+
+        <div id="error-view" class="hidden">
+          <div
+            class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4"
+          >
+            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Invitation Invalid</h3>
+          <p id="error-msg" class="text-sm text-gray-500 mb-6"></p>
+          <a href="/" class="text-indigo-600 hover:text-indigo-500 font-medium">Go to Home</a>
+        </div>
+      </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const loadingDiv = document.getElementById('loading');
-            const contentDiv = document.getElementById('content');
-            const errorView = document.getElementById('error-view');
-            const errorMsg = document.getElementById('error-msg');
-            const acceptBtn = document.getElementById('accept-btn');
-            const authWarning = document.getElementById('auth-warning');
+      document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const loadingDiv = document.getElementById('loading');
+        const contentDiv = document.getElementById('content');
+        const errorView = document.getElementById('error-view');
+        const errorMsg = document.getElementById('error-msg');
+        const acceptBtn = document.getElementById('accept-btn');
+        const authWarning = document.getElementById('auth-warning');
 
-            if (!token) {
-                showError('No invitation token provided.');
-                return;
-            }
+        if (!token) {
+          showError('No invitation token provided.');
+          return;
+        }
+
+        try {
+          // 1. Verify Token
+          const res = await fetch(`/api/invitations/${token}`);
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Failed to verify invitation');
+          }
+          const invite = await res.json();
+
+          // 2. Populate UI
+          document.getElementById('inviter-name').textContent =
+            invite.inviter_name || invite.inviter_email || 'A user';
+          document.getElementById('workspace-name').textContent = invite.workspace_name;
+          document.getElementById('role-name').textContent = invite.role;
+
+          // 3. Check Auth Status (Simple check via /api/auth/me usually, or just try to accept)
+          // We'll rely on the accept call to fail with 401 if not logged in,
+          // but for UX, let's check ahead if possible or handle the 401 gracefully.
+
+          loadingDiv.classList.add('hidden');
+          contentDiv.classList.remove('hidden');
+
+          // 4. Handle Accept
+          acceptBtn.addEventListener('click', async () => {
+            acceptBtn.disabled = true;
+            acceptBtn.textContent = 'Joining...';
 
             try {
-                // 1. Verify Token
-                const res = await fetch(`/api/invitations/${token}`);
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(data.error || 'Failed to verify invitation');
-                }
-                const invite = await res.json();
+              const acceptRes = await fetch(`/api/invitations/${token}/accept`, { method: 'POST' });
 
-                // 2. Populate UI
-                document.getElementById('inviter-name').textContent = invite.inviter_name || invite.inviter_email || 'A user';
-                document.getElementById('workspace-name').textContent = invite.workspace_name;
-                document.getElementById('role-name').textContent = invite.role;
+              if (acceptRes.status === 401) {
+                // User not logged in
+                // Store token in session storage to redirect back after login?
+                // For now, redirect to login with return URL
+                const returnUrl = encodeURIComponent(window.location.href);
+                window.location.href = `/login.html?returnUrl=${returnUrl}`;
+                return;
+              }
 
-                // 3. Check Auth Status (Simple check via /api/auth/me usually, or just try to accept)
-                // We'll rely on the accept call to fail with 401 if not logged in, 
-                // but for UX, let's check ahead if possible or handle the 401 gracefully.
+              if (!acceptRes.ok) {
+                const data = await acceptRes.json();
+                throw new Error(data.error || 'Failed to accept invitation');
+              }
 
-                loadingDiv.classList.add('hidden');
-                contentDiv.classList.remove('hidden');
-
-                // 4. Handle Accept
-                acceptBtn.addEventListener('click', async () => {
-                    acceptBtn.disabled = true;
-                    acceptBtn.textContent = 'Joining...';
-
-                    try {
-                        const acceptRes = await fetch(`/api/invitations/${token}/accept`, { method: 'POST' });
-
-                        if (acceptRes.status === 401) {
-                            // User not logged in
-                            // Store token in session storage to redirect back after login?
-                            // For now, redirect to login with return URL
-                            const returnUrl = encodeURIComponent(window.location.href);
-                            window.location.href = `/login.html?returnUrl=${returnUrl}`;
-                            return;
-                        }
-
-                        if (!acceptRes.ok) {
-                            const data = await acceptRes.json();
-                            throw new Error(data.error || 'Failed to accept invitation');
-                        }
-
-                        const data = await acceptRes.json();
-                        // Success! Redirect to dashboard or specific workspace
-                        localStorage.setItem('currentWorkspaceId', data.workspaceId); // Auto switch
-                        window.location.href = '/index.html';
-
-                    } catch (err) {
-                        alert(err.message);
-                        acceptBtn.disabled = false;
-                        acceptBtn.textContent = 'Accept Invitation';
-                    }
-                });
-
+              const data = await acceptRes.json();
+              // Success! Redirect to dashboard or specific workspace
+              localStorage.setItem('currentWorkspaceId', data.workspaceId); // Auto switch
+              window.location.href = '/index.html';
             } catch (err) {
-                showError(err.message);
+              alert(err.message);
+              acceptBtn.disabled = false;
+              acceptBtn.textContent = 'Accept Invitation';
             }
+          });
+        } catch (err) {
+          showError(err.message);
+        }
 
-            function showError(msg) {
-                loadingDiv.classList.add('hidden');
-                contentDiv.classList.add('hidden');
-                errorView.classList.remove('hidden');
-                errorMsg.textContent = msg;
-            }
-        });
+        function showError(msg) {
+          loadingDiv.classList.add('hidden');
+          contentDiv.classList.add('hidden');
+          errorView.classList.remove('hidden');
+          errorMsg.textContent = msg;
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>

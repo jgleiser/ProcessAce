@@ -1,7 +1,7 @@
 // Function to inject modal HTML if not present
 function ensureConfirmModalExists() {
-    if (!document.getElementById('confirmModal')) {
-        const modalHtml = `
+  if (!document.getElementById('confirmModal')) {
+    const modalHtml = `
     <div id="confirmModal" class="modal hidden">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0px; padding-top: 2rem;">
@@ -17,64 +17,69 @@ function ensureConfirmModalExists() {
         </div>
     </div>
         `;
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-    }
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
 }
 
 // Global function to show confirm modal
-window.showConfirmModal = function (message, title = 'Confirm Action', yesLabel = 'Confirm', noLabel = 'Cancel') {
-    ensureConfirmModalExists();
+window.showConfirmModal = function (
+  message,
+  title = 'Confirm Action',
+  yesLabel = 'Confirm',
+  noLabel = 'Cancel',
+) {
+  ensureConfirmModalExists();
 
-    return new Promise((resolve) => {
-        const modal = document.getElementById('confirmModal');
-        const msgEl = document.getElementById('confirmMessage');
-        const titleEl = document.getElementById('confirmTitle');
-        const yesBtn = document.getElementById('confirmYes');
-        const noBtn = document.getElementById('confirmNo');
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    const msgEl = document.getElementById('confirmMessage');
+    const titleEl = document.getElementById('confirmTitle');
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
 
-        if (msgEl) msgEl.textContent = message;
-        if (titleEl) titleEl.textContent = title;
-        if (yesBtn) yesBtn.textContent = yesLabel;
-        if (noBtn) noBtn.textContent = noLabel;
+    if (msgEl) msgEl.textContent = message;
+    if (titleEl) titleEl.textContent = title;
+    if (yesBtn) yesBtn.textContent = yesLabel;
+    if (noBtn) noBtn.textContent = noLabel;
 
-        modal.classList.remove('hidden');
+    modal.classList.remove('hidden');
 
-        // Force reflow for animation if needed
-        void modal.offsetWidth;
+    // Force reflow for animation if needed
+    void modal.offsetWidth;
 
-        const cleanup = () => {
-            modal.classList.add('hidden');
-            yesBtn.removeEventListener('click', onYes);
-            noBtn.removeEventListener('click', onNo);
-            window.removeEventListener('keydown', onKey);
-        };
+    const cleanup = () => {
+      modal.classList.add('hidden');
+      yesBtn.removeEventListener('click', onYes);
+      noBtn.removeEventListener('click', onNo);
+      window.removeEventListener('keydown', onKey);
+    };
 
-        const onYes = () => {
-            cleanup();
-            resolve(true);
-        };
+    const onYes = () => {
+      cleanup();
+      resolve(true);
+    };
 
-        const onNo = () => {
-            cleanup();
-            resolve(false);
-        };
+    const onNo = () => {
+      cleanup();
+      resolve(false);
+    };
 
-        const onKey = (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                onNo();
-            }
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                onYes();
-            }
-        };
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onNo();
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        onYes();
+      }
+    };
 
-        yesBtn.addEventListener('click', onYes);
-        noBtn.addEventListener('click', onNo);
-        window.addEventListener('keydown', onKey);
+    yesBtn.addEventListener('click', onYes);
+    noBtn.addEventListener('click', onNo);
+    window.addEventListener('keydown', onKey);
 
-        // Focus confirm button for accessibility/convenience
-        yesBtn.focus();
-    });
+    // Focus confirm button for accessibility/convenience
+    yesBtn.focus();
+  });
 };

@@ -52,25 +52,25 @@ This helps prioritize and design features that fit the vision of ProcessAce.
 1. **Discuss first for bigger changes**  
    For non-trivial changes (new modules, architectural changes), open an issue or join an existing one to align on direction.
 
-2. **Fork and branch**  
+2. **Fork and branch**
    - Fork the repo
    - Create a branch from `main`, e.g. `feature/bpmn-generator` or `fix/transcript-crash`
 
-3. **Code style and structure**  
+3. **Code style and structure**
    - Follow existing code style and patterns.
    - Keep PRs focused: one logical change per PR is ideal.
    - Add or update tests when relevant.
 
-4. **Commit messages**  
+4. **Commit messages**
    - Use clear, descriptive commits.
    - Prefer imperative style: `Add BPMN validation`, `Fix LLM config parsing`.
 
-5. **Open the PR**  
+5. **Open the PR**
    - Target the `main` branch (unless otherwise documented).
    - Describe the motivation, what changed, and how to test it.
    - Reference related issues (e.g. `Closes #12`).
 
-6. **Review and feedback**  
+6. **Review and feedback**
    - Be open to feedback and requested changes.
    - Maintainers may ask for refinements to align with architecture or roadmap.
 

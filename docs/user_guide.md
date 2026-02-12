@@ -76,7 +76,7 @@ Click the **Button Label** to download the file directly.
 You can export artifacts in various formats from the interactive view:
 
 -   **BPMN**:
-    -   **Export XML**: Download the `.bpmn` file for use in other tools (e.g., Camunda, Signavio).
+    -   **Export XML**: Download the `.bpmn` file for use in other tools (e.g., Camunda, Signavio, Bizagi).
     -   **Export PNG**: Download a high-resolution image of the diagram.
     -   **Download SVG**: Download the vector image.
 -   **SIPOC / RACI**:

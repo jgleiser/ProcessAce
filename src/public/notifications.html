@@ -1,130 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .notifications-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .notification-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            transition: all 0.2s;
-        }
-
-        .notification-card.unread {
-            border-left: 4px solid var(--primary);
-            background: rgba(124, 77, 255, 0.05);
-        }
-
-        .notification-content h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
-        }
-
-        .notification-content p {
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
-        }
-
-        .notification-meta {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 0.5rem;
-        }
-
-        .notification-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .empty-notifications {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: var(--radius-md);
-            border: 1px dashed var(--border-color);
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .back-link {
-            color: var(--primary);
-            text-decoration: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
-    <div class="app-container">
-        <div class="page-header">
-            <a href="/" class="header-brand">
-                <span class="logo-icon">✨</span>
-                <h1>ProcessAce</h1>
-            </a>
-            <div class="header-controls">
-                <div class="user-menu-container">
-                    <button id="userMenuBtn" class="user-menu-btn">
-                        <span id="userDisplay">Loading...</span>
-                        <span>▼</span>
-                    </button>
-                    <div id="userDropdown" class="user-dropdown hidden">
-                        <a href="/user-settings.html">User Settings</a>
-                        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
-                        <a href="/admin-jobs.html" id="adminJobsLink" style="display:none;">Jobs Dashboard</a>
-                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
-                        <button id="logoutBtn">Logout</button>
-                    </div>
-                </div>
-            </div>
+  <div class="app-container">
+    <div class="page-header">
+      <a href="/" class="header-brand">
+        <span class="logo-icon">✨</span>
+        <h1>ProcessAce</h1>
+      </a>
+      <div class="header-controls">
+        <div class="user-menu-container">
+          <button id="userMenuBtn" class="user-menu-btn">
+            <span id="userDisplay">Loading...</span>
+            <span>▼</span>
+          </button>
+          <div id="userDropdown" class="user-dropdown hidden">
+            <a href="/user-settings.html">User Settings</a>
+            <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+            <a href="/admin.html" id="adminLink" style="display: none">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <button id="logoutBtn">Logout</button>
+          </div>
         </div>
-
-        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-            <h1>🔔 Notifications</h1>
-            <a href="/" class="back-link">← Back to Dashboard</a>
-        </div>
-
-        <div id="messageContainer"></div>
-
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-            <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
-        </div>
-
-        <div id="notificationsContainer" class="notifications-list">
-            <div class="loading">Loading notifications...</div>
-        </div>
+      </div>
     </div>
 
-    <script src="js/header.js"></script>
-    <script src="js/toast.js"></script>
-    <script src="js/modal-utils.js"></script>
-    <script src="js/notifications.js"></script>
+    <div class="header-stacked">
+      <h1>🔔 Notifications</h1>
+      <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <div class="text-right mb-4">
+      <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
+    </div>
+
+    <div id="notificationsContainer" class="notifications-list">
+      <div class="loading">Loading notifications...</div>
+    </div>
+  </div>
+
+  <script src="js/api-client.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/toast.js"></script>
+  <script src="js/modal-utils.js"></script>
+  <script src="js/notifications.js"></script>
 </body>
 
 </html>

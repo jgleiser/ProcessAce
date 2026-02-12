@@ -4,5 +4,5 @@ const JobQueue = require('./jobQueue');
 const evidenceQueue = new JobQueue('evidence-queue');
 
 module.exports = {
-    evidenceQueue
+  evidenceQueue,
 };

@@ -1,244 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Settings - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--text-main);
-            font-family: inherit;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .back-link {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        /* Searchable Combobox Styles */
-        .combobox-container {
-            position: relative;
-        }
-
-        .combobox-input {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--text-main);
-            font-family: inherit;
-        }
-
-        .combobox-input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .combobox-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            z-index: 100;
-            display: none;
-        }
-
-        .combobox-dropdown.open {
-            display: block;
-        }
-
-        .combobox-option {
-            padding: 0.6rem 0.8rem;
-            cursor: pointer;
-            color: var(--text-main);
-        }
-
-        .combobox-option:hover,
-        .combobox-option.highlighted {
-            background: var(--primary);
-            color: white;
-        }
-
-        .combobox-no-results {
-            padding: 0.6rem 0.8rem;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        /* API Key Configured State */
-        .api-key-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.8rem;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
-            color: var(--success);
-        }
-
-        .api-key-status .status-icon {
-            font-size: 1rem;
-        }
-
-        .btn-change {
-            padding: 0.4rem 0.8rem;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-main);
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-left: auto;
-        }
-
-        .btn-change:hover {
-            background: var(--border-color);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Settings - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 
 <body>
-    <div class="app-container">
-        <div class="page-header">
-            <a href="/" class="header-brand">
-                <span class="logo-icon">✨</span>
-                <h1>ProcessAce</h1>
-            </a>
-            <div class="header-controls">
-                <div class="user-menu-container">
-                    <button id="userMenuBtn" class="user-menu-btn">
-                        <span id="userDisplay">Loading...</span>
-                        <span>▼</span>
-                    </button>
-                    <div id="userDropdown" class="user-dropdown hidden">
-                        <a href="/user-settings.html">User Settings</a>
-                        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-                        <a href="/admin.html" id="adminLink" style="display:none;">Users</a>
-                        <a href="/admin-jobs.html" id="adminJobsLink" style="display:none;">Jobs Dashboard</a>
-                        <a href="/app-settings.html" id="appSettingsLink" style="display:none;">App Settings</a>
-                        <button id="logoutBtn">Logout</button>
-                    </div>
-                </div>
-            </div>
+  <div class="app-container">
+    <div class="page-header">
+      <a href="/" class="header-brand">
+        <span class="logo-icon">✨</span>
+        <h1>ProcessAce</h1>
+      </a>
+      <div class="header-controls">
+        <div class="user-menu-container">
+          <button id="userMenuBtn" class="user-menu-btn">
+            <span id="userDisplay">Loading...</span>
+            <span>▼</span>
+          </button>
+          <div id="userDropdown" class="user-dropdown hidden">
+            <a href="/user-settings.html">User Settings</a>
+            <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+            <a href="/admin.html" id="adminLink" style="display: none">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <button id="logoutBtn">Logout</button>
+          </div>
         </div>
-
-        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-            <h1>App Settings</h1>
-            <a href="/" class="back-link">← Back to Dashboard</a>
-        </div>
-
-        <div id="messageContainer"></div>
-
-        <div class="card"
-            style="background: var(--card-bg); padding: 2rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-            <form id="appSettingsForm">
-                <div class="form-group">
-                    <label class="form-label">Default LLM Provider</label>
-                    <select id="providerSelect" class="form-select">
-                        <option value="openai">OpenAI</option>
-                        <option value="google">Google GenAI</option>
-                        <option value="anthropic">Anthropic</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">API Key</label>
-                    <!-- Configured State -->
-                    <div id="apiKeyConfigured" style="display: none;">
-                        <div class="api-key-status">
-                            <span class="status-icon">✓</span>
-                            <span>API Key is configured</span>
-                            <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
-                            <button type="button" id="deleteApiKeyBtn" class="btn-change"
-                                style="color: var(--error);">Delete</button>
-                            <button type="button" id="loadModelsBtnConfigured" class="btn-secondary"
-                                style="white-space: nowrap; padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer; font-size: 0.85rem;">Load
-                                Models</button>
-                        </div>
-                    </div>
-                    <!-- Input State -->
-                    <div id="apiKeyInputContainer" style="display: flex; gap: 0.5rem;">
-                        <input type="password" id="apiKeyInput" class="form-input" placeholder="Enter API Key"
-                            autocomplete="off">
-                        <button type="button" id="loadModelsBtn" class="btn-secondary"
-                            style="white-space: nowrap; padding: 0.8rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); cursor: pointer;">Load
-                            Models</button>
-                    </div>
-                    <small id="apiKeyHelp" style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Click
-                        "Load Models" to verify key and fetch available models.</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Base URL (Optional)</label>
-                    <input type="text" id="baseUrlInput" class="form-input"
-                        placeholder="e.g., http://localhost:11434/v1 for Ollama">
-                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Leave empty for
-                        default provider URLs. Use for local LLMs like Ollama or LocalAI.</small>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Default Model</label>
-                    <div class="combobox-container" id="modelCombobox">
-                        <input type="text" id="modelInput" class="combobox-input" placeholder="Type to search models..."
-                            autocomplete="off">
-                        <input type="hidden" id="modelValue">
-                        <div class="combobox-dropdown" id="modelDropdown"></div>
-                    </div>
-                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Type to filter models.
-                        Use "Load Models" to refresh options.</small>
-                </div>
-                <div style="text-align: right;">
-                    <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
-                </div>
-            </form>
-        </div>
+      </div>
     </div>
-    <script src="js/header.js"></script>
-    <script src="js/modal-utils.js"></script>
-    <script src="js/app-settings.js"></script>
+
+    <div class="header-stacked">
+      <h1>App Settings</h1>
+      <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <div class="card">
+      <form id="appSettingsForm">
+        <div class="form-group">
+          <label class="form-label">Default LLM Provider</label>
+          <select id="providerSelect" class="form-select">
+            <option value="openai">OpenAI</option>
+            <option value="google">Google GenAI</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <!-- Configured State -->
+          <div id="apiKeyConfigured" class="hidden">
+            <div class="api-key-status">
+              <span class="status-icon">✓</span>
+              <span>API Key is configured</span>
+              <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
+              <button type="button" id="deleteApiKeyBtn" class="btn-change" style="color: var(--error)">
+                Delete
+              </button>
+              <button type="button" id="loadModelsBtnConfigured" class="btn-compact">
+                Load Models
+              </button>
+            </div>
+          </div>
+          <!-- Input State -->
+          <div id="apiKeyInputContainer" style="display: flex; gap: 0.5rem">
+            <input type="password" id="apiKeyInput" class="form-input" placeholder="Enter API Key" autocomplete="off" />
+            <button type="button" id="loadModelsBtn" class="btn-secondary">
+              Load Models
+            </button>
+          </div>
+          <small id="apiKeyHelp" class="text-muted mt-1 block">Click "Load Models" to verify key and fetch available
+            models.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Base URL (Optional)</label>
+          <input type="text" id="baseUrlInput" class="form-input"
+            placeholder="e.g., http://localhost:11434/v1 for Ollama" />
+          <small class="text-muted mt-1 block">Leave empty for default provider URLs. Use for local LLMs like Ollama or
+            LocalAI.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Default Model</label>
+          <div class="combobox-container" id="modelCombobox">
+            <input type="text" id="modelInput" class="combobox-input" placeholder="Type to search models..."
+              autocomplete="off" />
+            <input type="hidden" id="modelValue" />
+            <div class="combobox-dropdown" id="modelDropdown"></div>
+          </div>
+          <small class="text-muted mt-1 block">Type to filter models. Use "Load Models" to refresh options.</small>
+        </div>
+        <div class="text-right">
+          <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="js/api-client.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/modal-utils.js"></script>
+  <script src="js/app-settings.js"></script>
 </body>
 
 </html>

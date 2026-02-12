@@ -3,12 +3,12 @@ const router = express.Router();
 const { version } = require('../../package.json');
 
 router.get('/', (req, res) => {
-    res.json({
-        status: 'UP',
-        version,
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-    });
+  res.json({
+    status: 'UP',
+    version,
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
 });
 
 module.exports = router;

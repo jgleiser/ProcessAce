@@ -4,24 +4,31 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - NODE_ENV=production
       - MOCK_LLM=${MOCK_LLM}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - DISABLE_SQLITE_WAL=true
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
     depends_on:
       - redis
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     restart: unless-stopped

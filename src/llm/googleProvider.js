@@ -1,89 +1,92 @@
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenAI } = require('@google/genai');
 const LlmProvider = require('./provider');
 const logger = require('../logging/logger');
 
 class GoogleProvider extends LlmProvider {
-    constructor(config = {}) {
-        super(config);
-        if (!config.apiKey) {
-            throw new Error('Google API key is not configured. Please set it in App Settings.');
-        }
-        // Initialize the client
-        this.client = new GoogleGenAI({ apiKey: config.apiKey });
-        this.modelName = config.model || 'gemini-2.5-flash-lite';
+  constructor(config = {}) {
+    super(config);
+    if (!config.apiKey) {
+      throw new Error('Google API key is not configured. Please set it in App Settings.');
     }
+    // Initialize the client
+    this.client = new GoogleGenAI({ apiKey: config.apiKey });
+    this.modelName = config.model || 'gemini-2.5-flash-lite';
+  }
 
-    async complete(prompt, system) {
-        try {
-            logger.info({ model: this.modelName }, 'Calling Google GenAI API');
+  async complete(prompt, system) {
+    try {
+      logger.info({ model: this.modelName }, 'Calling Google GenAI API');
 
-            // Build contents with optional system instruction
-            const config = {};
-            if (system) {
-                config.systemInstruction = system;
-            }
+      // Build contents with optional system instruction
+      const config = {};
+      if (system) {
+        config.systemInstruction = system;
+      }
 
-            const response = await this.client.models.generateContent({
-                model: this.modelName,
-                contents: prompt,
-                ...config
+      const response = await this.client.models.generateContent({
+        model: this.modelName,
+        contents: prompt,
+        ...config,
+      });
+
+      const text = response.text;
+
+      logger.info(
+        {
+          model: this.modelName,
+          usage: response.usageMetadata,
+        },
+        'Google GenAI API response received',
+      );
+
+      return text;
+    } catch (err) {
+      logger.error({ err, model: this.modelName }, 'Google GenAI API call failed');
+      throw err;
+    }
+  }
+
+  async listModels() {
+    try {
+      logger.info('Fetching available Google GenAI models');
+      const models = [];
+      let nextPageToken = null;
+
+      do {
+        const url = new URL('https://generativelanguage.googleapis.com/v1beta/models');
+        url.searchParams.set('key', this.config.apiKey);
+        url.searchParams.set('pageSize', '100');
+        if (nextPageToken) {
+          url.searchParams.set('pageToken', nextPageToken);
+        }
+
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error?.message || 'Failed to fetch models');
+        }
+
+        const data = await response.json();
+
+        if (data.models) {
+          for (const model of data.models) {
+            models.push({
+              id: model.name.replace('models/', ''),
+              name: model.displayName || model.name.replace('models/', ''),
             });
-
-            const text = response.text;
-
-            logger.info({
-                model: this.modelName,
-                usage: response.usageMetadata
-            }, 'Google GenAI API response received');
-
-            return text;
-        } catch (err) {
-            logger.error({ err, model: this.modelName }, 'Google GenAI API call failed');
-            throw err;
+          }
         }
+
+        nextPageToken = data.nextPageToken;
+      } while (nextPageToken);
+
+      logger.info({ count: models.length }, 'Google GenAI models fetched');
+      return models;
+    } catch (err) {
+      logger.error({ err }, 'Failed to list Google GenAI models');
+      throw err;
     }
-
-    async listModels() {
-        try {
-            logger.info('Fetching available Google GenAI models');
-            const models = [];
-            let nextPageToken = null;
-
-            do {
-                const url = new URL('https://generativelanguage.googleapis.com/v1beta/models');
-                url.searchParams.set('key', this.config.apiKey);
-                url.searchParams.set('pageSize', '100');
-                if (nextPageToken) {
-                    url.searchParams.set('pageToken', nextPageToken);
-                }
-
-                const response = await fetch(url.toString());
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'Failed to fetch models');
-                }
-
-                const data = await response.json();
-
-                if (data.models) {
-                    for (const model of data.models) {
-                        models.push({
-                            id: model.name.replace('models/', ''),
-                            name: model.displayName || model.name.replace('models/', '')
-                        });
-                    }
-                }
-
-                nextPageToken = data.nextPageToken;
-            } while (nextPageToken);
-
-            logger.info({ count: models.length }, 'Google GenAI models fetched');
-            return models;
-        } catch (err) {
-            logger.error({ err }, 'Failed to list Google GenAI models');
-            throw err;
-        }
-    }
+  }
 }
 
 module.exports = GoogleProvider;

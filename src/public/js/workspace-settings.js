@@ -1,133 +1,136 @@
+/* global lucide, showConfirmModal */
 // workspace-settings.js
 
 document.addEventListener('DOMContentLoaded', async () => {
-    lucide.createIcons();
+  lucide.createIcons();
 
-    // Elements
-    const myWorkspacesList = document.getElementById('my-workspaces-list');
-    const sharedWorkspacesList = document.getElementById('shared-workspaces-list');
+  // Elements
+  const myWorkspacesList = document.getElementById('my-workspaces-list');
+  const sharedWorkspacesList = document.getElementById('shared-workspaces-list');
 
-    // Manage Modal
-    const manageModal = document.getElementById('manage-modal');
-    const closeManageModalBtn = document.getElementById('close-manage-modal');
-    const modalWorkspaceName = document.getElementById('modal-workspace-name');
-    const manageWorkspaceIdInput = document.getElementById('manage-workspace-id');
-    const inviteForm = document.getElementById('invite-form');
-    const membersList = document.getElementById('members-list');
-    const invitationsList = document.getElementById('invitations-list');
-    const tabMembers = document.getElementById('tab-members');
-    const tabInvites = document.getElementById('tab-invites');
+  // Manage Modal
+  const manageModal = document.getElementById('manage-modal');
+  const closeManageModalBtn = document.getElementById('close-manage-modal');
+  const modalWorkspaceName = document.getElementById('modal-workspace-name');
+  const manageWorkspaceIdInput = document.getElementById('manage-workspace-id');
+  const inviteForm = document.getElementById('invite-form');
+  const membersList = document.getElementById('members-list');
+  const invitationsList = document.getElementById('invitations-list');
+  const tabMembers = document.getElementById('tab-members');
+  const tabInvites = document.getElementById('tab-invites');
 
-    // Create Modal
-    const createModal = document.getElementById('create-modal');
-    const createWorkspaceBtn = document.getElementById('create-workspace-btn');
-    const closeCreateModalBtn = document.getElementById('close-create-modal');
-    const cancelCreateBtn = document.getElementById('cancel-create-btn');
-    const createWorkspaceForm = document.getElementById('create-workspace-form');
+  // Create Modal
+  const createModal = document.getElementById('create-modal');
+  const createWorkspaceBtn = document.getElementById('create-workspace-btn');
+  const closeCreateModalBtn = document.getElementById('close-create-modal');
+  const cancelCreateBtn = document.getElementById('cancel-create-btn');
+  const createWorkspaceForm = document.getElementById('create-workspace-form');
 
+  // State
+  let currentUser = null;
+  let activeModal = null; // Track active modal for back button / escape support
 
-    // State
-    let currentUser = null;
-    let activeModal = null; // Track active modal for back button / escape support
+  // --- Modal Logic (Close on Back / Escape / Click Outside) ---
 
-    // --- Modal Logic (Close on Back / Escape / Click Outside) ---
+  function openModal(modal) {
+    if (activeModal) return;
+    activeModal = modal;
+    modal.classList.remove('hidden');
+    history.pushState({ modalOpen: true }, '');
+  }
 
-    function openModal(modal) {
-        if (activeModal) return;
-        activeModal = modal;
-        modal.classList.remove('hidden');
-        history.pushState({ modalOpen: true }, '');
+  function closeModal() {
+    if (activeModal) {
+      history.back(); // This triggers popstate, which handles the actual hiding
     }
+  }
 
-    function closeModal() {
-        if (activeModal) {
-            history.back(); // This triggers popstate, which handles the actual hiding
-        }
+  // Handle Browser Back Button
+  window.addEventListener('popstate', () => {
+    if (activeModal) {
+      activeModal.classList.add('hidden');
+      activeModal = null;
     }
+  });
 
-    // Handle Browser Back Button
-    window.addEventListener('popstate', () => {
-        if (activeModal) {
-            activeModal.classList.add('hidden');
-            activeModal = null;
+  // Handle Escape Key
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && activeModal) {
+      closeModal();
+    }
+  });
+
+  // Handle Click Outside (Backdrop)
+  [manageModal, createModal].forEach((m) => {
+    if (m) {
+      m.addEventListener('click', (e) => {
+        if (e.target === m) {
+          closeModal();
         }
-    });
+      });
+    }
+  });
 
-    // Handle Escape Key
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && activeModal) {
-            closeModal();
-        }
-    });
+  // --- Initialization ---
 
-    // Handle Click Outside (Backdrop)
-    [manageModal, createModal].forEach(m => {
-        if (m) {
-            m.addEventListener('click', (e) => {
-                if (e.target === m) {
-                    closeModal();
-                }
-            });
-        }
-    });
+  try {
+    const authRes = await fetch('/api/auth/me');
+    if (authRes.ok) {
+      currentUser = await authRes.json();
+      loadWorkspaces();
+    } else {
+      window.location.href = '/login.html';
+    }
+  } catch (e) {
+    console.error('Auth check failed', e);
+  }
 
+  // --- Loading Workspaces ---
 
-    // --- Initialization ---
-
+  async function loadWorkspaces() {
     try {
-        const authRes = await fetch('/api/auth/me');
-        if (authRes.ok) {
-            currentUser = await authRes.json();
-            loadWorkspaces();
-        } else {
-            window.location.href = '/login.html';
-        }
+      const res = await fetch('/api/workspaces');
+      if (res.ok) {
+        const workspaces = await res.json();
+        renderWorkspaces(workspaces);
+      }
     } catch (e) {
-        console.error('Auth check failed', e);
+      console.error('Failed to load workspaces', e);
+    }
+  }
+
+  function renderWorkspaces(workspaces) {
+    const myWorkspaces = workspaces.filter((w) => w.owner_id === currentUser.id);
+    const sharedWorkspaces = workspaces.filter((w) => w.owner_id !== currentUser.id);
+
+    // My Workspaces
+    if (myWorkspaces.length === 0) {
+      myWorkspacesList.innerHTML =
+        '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">You haven\'t created any workspaces yet.</div>';
+    } else {
+      myWorkspacesList.innerHTML = myWorkspaces.map((w) => createWorkspaceCard(w, true)).join('');
     }
 
-    // --- Loading Workspaces ---
-
-    async function loadWorkspaces() {
-        try {
-            const res = await fetch('/api/workspaces');
-            if (res.ok) {
-                const workspaces = await res.json();
-                renderWorkspaces(workspaces);
-            }
-        } catch (e) {
-            console.error('Failed to load workspaces', e);
-        }
+    // Shared Workspaces
+    if (sharedWorkspaces.length === 0) {
+      sharedWorkspacesList.innerHTML =
+        '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">No shared workspaces found.</div>';
+    } else {
+      sharedWorkspacesList.innerHTML = sharedWorkspaces
+        .map((w) => createWorkspaceCard(w, false))
+        .join('');
     }
 
-    function renderWorkspaces(workspaces) {
-        const myWorkspaces = workspaces.filter(w => w.owner_id === currentUser.id);
-        const sharedWorkspaces = workspaces.filter(w => w.owner_id !== currentUser.id);
+    lucide.createIcons();
+    attachCardListeners();
+  }
 
-        // My Workspaces
-        if (myWorkspaces.length === 0) {
-            myWorkspacesList.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">You haven\'t created any workspaces yet.</div>';
-        } else {
-            myWorkspacesList.innerHTML = myWorkspaces.map(w => createWorkspaceCard(w, true)).join('');
-        }
+  function createWorkspaceCard(workspace, isOwner) {
+    const jobCount = workspace.job_count || 0;
+    const artifactCount = workspace.artifact_count || 0;
+    const memberCount = workspace.member_count || 0;
 
-        // Shared Workspaces
-        if (sharedWorkspaces.length === 0) {
-            sharedWorkspacesList.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">No shared workspaces found.</div>';
-        } else {
-            sharedWorkspacesList.innerHTML = sharedWorkspaces.map(w => createWorkspaceCard(w, false)).join('');
-        }
-
-        lucide.createIcons();
-        attachCardListeners();
-    }
-
-    function createWorkspaceCard(workspace, isOwner) {
-        const jobCount = workspace.job_count || 0;
-        const artifactCount = workspace.artifact_count || 0;
-        const memberCount = workspace.member_count || 0;
-
-        return `
+    return `
             <div class="workspace-card">
                 <div class="workspace-header">
                     <div>
@@ -150,126 +153,135 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
                 <div class="workspace-actions">
-                    ${isOwner ? `
-                        ${workspace.name === 'My Workspace' ? `
+                    ${
+                      isOwner
+                        ? `
+                        ${
+                          workspace.name === 'My Workspace'
+                            ? `
                             <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Default Workspace</div>
-                        ` : `
+                        `
+                            : `
                             <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}">Manage</button>
                             <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">Delete</button>
-                        `}
-                    ` : `
+                        `
+                        }
+                    `
+                        : `
                         <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">View Only</div>
-                    `}
+                    `
+                    }
                 </div>
             </div>
         `;
-    }
+  }
 
-    function attachCardListeners() {
-        document.querySelectorAll('.manage-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const name = btn.getAttribute('data-name');
-                const ownerId = btn.getAttribute('data-owner-id');
-                openManageModal(id, name, ownerId);
-            });
-        });
+  function attachCardListeners() {
+    document.querySelectorAll('.manage-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const ownerId = btn.getAttribute('data-owner-id');
+        openManageModal(id, name, ownerId);
+      });
+    });
 
-        document.querySelectorAll('.delete-ws-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                const confirmed = await showConfirmModal(
-                    'Are you sure you want to delete this workspace? This defaults ALL jobs, evidence, and artifacts associated with it. This cannot be undone.',
-                    'Delete Workspace',
-                    'Delete',
-                    'Cancel'
-                );
-                if (confirmed) {
-                    deleteWorkspace(id);
-                }
-            });
-        });
-    }
-
-    // --- Workspace Actions ---
-
-    async function deleteWorkspace(id) {
-        try {
-            const res = await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                loadWorkspaces();
-            } else {
-                alert('Failed to delete workspace');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Error deleting workspace');
+    document.querySelectorAll('.delete-ws-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const confirmed = await showConfirmModal(
+          'Are you sure you want to delete this workspace? This defaults ALL jobs, evidence, and artifacts associated with it. This cannot be undone.',
+          'Delete Workspace',
+          'Delete',
+          'Cancel',
+        );
+        if (confirmed) {
+          deleteWorkspace(id);
         }
+      });
+    });
+  }
+
+  // --- Workspace Actions ---
+
+  async function deleteWorkspace(id) {
+    try {
+      const res = await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadWorkspaces();
+      } else {
+        alert('Failed to delete workspace');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error deleting workspace');
     }
+  }
 
-    // --- Manage Modal Logic ---
+  // --- Manage Modal Logic ---
 
-    async function openManageModal(id, name, ownerId) {
-        modalWorkspaceName.textContent = name;
-        manageWorkspaceIdInput.value = id;
+  async function openManageModal(id, name, ownerId) {
+    modalWorkspaceName.textContent = name;
+    manageWorkspaceIdInput.value = id;
 
-        openModal(manageModal); // Use helper
+    openModal(manageModal); // Use helper
 
-        // Reset tabs
-        switchTab('members');
+    // Reset tabs
+    switchTab('members');
 
-        loadMembers(id, ownerId);
-        loadInvitations(id);
+    loadMembers(id, ownerId);
+    loadInvitations(id);
+  }
+
+  // Replace old close function with our helper interaction
+  if (closeManageModalBtn) closeManageModalBtn.addEventListener('click', closeModal);
+
+  // Tab Switching
+  function switchTab(tab) {
+    if (tab === 'members') {
+      tabMembers.classList.add('active', 'text-primary', 'border-b-2', 'border-primary'); // Tailwind classes concept but applied via style in HTML
+      tabMembers.style.color = 'var(--primary)';
+      tabMembers.style.borderBottom = '2px solid var(--primary)';
+
+      tabInvites.style.color = 'var(--text-muted)';
+      tabInvites.style.borderBottom = 'none';
+
+      membersList.classList.remove('hidden');
+      invitationsList.classList.add('hidden');
+    } else {
+      tabInvites.style.color = 'var(--primary)';
+      tabInvites.style.borderBottom = '2px solid var(--primary)';
+
+      tabMembers.style.color = 'var(--text-muted)';
+      tabMembers.style.borderBottom = 'none';
+
+      invitationsList.classList.remove('hidden');
+      membersList.classList.add('hidden');
     }
+  }
 
-    // Replace old close function with our helper interaction
-    if (closeManageModalBtn) closeManageModalBtn.addEventListener('click', closeModal);
+  if (tabMembers) tabMembers.addEventListener('click', () => switchTab('members'));
+  if (tabInvites) tabInvites.addEventListener('click', () => switchTab('invites'));
 
-    // Tab Switching
-    function switchTab(tab) {
-        if (tab === 'members') {
-            tabMembers.classList.add('active', 'text-primary', 'border-b-2', 'border-primary'); // Tailwind classes concept but applied via style in HTML
-            tabMembers.style.color = 'var(--primary)';
-            tabMembers.style.borderBottom = '2px solid var(--primary)';
+  // Loading Members/Invites
+  async function loadMembers(workspaceId, ownerId) {
+    try {
+      const res = await fetch(`/api/workspaces/${workspaceId}/members?t=${Date.now()}`);
+      const members = await res.json();
 
-            tabInvites.style.color = 'var(--text-muted)';
-            tabInvites.style.borderBottom = 'none';
+      const isCurrentUserOwner = currentUser && currentUser.id === ownerId;
 
-            membersList.classList.remove('hidden');
-            invitationsList.classList.add('hidden');
-        } else {
-            tabInvites.style.color = 'var(--primary)';
-            tabInvites.style.borderBottom = '2px solid var(--primary)';
+      if (membersList) {
+        membersList.innerHTML = members
+          .map((m) => {
+            const isMemberOwner = m.role === 'owner';
 
-            tabMembers.style.color = 'var(--text-muted)';
-            tabMembers.style.borderBottom = 'none';
-
-            invitationsList.classList.remove('hidden');
-            membersList.classList.add('hidden');
-        }
-    }
-
-    if (tabMembers) tabMembers.addEventListener('click', () => switchTab('members'));
-    if (tabInvites) tabInvites.addEventListener('click', () => switchTab('invites'));
-
-    // Loading Members/Invites
-    async function loadMembers(workspaceId, ownerId) {
-        try {
-            const res = await fetch(`/api/workspaces/${workspaceId}/members?t=${Date.now()}`);
-            const members = await res.json();
-
-            const isCurrentUserOwner = currentUser && currentUser.id === ownerId;
-
-            if (membersList) {
-                membersList.innerHTML = members.map(m => {
-                    const isMemberOwner = m.role === 'owner';
-
-                    let roleDisplay;
-                    if (isMemberOwner) {
-                        roleDisplay = `<span class="role-badge role-owner">OWNER</span>`;
-                    } else if (isCurrentUserOwner) {
-                        // Edit button flow
-                        roleDisplay = `
+            let roleDisplay;
+            if (isMemberOwner) {
+              roleDisplay = `<span class="role-badge role-owner">OWNER</span>`;
+            } else if (isCurrentUserOwner) {
+              // Edit button flow
+              roleDisplay = `
                             <div class="role-edit-container" data-uid="${m.id}" data-wid="${workspaceId}" data-current-role="${m.role}" style="display: flex; align-items: center; gap: 0.5rem;">
                                 <span class="role-display-area">
                                     <span class="role-badge role-${m.role}">${m.role}</span>
@@ -279,12 +291,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </button>
                             </div>
                         `;
-                    } else {
-                        // Static badge for others
-                        roleDisplay = `<span class="role-badge role-${m.role}">${m.role}</span>`;
-                    }
+            } else {
+              // Static badge for others
+              roleDisplay = `<span class="role-badge role-${m.role}">${m.role}</span>`;
+            }
 
-                    return `
+            return `
                     <li class="list-group-item">
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
@@ -297,27 +309,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             ${roleDisplay}
-                            ${!isMemberOwner && isCurrentUserOwner ? `
+                            ${
+                              !isMemberOwner && isCurrentUserOwner
+                                ? `
                                 <button class="btn-icon remove-member" data-uid="${m.id}" data-wid="${workspaceId}">
                                     <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
                                 </button>
-                            ` : ''}
+                            `
+                                : ''
+                            }
                         </div>
                     </li>
-                `}).join('');
+                `;
+          })
+          .join('');
 
-                lucide.createIcons();
+        lucide.createIcons();
 
-                // Attach listeners for edit role
-                document.querySelectorAll('.edit-role-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const container = btn.closest('.role-edit-container');
-                        const uid = container.dataset.uid;
-                        const currentRole = container.dataset.currentRole;
-                        const wid = container.dataset.wid;
+        // Attach listeners for edit role
+        document.querySelectorAll('.edit-role-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const container = btn.closest('.role-edit-container');
+            const uid = container.dataset.uid;
+            const currentRole = container.dataset.currentRole;
+            const wid = container.dataset.wid;
 
-                        // Switch to select + save
-                        container.innerHTML = `
+            // Switch to select + save
+            container.innerHTML = `
                              <select class="form-input member-role-select" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 4px; height: auto; width: auto;">
                                 <option value="viewer" ${currentRole === 'viewer' ? 'selected' : ''}>Viewer</option>
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>Editor</option>
@@ -328,67 +346,74 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <i data-lucide="x" style="width: 14px; height: 14px;"></i>
                             </button>
                         `;
-                        lucide.createIcons();
+            lucide.createIcons();
 
-                        // Attach save listener
-                        const saveBtn = container.querySelector('.save-role-btn');
-                        saveBtn.addEventListener('click', async () => {
-                            const newRole = container.querySelector('.member-role-select').value;
+            // Attach save listener
+            const saveBtn = container.querySelector('.save-role-btn');
+            saveBtn.addEventListener('click', async () => {
+              const newRole = container.querySelector('.member-role-select').value;
 
-                            try {
-                                const res = await fetch(`/api/workspaces/${wid}/members/${uid}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ role: newRole })
-                                });
-
-                                if (res.ok) {
-                                    showInviteMessage('success', 'Member role updated successfully');
-                                    loadMembers(wid, ownerId);
-                                } else {
-                                    const err = await res.json();
-                                    showInviteMessage('error', err.error || 'Failed to update role');
-                                }
-                            } catch (err) {
-                                console.error(err);
-                                showInviteMessage('error', 'Error updating role');
-                            }
-                        });
-
-                        // Attach cancel listener
-                        const cancelBtn = container.querySelector('.cancel-role-btn');
-                        cancelBtn.addEventListener('click', () => {
-                            loadMembers(workspaceId, ownerId); // Reload to reset
-                        });
-                    });
+              try {
+                const res = await fetch(`/api/workspaces/${wid}/members/${uid}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ role: newRole }),
                 });
 
-                document.querySelectorAll('.remove-member').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const confirmed = await showConfirmModal('Are you sure you want to remove this member?', 'Remove Member');
-                        if (confirmed) {
-                            removeMember(btn.dataset.wid, btn.dataset.uid);
-                        }
-                    });
-                });
-            }
-
-        } catch (e) {
-            console.error(e);
-            if (membersList) membersList.innerHTML = '<li style="padding: 1rem; color: var(--error);">Failed to load members</li>';
-        }
-    }
-
-    async function loadInvitations(workspaceId) {
-        try {
-            const res = await fetch(`/api/workspaces/${workspaceId}/invitations?t=${Date.now()}`);
-            const invites = await res.json();
-            if (invitationsList) {
-                if (invites.length === 0) {
-                    invitationsList.innerHTML = '<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No pending invitations</li>';
-                    return;
+                if (res.ok) {
+                  showInviteMessage('success', 'Member role updated successfully');
+                  loadMembers(wid, ownerId);
+                } else {
+                  const err = await res.json();
+                  showInviteMessage('error', err.error || 'Failed to update role');
                 }
-                invitationsList.innerHTML = invites.map(i => `
+              } catch (err) {
+                console.error(err);
+                showInviteMessage('error', 'Error updating role');
+              }
+            });
+
+            // Attach cancel listener
+            const cancelBtn = container.querySelector('.cancel-role-btn');
+            cancelBtn.addEventListener('click', () => {
+              loadMembers(workspaceId, ownerId); // Reload to reset
+            });
+          });
+        });
+
+        document.querySelectorAll('.remove-member').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const confirmed = await showConfirmModal(
+              'Are you sure you want to remove this member?',
+              'Remove Member',
+            );
+            if (confirmed) {
+              removeMember(btn.dataset.wid, btn.dataset.uid);
+            }
+          });
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      if (membersList)
+        membersList.innerHTML =
+          '<li style="padding: 1rem; color: var(--error);">Failed to load members</li>';
+    }
+  }
+
+  async function loadInvitations(workspaceId) {
+    try {
+      const res = await fetch(`/api/workspaces/${workspaceId}/invitations?t=${Date.now()}`);
+      const invites = await res.json();
+      if (invitationsList) {
+        if (invites.length === 0) {
+          invitationsList.innerHTML =
+            '<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No pending invitations</li>';
+          return;
+        }
+        invitationsList.innerHTML = invites
+          .map(
+            (i) => `
                     <li class="list-group-item">
                         <div>
                             <div>${i.recipient_email}</div>
@@ -401,114 +426,119 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </button>
                         </div>
                     </li>
-                `).join('');
-                lucide.createIcons();
+                `,
+          )
+          .join('');
+        lucide.createIcons();
 
-                document.querySelectorAll('.revoke-invite').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const confirmed = await showConfirmModal('Are you sure you want to revoke this invitation?', 'Revoke Invitation');
-                        if (confirmed) {
-                            revokeInvitation(btn.dataset.wid, btn.dataset.id);
-                        }
-                    });
-                });
+        document.querySelectorAll('.revoke-invite').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const confirmed = await showConfirmModal(
+              'Are you sure you want to revoke this invitation?',
+              'Revoke Invitation',
+            );
+            if (confirmed) {
+              revokeInvitation(btn.dataset.wid, btn.dataset.id);
             }
-
-        } catch (e) {
-            console.error(e);
-            if (invitationsList) invitationsList.innerHTML = '<li style="padding: 1rem; color: var(--error);">Failed to load invitations</li>';
-        }
+          });
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      if (invitationsList)
+        invitationsList.innerHTML =
+          '<li style="padding: 1rem; color: var(--error);">Failed to load invitations</li>';
     }
+  }
 
-    // Actions
-    async function removeMember(wid, uid) {
-        await fetch(`/api/workspaces/${wid}/members/${uid}`, { method: 'DELETE' });
-        loadMembers(wid);
-    }
+  // Actions
+  async function removeMember(wid, uid) {
+    await fetch(`/api/workspaces/${wid}/members/${uid}`, { method: 'DELETE' });
+    loadMembers(wid);
+  }
 
-    async function revokeInvitation(wid, inviteId) {
-        await fetch(`/api/workspaces/${wid}/invitations/${inviteId}`, { method: 'DELETE' });
-        loadInvitations(wid);
-    }
+  async function revokeInvitation(wid, inviteId) {
+    await fetch(`/api/workspaces/${wid}/invitations/${inviteId}`, { method: 'DELETE' });
+    loadInvitations(wid);
+  }
 
-    // Notification Helper
-    const inviteMessageContainer = document.getElementById('inviteMessageContainer');
+  // Notification Helper
+  const inviteMessageContainer = document.getElementById('inviteMessageContainer');
 
-    function showInviteMessage(type, text) {
-        if (!inviteMessageContainer) return;
+  function showInviteMessage(type, text) {
+    if (!inviteMessageContainer) return;
 
-        inviteMessageContainer.innerHTML = `
+    inviteMessageContainer.innerHTML = `
             <div style="padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 6px; font-size: 0.85rem; background: ${type === 'error' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 230, 118, 0.1)'}; color: ${type === 'error' ? 'var(--error)' : 'var(--success)'}; border: 1px solid ${type === 'error' ? 'var(--error)' : 'var(--success)'};">
                 ${text}
             </div>
         `;
 
-        // Auto clear after 3 seconds
-        setTimeout(() => {
-            inviteMessageContainer.innerHTML = '';
-        }, 3000);
-    }
+    // Auto clear after 3 seconds
+    setTimeout(() => {
+      inviteMessageContainer.innerHTML = '';
+    }, 3000);
+  }
 
-    if (inviteForm) {
-        inviteForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const wid = manageWorkspaceIdInput.value;
-            const email = document.getElementById('invite-email').value;
-            const role = document.getElementById('invite-role-select').value; // Get from select
+  if (inviteForm) {
+    inviteForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const wid = manageWorkspaceIdInput.value;
+      const email = document.getElementById('invite-email').value;
+      const role = document.getElementById('invite-role-select').value; // Get from select
 
-            try {
-                const res = await fetch(`/api/workspaces/${wid}/invite`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, role })
-                });
-                if (res.ok) {
-                    document.getElementById('invite-email').value = '';
-                    showInviteMessage('success', 'Invitation sent / generated!');
-                    await loadInvitations(wid);
-                    switchTab('invites');
-                } else {
-                    const err = await res.json();
-                    showInviteMessage('error', err.error || 'Failed to invite');
-                }
-            } catch (e) {
-                console.error(e);
-                showInviteMessage('error', 'An error occurred while sending the invitation');
-            }
+      try {
+        const res = await fetch(`/api/workspaces/${wid}/invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, role }),
         });
-    }
+        if (res.ok) {
+          document.getElementById('invite-email').value = '';
+          showInviteMessage('success', 'Invitation sent / generated!');
+          await loadInvitations(wid);
+          switchTab('invites');
+        } else {
+          const err = await res.json();
+          showInviteMessage('error', err.error || 'Failed to invite');
+        }
+      } catch (e) {
+        console.error(e);
+        showInviteMessage('error', 'An error occurred while sending the invitation');
+      }
+    });
+  }
 
-    // --- Create Workspace Modal ---
+  // --- Create Workspace Modal ---
 
-    if (createWorkspaceBtn) {
-        createWorkspaceBtn.addEventListener('click', () => openModal(createModal));
-    }
-    if (closeCreateModalBtn) {
-        closeCreateModalBtn.addEventListener('click', closeModal);
-    }
-    if (cancelCreateBtn) {
-        cancelCreateBtn.addEventListener('click', closeModal);
-    }
+  if (createWorkspaceBtn) {
+    createWorkspaceBtn.addEventListener('click', () => openModal(createModal));
+  }
+  if (closeCreateModalBtn) {
+    closeCreateModalBtn.addEventListener('click', closeModal);
+  }
+  if (cancelCreateBtn) {
+    cancelCreateBtn.addEventListener('click', closeModal);
+  }
 
-    if (createWorkspaceForm) {
-        createWorkspaceForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('new-workspace-name').value;
-            try {
-                const res = await fetch('/api/workspaces', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
-                });
-                if (res.ok) {
-                    closeModal(); // Triggers back -> popstate -> hide
-                    document.getElementById('new-workspace-name').value = '';
-                    loadWorkspaces();
-                }
-            } catch (e) {
-                console.error(e);
-            }
+  if (createWorkspaceForm) {
+    createWorkspaceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('new-workspace-name').value;
+      try {
+        const res = await fetch('/api/workspaces', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
         });
-    }
-
+        if (res.ok) {
+          closeModal(); // Triggers back -> popstate -> hide
+          document.getElementById('new-workspace-name').value = '';
+          loadWorkspaces();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
 });

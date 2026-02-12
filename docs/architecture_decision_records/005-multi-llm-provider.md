@@ -1,9 +1,11 @@
 # ADR 005: Multi-LLM Provider Architecture
 
 ## Status
+
 Accepted
 
 ## Context
+
 In Phases 1–8, ProcessAce supported only a single LLM provider (OpenAI) configured via environment variables (`OPENAI_API_KEY`). This had several limitations:
 
 - Users locked into one provider.
@@ -14,6 +16,7 @@ In Phases 1–8, ProcessAce supported only a single LLM provider (OpenAI) config
 Phase 10 expanded LLM support to Google GenAI and Anthropic. Phase 11 moved API key management to the database with encryption.
 
 ## Decision
+
 We adopted a **factory pattern** with pluggable provider implementations:
 
 1. **Provider abstraction** (`src/llm/index.js`): A `getLlmProvider(options)` factory that instantiates the correct provider based on `{ provider, model, apiKey, baseURL }`.
@@ -27,11 +30,13 @@ We adopted a **factory pattern** with pluggable provider implementations:
 6. **Mock provider**: Enabled via `MOCK_LLM=true` for testing without API calls.
 
 ### Alternatives Considered
+
 - **Single adapter with provider URL swapping**: Simpler but doesn't handle SDK differences (Google and Anthropic have very different APIs from OpenAI).
 - **Env-var-only config**: Simpler but poor UX — requires server restarts and doesn't support per-job selection.
 - **LiteLLM proxy**: External dependency; adds operational complexity for self-hosted users.
 
 ## Consequences
+
 - API keys are no longer in environment variables; they're managed via the App Settings UI and stored encrypted.
 - `ENCRYPTION_KEY` env var is **required** for key encryption/decryption.
 - Each artifact records its `llm_provider` and `llm_model` for full traceability.

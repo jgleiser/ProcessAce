@@ -40,7 +40,6 @@ body {
     padding: 2rem;
 }
 
-
 /* Common Header */
 .page-header {
     display: flex;
@@ -592,8 +591,8 @@ body {
 
 /* Palette Overrides */
 .djs-palette {
-    background: #FFF !important;
-    border: 1px solid #CCC !important;
+    background: #fff !important;
+    border: 1px solid #ccc !important;
     top: 20px !important;
     left: 20px !important;
 }
@@ -734,7 +733,6 @@ body {
     padding: 0 5px;
 }
 
-
 .delete-row-btn:hover {
     color: #ff8a80;
 }
@@ -798,6 +796,478 @@ body {
     width: 100%;
     transition: background 0.2s;
     border-bottom: 1px solid var(--border-color);
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+    background: var(--card-hover);
+}
+
+/* --- Admin & Jobs Shared Styles --- */
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.error-message {
+    background: rgba(255, 82, 82, 0.1);
+    border: 1px solid var(--error);
+    color: var(--error);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-btn {
+    background: var(--card-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.limit-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.limit-selector label {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.limit-select {
+    background: var(--card-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.limit-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- Admin User Management --- */
+
+.users-table-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.users-table th {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.users-table tr:last-child td {
+    border-bottom: none;
+}
+
+.users-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.user-email {
+    font-weight: 500;
+}
+
+.user-date {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.you-badge {
+    background: var(--primary);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.status-select,
+.role-select {
+    background: var(--card-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.status-select:focus,
+.role-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.status-active {
+    color: var(--success);
+}
+
+.status-inactive {
+    color: var(--error);
+}
+
+.role-admin {
+    color: #ffd700;
+}
+
+.role-editor {
+    color: #00bcd4;
+}
+
+.role-viewer {
+    color: var(--text-muted);
+}
+
+.save-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.changes-count {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.save-all-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-all-btn:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.save-all-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* --- Admin Jobs Dashboard --- */
+
+.jobs-table-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.jobs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.jobs-table th,
+.jobs-table td {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.jobs-table th {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.jobs-table tr:last-child td {
+    border-bottom: none;
+}
+
+.jobs-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.user-email {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.workspace-name {
+    color: var(--primary);
+}
+
+.process-name {
+    font-weight: 500;
+}
+
+.filename {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.llm-info {
+    font-size: 0.8rem;
+}
+
+.llm-provider {
+    color: #00e676;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.llm-model {
+    color: var(--text-muted);
+}
+
+.artifact-links {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.artifact-link {
+    background: var(--card-hover);
+    color: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.artifact-link:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-completed {
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--success);
+}
+
+.status-pending {
+    background: rgba(161, 161, 170, 0.15);
+    color: var(--text-muted);
+}
+
+.status-processing {
+    background: rgba(41, 121, 255, 0.15);
+    color: var(--processing);
+}
+
+.status-failed {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--error);
+}
+
+.date-cell {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.jobs-table tbody tr {
+    cursor: pointer;
+}
+
+/* Modal Overlay for Admin Jobs (Distinct from generic modal for now) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-overlay .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 500px;
+    padding: 1.5rem;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+.modal-section {
+    margin-bottom: 1.5rem;
+}
+
+.modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.modal-value {
+    font-size: 1rem;
+}
+
+.modal-artifacts {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.modal-artifact-btn {
+    background: var(--primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.modal-artifact-btn:hover {
+    background: var(--primary-hover);
+}
+
+.modal-no-artifacts {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.modal-content-wide {
+    width: 90% !important;
+    max-width: 900px !important;
 }
 
 .user-dropdown a:hover,
@@ -952,4 +1422,568 @@ body {
     @page {
         margin: 2cm;
     }
+}
+
+/* =========================================
+   Refactored Styles (Phase 14)
+   ========================================= */
+
+/* Utility Classes */
+.w-full {
+    width: 100%;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Ensure this overrides */
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.items-start {
+    align-items: flex-start;
+}
+
+.items-end {
+    align-items: flex-end;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.header-stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-family: inherit;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Combobox Styles */
+.combobox-container {
+    position: relative;
+}
+
+.combobox-input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-family: inherit;
+}
+
+.combobox-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.combobox-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    z-index: 100;
+    display: none;
+}
+
+.combobox-dropdown.open {
+    display: block;
+}
+
+.combobox-option {
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    color: var(--text-main);
+}
+
+.combobox-option:hover,
+.combobox-option.highlighted {
+    background: var(--primary);
+    color: white;
+}
+
+.combobox-no-results {
+    padding: 0.6rem 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* API Key Settings */
+.api-key-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--success);
+}
+
+.api-key-status .status-icon {
+    font-size: 1rem;
+}
+
+.btn-change {
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: auto;
+}
+
+.btn-change:hover {
+    background: var(--border-color);
+}
+
+.btn-compact {
+    white-space: nowrap;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Authentication Pages */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: var(--bg-color);
+}
+
+.auth-box {
+    background: #ffffff;
+    /* Explicitly white per original design */
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    color: #333;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-header h1 {
+    color: #7c4dff;
+    margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+    color: #333;
+}
+
+.auth-box .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.auth-box .form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #333;
+    background: #fff;
+}
+
+.auth-box .form-group input::placeholder {
+    color: #999;
+}
+
+.auth-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.auth-footer a {
+    color: #7c4dff;
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    color: #ef4444;
+    margin-bottom: 1rem;
+    text-align: center;
+    display: none;
+}
+
+/* Back Link (Common) */
+.back-link {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+/* =========================================
+   Workspace Settings Styles
+   ========================================= */
+
+.workspaces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.workspace-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.workspace-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.workspace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.workspace-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+}
+
+.workspace-role {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.workspace-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.workspace-actions {
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-muted);
+}
+
+.action-btn.primary {
+    background: rgba(124, 77, 255, 0.1);
+    border-color: rgba(124, 77, 255, 0.3);
+    color: var(--primary);
+}
+
+.action-btn.primary:hover {
+    background: rgba(124, 77, 255, 0.2);
+}
+
+.action-btn.danger {
+    background: rgba(255, 82, 82, 0.1);
+    border-color: rgba(255, 82, 82, 0.3);
+    color: var(--error);
+}
+
+.action-btn.danger:hover {
+    background: rgba(255, 82, 82, 0.2);
+}
+
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.role-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.role-admin {
+    background: rgba(124, 77, 255, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(124, 77, 255, 0.2);
+}
+
+.role-editor {
+    background: rgba(41, 121, 255, 0.1);
+    color: var(--processing);
+    border: 1px solid rgba(41, 121, 255, 0.2);
+}
+
+.role-viewer {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.role-owner {
+    background: #fff;
+    color: #000;
+    font-weight: 700;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Common User Settings Styles */
+.divider {
+    border: 0;
+    border-top: 1px solid var(--border-color);
+    margin: 2rem 0;
+}
+
+.section-title {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.invite-section {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.tabs-container {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.scrollable-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* =========================================
+   Notification Styles
+   ========================================= */
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.notification-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.2s;
+}
+
+.notification-card.unread {
+    border-left: 4px solid var(--primary);
+    background: rgba(124, 77, 255, 0.05);
+}
+
+.notification-content h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.notification-content p {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.notification-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.empty-notifications {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-color);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-main);
+    font-family: inherit;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
 }

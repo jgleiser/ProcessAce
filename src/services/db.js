@@ -6,44 +6,62 @@ const fs = require('fs');
 
 const dataDir = path.resolve(process.cwd(), 'data');
 if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const dbPath = path.join(dataDir, 'processAce.db');
-const db = new Database(dbPath/*, { verbose: console.log } */);
+const dbPath = process.env.DB_PATH || path.join(dataDir, 'processAce.db');
+const db = new Database(dbPath /*, { verbose: console.log } */);
 
-// Enable WAL for better concurrency, but fallback if it fails (e.g. Docker mounts)
-try {
+// Enable WAL for better concurrency, but check for explicit disable (e.g. for Docker on Windows)
+if (process.env.DISABLE_SQLITE_WAL !== 'true') {
+  try {
     db.pragma('journal_mode = WAL');
-} catch (err) {
+  } catch (err) {
     logger.warn({ err }, 'Failed to enable WAL mode. Continuing with default journal mode.');
+  }
+} else {
+  try {
+    db.pragma('journal_mode = DELETE');
+    logger.info('WAL mode disabled via configuration. Switched to DELETE journal mode.');
+  } catch (err) {
+    logger.warn({ err }, 'Failed to switch to DELETE journal mode.');
+  }
 }
 
 // Initialize Tables
 try {
-    // Users Table
-    db.prepare(`
+  // Users Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             email TEXT UNIQUE,
             password_hash TEXT,
             created_at TEXT
         )
-    `).run();
+    `,
+  ).run();
 
-    // Migration: Add role and status columns to users table
-    try {
-        db.prepare("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer'").run();
-    } catch (e) { /* ignore if exists */ }
-    try {
-        db.prepare("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'").run();
-    } catch (e) { /* ignore if exists */ }
-    try {
-        db.prepare("ALTER TABLE users ADD COLUMN name TEXT").run();
-    } catch (e) { /* ignore if exists */ }
+  // Migration: Add role and status columns to users table
+  try {
+    db.prepare("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer'").run();
+  } catch {
+    /* ignore if exists */
+  }
+  try {
+    db.prepare("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'").run();
+  } catch {
+    /* ignore if exists */
+  }
+  try {
+    db.prepare('ALTER TABLE users ADD COLUMN name TEXT').run();
+  } catch {
+    /* ignore if exists */
+  }
 
-    // Workspaces Table
-    db.prepare(`
+  // Workspaces Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS workspaces (
             id TEXT PRIMARY KEY,
             name TEXT,
@@ -51,10 +69,12 @@ try {
             created_at TEXT,
             FOREIGN KEY(owner_id) REFERENCES users(id)
         )
-    `).run();
+    `,
+  ).run();
 
-    // Workspace Members Table
-    db.prepare(`
+  // Workspace Members Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS workspace_members (
             workspace_id TEXT,
             user_id TEXT,
@@ -63,10 +83,12 @@ try {
             FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
-    `).run();
+    `,
+  ).run();
 
-    // Workspace Invitations Table
-    db.prepare(`
+  // Workspace Invitations Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS workspace_invitations (
             id TEXT PRIMARY KEY,
             workspace_id TEXT,
@@ -80,13 +102,17 @@ try {
             FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
             FOREIGN KEY(inviter_id) REFERENCES users(id)
         )
-    `).run();
+    `,
+  ).run();
 
-    // Evidence Table
-    // Check if table exists to decide whether to create or alter
-    const evidenceTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evidence'").get();
-    if (!evidenceTableExists) {
-        db.prepare(`
+  // Evidence Table
+  // Check if table exists to decide whether to create or alter
+  const evidenceTableExists = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evidence'")
+    .get();
+  if (!evidenceTableExists) {
+    db.prepare(
+      `
             CREATE TABLE evidence (
                 id TEXT PRIMARY KEY,
                 filename TEXT,
@@ -101,21 +127,29 @@ try {
                 user_id TEXT,
                 workspace_id TEXT
             )
-        `).run();
-    } else {
-        // Migration: Add columns if they don't exist
-        try {
-            db.prepare("ALTER TABLE evidence ADD COLUMN user_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE evidence ADD COLUMN workspace_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
+        `,
+    ).run();
+  } else {
+    // Migration: Add columns if they don't exist
+    try {
+      db.prepare('ALTER TABLE evidence ADD COLUMN user_id TEXT').run();
+    } catch {
+      /* ignore if exists */
     }
+    try {
+      db.prepare('ALTER TABLE evidence ADD COLUMN workspace_id TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+  }
 
-    // Artifact Table
-    const artifactsTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='artifacts'").get();
-    if (!artifactsTableExists) {
-        db.prepare(`
+  // Artifact Table
+  const artifactsTableExists = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='artifacts'")
+    .get();
+  if (!artifactsTableExists) {
+    db.prepare(
+      `
             CREATE TABLE artifacts (
                 id TEXT PRIMARY KEY,
                 type TEXT,
@@ -129,26 +163,38 @@ try {
                 user_id TEXT,
                 workspace_id TEXT
             )
-        `).run();
-    } else {
-        try {
-            db.prepare("ALTER TABLE artifacts ADD COLUMN user_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE artifacts ADD COLUMN workspace_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE artifacts ADD COLUMN llm_provider TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE artifacts ADD COLUMN llm_model TEXT").run();
-        } catch (e) { /* ignore if exists */ }
+        `,
+    ).run();
+  } else {
+    try {
+      db.prepare('ALTER TABLE artifacts ADD COLUMN user_id TEXT').run();
+    } catch {
+      /* ignore if exists */
     }
+    try {
+      db.prepare('ALTER TABLE artifacts ADD COLUMN workspace_id TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+    try {
+      db.prepare('ALTER TABLE artifacts ADD COLUMN llm_provider TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+    try {
+      db.prepare('ALTER TABLE artifacts ADD COLUMN llm_model TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+  }
 
-    // Jobs Table
-    const jobsTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='jobs'").get();
-    if (!jobsTableExists) {
-        db.prepare(`
+  // Jobs Table
+  const jobsTableExists = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='jobs'")
+    .get();
+  if (!jobsTableExists) {
+    db.prepare(
+      `
             CREATE TABLE jobs (
                 id TEXT PRIMARY KEY,
                 type TEXT,
@@ -161,29 +207,39 @@ try {
                 user_id TEXT,
                 workspace_id TEXT
             )
-        `).run();
-    } else {
-        try {
-            db.prepare("ALTER TABLE jobs ADD COLUMN user_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE jobs ADD COLUMN workspace_id TEXT").run();
-        } catch (e) { /* ignore if exists */ }
-        try {
-            db.prepare("ALTER TABLE jobs ADD COLUMN process_name TEXT").run();
-        } catch (e) { /* ignore if exists */ }
+        `,
+    ).run();
+  } else {
+    try {
+      db.prepare('ALTER TABLE jobs ADD COLUMN user_id TEXT').run();
+    } catch {
+      /* ignore if exists */
     }
+    try {
+      db.prepare('ALTER TABLE jobs ADD COLUMN workspace_id TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+    try {
+      db.prepare('ALTER TABLE jobs ADD COLUMN process_name TEXT').run();
+    } catch {
+      /* ignore if exists */
+    }
+  }
 
-    // App Settings Table
-    db.prepare(`
+  // App Settings Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT
         )
-    `).run();
+    `,
+  ).run();
 
-    // Notifications Table
-    db.prepare(`
+  // Notifications Table
+  db.prepare(
+    `
         CREATE TABLE IF NOT EXISTS notifications (
             id TEXT PRIMARY KEY,
             user_id TEXT,
@@ -195,12 +251,13 @@ try {
             created_at TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
-    `).run();
+    `,
+  ).run();
 
-    logger.info('SQLite Database initialized');
+  logger.info('SQLite Database initialized');
 } catch (err) {
-    logger.error({ err }, 'Failed to initialize SQLite database');
-    process.exit(1);
+  logger.error({ err }, 'Failed to initialize SQLite database');
+  process.exit(1);
 }
 
 module.exports = db;

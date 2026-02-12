@@ -5,44 +5,44 @@ const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
 const settingsService = require('../services/settingsService');
 
-
 const processEvidence = async (job) => {
-    const { evidenceId, filename, processName, provider, model } = job.data;
-    logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
+  const { evidenceId, filename, processName, provider, model } = job.data;
+  logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
 
-    // Naming Logic
-    let baseName = processName || filename.replace(/\.[^/.]+$/, "");
+  // Naming Logic
+  let baseName = processName || filename.replace(/\.[^/.]+$/, '');
 
-    // Normalize: remove accents, lowercase, replace non-alphanum with _, dedupe _
-    const normalizedName = baseName
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // remove accents
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, ""); // trim underscores
+  // Normalize: remove accents, lowercase, replace non-alphanum with _, dedupe _
+  const normalizedName = baseName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, ''); // trim underscores
 
-    logger.info({ jobId: job.id, normalizedName }, 'Using normalized process name');
+  logger.info({ jobId: job.id, normalizedName }, 'Using normalized process name');
 
-    try {
-        // 1. Retrieve Evidence record to get the full path
-        const evidence = await getEvidence(evidenceId);
-        if (!evidence) {
-            throw new Error(`Evidence not found: ${evidenceId}`);
-        }
+  try {
+    // 1. Retrieve Evidence record to get the full path
+    const evidence = await getEvidence(evidenceId);
+    if (!evidence) {
+      throw new Error(`Evidence not found: ${evidenceId}`);
+    }
 
-        // 2. Read file content
-        const fileContent = await fs.readFile(evidence.path, 'utf8');
+    // 2. Read file content
+    const fileContent = await fs.readFile(evidence.path, 'utf8');
 
-        // 3. Get LLM config from settings (apiKey is stored encrypted in DB)
-        const llmConfig = settingsService.getLLMConfig();
-        const llm = getLlmProvider({
-            provider: provider || llmConfig.provider,
-            model: model || llmConfig.model,
-            apiKey: llmConfig.apiKey,
-            baseURL: llmConfig.baseUrl
-        });
+    // 3. Get LLM config from settings (apiKey is stored encrypted in DB)
+    const llmConfig = settingsService.getLLMConfig();
+    const llm = getLlmProvider({
+      provider: provider || llmConfig.provider,
+      model: model || llmConfig.model,
+      apiKey: llmConfig.apiKey,
+      baseURL: llmConfig.baseUrl,
+    });
 
-        const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
+    const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
 Convert the process description into valid BPMN 2.0 XML with a PROFESSIONAL VISUAL LAYOUT.
 
 ### 1. NAMESPACE & SYNTAX (STRICT)
@@ -90,7 +90,7 @@ CORRECT EDGE SYNTAX:
 ### 5. OUTPUT FORMAT
 Return *only* the XML string. No markdown code blocks.`;
 
-        const sipocPrompt = `You are a Six Sigma Process Expert.
+    const sipocPrompt = `You are a Six Sigma Process Expert.
 Generate a structured SIPOC table (Suppliers, Inputs, Process, Outputs, Customers) for the given process description.
 Output Format: JSON Array with keys: "supplier", "input", "process_step", "output", "customer".
 Example:
@@ -99,7 +99,7 @@ Example:
 ]
 Return ONLY Valid JSON.`;
 
-        const raciPrompt = `You are a Project Management Pro.
+    const raciPrompt = `You are a Project Management Pro.
 Generate a RACI Matrix (Responsible, Accountable, Consulted, Informed) for the activities in the process.
 Output Format: JSON Array with keys: "activity", "responsible", "accountable", "consulted", "informed".
 Example:
@@ -108,7 +108,7 @@ Example:
 ]
 Return ONLY Valid JSON.`;
 
-        const docPrompt = `You are a Technical Writer.
+    const docPrompt = `You are a Technical Writer.
 Create a Professional Narrative Process Document in Markdown format.
 Include:
 - **Process Overview**: Goal and Scope.
@@ -118,70 +118,87 @@ Include:
 - **Business Rules**: Critical constraints.
 Return ONLY Markdown content.`;
 
-        const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
+    const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
 
-        // Determine provider name for traceability
-        const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
-        const modelName = llm.config?.model || model || llmConfig.model;
+    // Determine provider name for traceability
+    const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
+    const modelName = llm.config?.model || model || llmConfig.model;
 
-        // Helper to generate and save
-        const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
-            const response = await llm.complete(prompt, systemPrompt);
-            let content = response.trim();
-            // Basic Cleanup
-            if (content.startsWith('```')) {
-                content = content.replace(/^```[a-z]*\s*/, '').replace(/\s*```$/, '');
-            }
+    // Helper to generate and save
+    const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
+      const response = await llm.complete(prompt, systemPrompt);
+      let content = response.trim();
+      // Basic Cleanup
+      if (content.startsWith('```')) {
+        content = content.replace(/^```[a-z]*\s*/, '').replace(/\s*```$/, '');
+      }
 
-            const artifactFilename = `${normalizedName}_${suffix}.${extension}`;
+      const artifactFilename = `${normalizedName}_${suffix}.${extension}`;
 
-            const artifact = new Artifact({
-                type,
-                content,
-                filename: artifactFilename,
-                metadata: {
-                    sourceEvidenceId: evidenceId,
-                    jobId: job.id,
-                    extension
-                },
-                user_id: job.user_id,
-                workspace_id: job.workspace_id,
-                llm_provider: providerName,
-                llm_model: modelName
-            });
-            await saveArtifact(artifact);
-            return artifact;
-        };
+      const artifact = new Artifact({
+        type,
+        content,
+        filename: artifactFilename,
+        metadata: {
+          sourceEvidenceId: evidenceId,
+          jobId: job.id,
+          extension,
+        },
+        user_id: job.user_id,
+        workspace_id: job.workspace_id,
+        llm_provider: providerName,
+        llm_model: modelName,
+      });
+      await saveArtifact(artifact);
+      return artifact;
+    };
 
-        // 4. Generate All Artifacts in Parallel
-        const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
-            generateAndSave('bpmn', bpmnPrompt, `Generate BPMN XML:\n\n${fileContent}`, 'bpmn', 'diagram'),
-            generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json', 'sipoc'),
-            generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json', 'raci'),
-            generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md', 'document')
-        ]);
+    // 4. Generate All Artifacts in Parallel
+    const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
+      generateAndSave(
+        'bpmn',
+        bpmnPrompt,
+        `Generate BPMN XML:\n\n${fileContent}`,
+        'bpmn',
+        'diagram',
+      ),
+      generateAndSave(
+        'sipoc',
+        sipocPrompt,
+        `Generate SIPOC JSON:\n\n${fileContent}`,
+        'json',
+        'sipoc',
+      ),
+      generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json', 'raci'),
+      generateAndSave(
+        'doc',
+        docPrompt,
+        `Generate Process Documentation:\n\n${fileContent}`,
+        'md',
+        'document',
+      ),
+    ]);
 
-        logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');
+    logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');
 
-        // Return all artifacts
-        return {
-            success: true,
-            evidenceId,
-            artifactId: bpmnArtifact.id, // Keep for backward compat
-            artifacts: [
-                { type: 'bpmn', id: bpmnArtifact.id, format: 'xml' },
-                { type: 'sipoc', id: sipocArtifact.id, format: 'json' },
-                { type: 'raci', id: raciArtifact.id, format: 'json' },
-                { type: 'doc', id: docArtifact.id, format: 'md' }
-            ]
-        };
-
-    } catch (err) {
-        logger.error({ jobId: job.id, err }, 'Artifact generation failed');
-        throw err;
-    }
+    // Return all artifacts
+    return {
+      success: true,
+      evidenceId,
+      artifactId: bpmnArtifact.id, // Keep for backward compat
+      artifacts: [
+        { type: 'bpmn', id: bpmnArtifact.id, format: 'xml' },
+        { type: 'sipoc', id: sipocArtifact.id, format: 'json' },
+        { type: 'raci', id: raciArtifact.id, format: 'json' },
+        { type: 'doc', id: docArtifact.id, format: 'md' },
+      ],
+    };
+  } catch (err) {
+    logger.error({ jobId: job.id, err }, 'Artifact generation failed');
+    throw err;
+  }
 };
 
 module.exports = {
-    processEvidence
+  processEvidence,
 };

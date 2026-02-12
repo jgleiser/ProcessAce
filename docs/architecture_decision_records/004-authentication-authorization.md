@@ -1,9 +1,11 @@
 # ADR 004: Authentication & Authorization
 
 ## Status
+
 Accepted
 
 ## Context
+
 Through Phases 1–8, ProcessAce ran as a single-user, unauthenticated application. Anyone with network access to the server could upload evidence, view all jobs, and access all artifacts. As the application moved toward multi-user deployment (Phase 11), we needed:
 
 - Identity management (user accounts).
@@ -12,6 +14,7 @@ Through Phases 1–8, ProcessAce ran as a single-user, unauthenticated applicati
 - Data isolation between users and workspaces.
 
 ## Decision
+
 We chose the following approach:
 
 1. **JWT (JSON Web Tokens)** for stateless authentication, stored in **HTTP-only cookies** (not localStorage) to mitigate XSS risks.
@@ -22,11 +25,13 @@ We chose the following approach:
 6. **Middleware-based enforcement**: `authenticateToken` on all protected routes, `requireAdmin` on admin-only routes.
 
 ### Alternatives Considered
+
 - **Session-based auth (server-side sessions)**: Simpler, but ties state to a single server. JWT is more suitable for future horizontal scaling.
 - **OAuth / SSO**: Too complex for the current single-deployment model. Can be layered on later.
 - **API key auth**: Doesn't suit a browser SPA workflow well.
 
 ## Consequences
+
 - All API routes (except `/health`, `/api/auth/register`, `/api/auth/login`) require a valid JWT.
 - JWT secret must be configured via `JWT_SECRET` env var in production.
 - Password complexity is enforced server-side (8+ chars, uppercase, lowercase, numbers).

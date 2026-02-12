@@ -17,7 +17,7 @@ const logger = pino({
     pid: process.pid,
   },
   serializers: {
-    err: pino.stdSerializers.err, 
+    err: pino.stdSerializers.err,
     req: pino.stdSerializers.req,
     res: pino.stdSerializers.res,
   },
