@@ -201,6 +201,80 @@
             margin-left: 0.5rem;
             font-weight: 600;
         }
+
+        /* Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .page-btn {
+            background: var(--card-hover);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .limit-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .limit-selector label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .limit-select {
+            background: var(--card-hover);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .limit-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
     </style>
 </head>
 
@@ -251,6 +325,22 @@
                 <tbody id="usersTableBody">
                 </tbody>
             </table>
+
+            <div class="pagination-container" id="paginationContainer" style="display: none;">
+                <div class="pagination-info" id="paginationInfo">
+                    Showing 0 of 0 users
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                </div>
+                <div class="limit-selector">
+                    <label for="limitSelect">Show:</label>
+                    <select id="limitSelect" class="limit-select">
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+            </div>
             <div class="save-actions">
                 <span id="changesCount" class="changes-count"></span>
                 <button id="saveAllBtn" class="save-all-btn" disabled>Save Changes</button>

@@ -17,15 +17,33 @@ router.use(requireAdmin);
  */
 router.get('/users', (req, res) => {
     try {
-        const users = authService.getAllUsers();
+        // Disable caching
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.set('Expires', '0');
+        res.set('Pragma', 'no-cache');
+
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const result = authService.getUsersPaginated(page, limit);
 
         logger.info({
             event_type: 'admin_users_list',
             actor: req.user.id,
-            userCount: users.length
+            page,
+            limit,
+            userCount: result.users.length
         }, 'Admin retrieved user list');
 
-        res.json(users);
+        res.json({
+            users: result.users,
+            pagination: {
+                page,
+                limit,
+                total: result.total,
+                totalPages: result.totalPages
+            }
+        });
     } catch (error) {
         logger.error({ err: error }, 'Error fetching users');
         res.status(500).json({ error: 'Failed to fetch users' });

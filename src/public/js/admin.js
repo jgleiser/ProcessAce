@@ -3,8 +3,17 @@
  * Handles user management functionality
  */
 
+let currentPage = 1;
+let currentLimit = 10;
+let totalPages = 1;
 let currentUserId = null;
 let originalUserData = {}; // Track original values to detect changes
+
+// DOM Elements
+const paginationContainer = document.getElementById('paginationContainer');
+const paginationInfo = document.getElementById('paginationInfo');
+const paginationControls = document.getElementById('paginationControls');
+const limitSelect = document.getElementById('limitSelect');
 
 // Check authentication and admin status on load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -25,10 +34,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        loadUsers();
+        // Initialize limit select
+        limitSelect.value = currentLimit;
+
+        loadUsers(currentPage, currentLimit);
 
         // Add event listener for save button
         document.getElementById('saveAllBtn').addEventListener('click', saveAllChanges);
+
+        // Add listener for limit select
+        limitSelect.addEventListener('change', (e) => {
+            currentLimit = parseInt(e.target.value);
+            currentPage = 1;
+            loadUsers(currentPage, currentLimit);
+        });
+
+        // Add listner for pagination controls (Event Delegation)
+        paginationControls.addEventListener('click', (e) => {
+            const btn = e.target.closest('.page-btn');
+            if (btn && !btn.disabled) {
+                const page = parseInt(btn.dataset.page);
+                if (!isNaN(page)) {
+                    goToPage(page);
+                }
+            }
+        });
+
     } catch (error) {
         console.error('Auth check failed:', error);
         window.location.href = '/login.html';
@@ -38,9 +69,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 /**
  * Load all users from API
  */
-async function loadUsers() {
+async function loadUsers(page = 1, limit = 10) {
     try {
-        const response = await fetch('/api/admin/users');
+        const loading = document.getElementById('loadingState');
+        const table = document.getElementById('usersTable');
+        const pagContainer = document.getElementById('paginationContainer');
+
+        loading.style.display = 'block';
+        table.style.display = 'none';
+        pagContainer.style.display = 'none';
+
+        const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`);
         if (!response.ok) {
             if (response.status === 403) {
                 showError('Access denied. Admin privileges required.');
@@ -49,11 +88,22 @@ async function loadUsers() {
             throw new Error('Failed to fetch users');
         }
 
-        const users = await response.json();
+        const data = await response.json();
+
+        // Handle response format change (array vs object with pagination)
+        const users = data.users || data;
+        const pagination = data.pagination || { page: 1, limit: 10, total: users.length, totalPages: 1 };
+
+        currentPage = pagination.page;
+        currentLimit = pagination.limit;
+        totalPages = pagination.totalPages;
+
         renderUsersTable(users);
+        renderPagination(pagination);
     } catch (error) {
-        console.error('Error loading users:', error);
-        showError('Failed to load users. Please try again.');
+        console.error('Error loading users. Details:', error);
+        console.error('Stack:', error.stack);
+        showError(`Failed to load users: ${error.message}`);
     }
 }
 
@@ -229,4 +279,77 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Render pagination controls
+ */
+function renderPagination(pagination) {
+    const { page, limit, total, totalPages: pages } = pagination;
+    const start = total === 0 ? 0 : (page - 1) * limit + 1;
+    const end = Math.min(page * limit, total);
+
+    // Show container
+    paginationContainer.style.display = 'flex';
+
+    paginationInfo.textContent = `Showing ${start}-${end} of ${total} users`;
+
+    // Build page buttons
+    let buttonsHtml = '';
+
+    // Previous button
+    buttonsHtml += `
+        <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
+            ← Prev
+        </button>
+    `;
+
+    // Page numbers
+    const maxButtons = 5;
+    let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+    let endPage = Math.min(pages, startPage + maxButtons - 1);
+
+    if (endPage - startPage < maxButtons - 1) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    if (startPage > 1) {
+        buttonsHtml += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) {
+            buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+        }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        buttonsHtml += `
+            <button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">
+                ${i}
+            </button>
+        `;
+    }
+
+    if (endPage < pages) {
+        if (endPage < pages - 1) {
+            buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+        }
+        buttonsHtml += `<button class="page-btn" data-page="${pages}">${pages}</button>`;
+    }
+
+    // Next button
+    buttonsHtml += `
+        <button class="page-btn" ${page >= pages ? 'disabled' : ''} data-page="${page + 1}">
+            Next →
+        </button>
+    `;
+
+    paginationControls.innerHTML = buttonsHtml;
+}
+
+/**
+ * Navigate to a specific page
+ */
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    loadUsers(currentPage, currentLimit);
 }

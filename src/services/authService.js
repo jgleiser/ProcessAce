@@ -134,6 +134,23 @@ class AuthService {
     }
 
     /**
+     * Get users with pagination
+     * @param {number} page 
+     * @param {number} limit 
+     * @returns {Object} { users, total, totalPages }
+     */
+    getUsersPaginated(page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        const countResult = db.prepare('SELECT COUNT(*) as count FROM users').get();
+        const total = countResult.count;
+        const totalPages = Math.ceil(total / limit);
+
+        const users = db.prepare('SELECT id, name, email, role, status, created_at FROM users ORDER BY created_at ASC LIMIT ? OFFSET ?').all(limit, offset);
+
+        return { users, total, totalPages };
+    }
+
+    /**
      * Update user role and/or status (admin only)
      * @param {string} id - User ID
      * @param {Object} updates - { role?, status? }
