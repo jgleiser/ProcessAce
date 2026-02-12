@@ -148,6 +148,6 @@ vite.config.ts.timestamp-*
 *.p7b
 *.p7c
 
-#
+# Local files
 uploads/
 samples/
