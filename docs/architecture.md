@@ -158,6 +158,7 @@ The processing pipeline is implemented inside the worker process and consists of
     - `users` – id, name, email, password_hash, role, status, created_at.
     - `workspaces` – id, name, owner_id, created_at.
     - `workspace_members` – workspace_id, user_id, role.
+    - `workspace_invitations` – id, workspace_id, recipient_email, role, token, status, expires_at.
     - `evidence` – id, filename, originalName, mimeType, size, path, status, metadata, user_id, workspace_id.
     - `artifacts` – id, type, version, content, metadata, filename, user_id, workspace_id, llm_provider, llm_model.
     - `jobs` – id, type, data, status, result, error, process_name, user_id, workspace_id.
@@ -181,9 +182,11 @@ The processing pipeline is implemented inside the worker process and consists of
 - **Middleware** (`src/middleware/auth.js`, `src/middleware/requireAdmin.js`):
   - `authenticateToken` – extracts and verifies JWT from cookies.
   - `requireAdmin` – checks for `admin` role on protected admin routes.
-- **Roles**: `admin`, `editor`, `viewer`.
+- **Roles**:
+  - **System Roles**: `admin` (can manage system settings/users), `user` (regular access).
+  - **Workspace Roles**: `owner` (full control), `editor` (can edit content), `viewer` (read-only).
 - **User Status**: `active`, `inactive` (inactive users cannot log in).
-- **Authorization**: Jobs and artifacts include `user_id`, enabling per-user data isolation. Workspace scoping via `workspace_id`.
+- **Authorization**: Resources are scoped by `workspace_id`. Access is determined by the user's membership role in that workspace.
 
 ---
 

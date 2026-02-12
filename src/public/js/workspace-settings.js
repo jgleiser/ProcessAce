@@ -124,7 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function createWorkspaceCard(workspace, isOwner) {
         const jobCount = workspace.job_count || 0;
-        const evidenceCount = workspace.evidence_count || 0;
+        const artifactCount = workspace.artifact_count || 0;
+        const memberCount = workspace.member_count || 0;
 
         return `
             <div class="workspace-card">
@@ -137,11 +138,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="workspace-stats">
                     <div class="stat-item">
                         <span class="stat-value">${jobCount}</span>
-                        <span class="stat-label">Jobs</span>
+                        <span class="stat-label">Processes</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-value">${evidenceCount}</span>
-                        <span class="stat-label">Evidence</span>
+                        <span class="stat-value">${artifactCount}</span>
+                        <span class="stat-label">Documents</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">${memberCount}</span>
+                        <span class="stat-label">Members</span>
                     </div>
                 </div>
                 <div class="workspace-actions">

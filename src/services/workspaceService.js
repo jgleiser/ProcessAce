@@ -46,7 +46,9 @@ class WorkspaceService {
         return db.prepare(`
             SELECT w.*, wm.role,
             (SELECT COUNT(*) FROM jobs WHERE workspace_id = w.id) as job_count,
-            (SELECT COUNT(*) FROM evidence WHERE workspace_id = w.id) as evidence_count
+            (SELECT COUNT(*) FROM evidence WHERE workspace_id = w.id) as evidence_count,
+            (SELECT COUNT(*) FROM artifacts WHERE workspace_id = w.id) as artifact_count,
+            (SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count
             FROM workspaces w
             JOIN workspace_members wm ON w.id = wm.workspace_id
             WHERE wm.user_id = ?

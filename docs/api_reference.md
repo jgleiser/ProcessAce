@@ -105,10 +105,43 @@ All API endpoints are served under `http://localhost:3000` (default).
 |--------|------|------|-------------|
 | `GET` | `/api/workspaces` | Yes | List current user's workspaces |
 | `POST` | `/api/workspaces` | Yes | Create a new workspace |
+| `DELETE` | `/api/workspaces/:id` | Yes | Delete a workspace (Owner only) |
+| `GET` | `/api/workspaces/:id/members` | Yes | Get workspace members |
+| `PUT` | `/api/workspaces/:id/members/:userId` | Yes | Update member role |
+| `DELETE` | `/api/workspaces/:id/members/:userId` | Yes | Remove member |
+| `POST` | `/api/workspaces/:id/invite` | Yes | Invite user |
+| `GET` | `/api/workspaces/:id/invitations` | Yes | List pending invitations |
+| `DELETE` | `/api/workspaces/:id/invitations/:inviteId` | Yes | Revoke invitation |
 
 ### `POST /api/workspaces`
 **Body**: `{ "name": "string" }`
 - Returns `201` with workspace object.
+
+### `DELETE /api/workspaces/:id`
+- Deletes a workspace and all its contents.
+- **Note**: Only the workspace owner can delete it.
+
+### `GET /api/workspaces/:id/members`
+- Returns a list of members in the workspace with their roles.
+
+### `PUT /api/workspaces/:id/members/:userId`
+**Body**: `{ "role": "viewer" | "editor" }`
+- Updates a member's role.
+- **Note**: Only the workspace owner can manage roles.
+
+### `DELETE /api/workspaces/:id/members/:userId`
+- Removes a member from the workspace.
+
+### `POST /api/workspaces/:id/invite`
+**Body**: `{ "email": "string", "role": "viewer" | "editor" }`
+- Invites a user to the workspace.
+- Returns `200` with the invitation object.
+
+### `GET /api/workspaces/:id/invitations`
+- Returns a list of pending invitations for the workspace.
+
+### `DELETE /api/workspaces/:id/invitations/:inviteId`
+- Revokes a pending invitation.
 
 ---
 

@@ -29,6 +29,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
     -   **Secure Login**: Email/password with JWT (HTTP-only cookies).
     -   **Role-Based Access**: Admin, Editor, and Viewer roles. First registered user becomes Admin.
     -   **Workspaces**: Create and switch between workspaces for organizing projects.
+    -   **Workspace Sharing**: Invite other users to your workspace with specific roles (Viewer/Editor).
     -   **User Data Isolation**: Jobs and artifacts scoped per user and workspace.
 -   **Administration**:
     -   **Admin Dashboard**: Manage users (roles, status), view all jobs across workspaces.

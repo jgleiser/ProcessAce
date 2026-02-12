@@ -21,14 +21,39 @@ Before processing files, an Admin must configure the LLM provider:
 4.  Click **Save**. API keys are stored encrypted in the database.
 5.  Optionally, use **Verify & Load Models** to confirm the key works and see available models.
 
-### 3. Workspaces
-Workspaces help you organize your processes.
+### 3. Workspaces & Collaboration
+Workspaces help you organize your processes and collaborate with your team.
 
+#### Managing Workspaces
 1.  **View Current Workspace**: The workspace selector is in the top-right header.
 2.  **Switch Workspaces**: Select a different workspace from the dropdown.
+    -   **My Workspaces**: Workspaces you own.
+    -   **Shared Workspaces**: Workspaces you have been invited to.
 3.  **Create New Workspace**: Click the **+ New** button, enter a name, and click **Create**.
 
-> **Note**: Each user starts with a default workspace ("My Workspace"). Jobs and artifacts are scoped to the current workspace.
+#### Managing Members (Owner Only)
+If you are the owner of a workspace, you can manage its members:
+
+1.  Click the **Settings (⚙️)** icon next to the workspace name in the header (or go to **Workspace Settings**).
+2.  **Invite Users**:
+    -   Enter the email address of the user you want to invite.
+    -   Select a role: **Viewer** (read-only) or **Editor** (can upload/edit).
+    -   Click **Invite**. An invitation email will be sent (simulated in development).
+3.  **Manage Invitations**:
+    -   See pending invitations in the "Pending Invitations" list.
+    -   Click **Revoke** to cancel an invitation.
+4.  **Manage Members**:
+    -   View current members and their roles.
+    -   **Change Role**: Update a member's role (e.g., Viewer to Editor).
+    -   **Remove Member**: Click the **Delete (🗑️)** icon to remove a user from the workspace.
+
+#### Joining a Workspace
+1.  When invited, you will receive a notification (or see a pending invite in your list).
+2.  Go to your **Notifications** or check your email for the invite link.
+3.  **Accept** the invitation to join the workspace.
+4.  The new workspace will appear in your **Shared Workspaces** list.
+
+> **Note**: Jobs and artifacts are scoped to the current workspace. All members of a workspace can see its content, but only Editors and Owners can make changes.
 
 ### 4. Uploading Evidence
 1.  Navigate to the **Upload** section on the main dashboard.
