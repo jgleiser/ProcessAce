@@ -10,32 +10,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .admin-header {
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
         }
 
-        .admin-header h1 {
-            font-size: 1.75rem;
-            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
         .back-link {
             color: var(--primary);
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
         }
 
         .back-link:hover {
-            color: var(--primary-hover);
+            text-decoration: underline;
         }
 
         .users-table-container {
@@ -303,7 +291,7 @@
             </div>
         </div>
 
-        <div style="margin-bottom: 2rem;">
+        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
             <h1>👥 User Management</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
         </div>

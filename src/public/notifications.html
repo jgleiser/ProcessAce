@@ -65,6 +65,18 @@
             border-radius: var(--radius-md);
             border: 1px dashed var(--border-color);
         }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -96,10 +108,13 @@
         <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
             <h1>🔔 Notifications</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
-            <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
         </div>
 
         <div id="messageContainer"></div>
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+            <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
+        </div>
 
         <div id="notificationsContainer" class="notifications-list">
             <div class="loading">Loading notifications...</div>

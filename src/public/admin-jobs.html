@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        .admin-header {
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -26,14 +26,10 @@
         .back-link {
             color: var(--primary);
             text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
         }
 
         .back-link:hover {
-            color: var(--primary-hover);
+            text-decoration: underline;
         }
 
         .jobs-table-container {
@@ -411,7 +407,7 @@
             </div>
         </div>
 
-        <div style="margin-bottom: 2rem;">
+        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
             <h1>📋 Jobs Dashboard</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
