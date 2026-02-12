@@ -204,7 +204,7 @@ function renderPagination(pagination) {
 
     // Previous button
     buttonsHtml += `
-        <button class="page-btn" ${page <= 1 ? 'disabled' : ''} onclick="goToPage(${page - 1})">
+        <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
             ← Prev
         </button>
     `;
@@ -219,7 +219,7 @@ function renderPagination(pagination) {
     }
 
     if (startPage > 1) {
-        buttonsHtml += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
+        buttonsHtml += `<button class="page-btn" data-page="1">1</button>`;
         if (startPage > 2) {
             buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
         }
@@ -227,7 +227,7 @@ function renderPagination(pagination) {
 
     for (let i = startPage; i <= endPage; i++) {
         buttonsHtml += `
-            <button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">
+            <button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">
                 ${i}
             </button>
         `;
@@ -237,18 +237,29 @@ function renderPagination(pagination) {
         if (endPage < totalPages - 1) {
             buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
         }
-        buttonsHtml += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+        buttonsHtml += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
     }
 
     // Next button
     buttonsHtml += `
-        <button class="page-btn" ${page >= totalPages ? 'disabled' : ''} onclick="goToPage(${page + 1})">
+        <button class="page-btn" ${page >= totalPages ? 'disabled' : ''} data-page="${page + 1}">
             Next →
         </button>
     `;
 
     paginationControls.innerHTML = buttonsHtml;
 }
+
+// Add event listener for pagination controls (Event Delegation)
+paginationControls.addEventListener('click', (e) => {
+    const btn = e.target.closest('.page-btn');
+    if (btn && !btn.disabled) {
+        const page = parseInt(btn.dataset.page);
+        if (!isNaN(page)) {
+            goToPage(page);
+        }
+    }
+});
 
 /**
  * Navigate to a specific page
