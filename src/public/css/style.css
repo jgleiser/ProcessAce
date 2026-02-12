@@ -914,3 +914,42 @@ body {
     border-radius: var(--radius-md);
     border: 1px dashed var(--border-color);
 }
+
+@media print {
+    body>*:not(.modal) {
+        display: none !important;
+    }
+
+    .modal {
+        position: absolute;
+        background: white;
+    }
+
+    .modal-content {
+        box-shadow: none;
+        border: none;
+        width: 100%;
+        max-width: 100%;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .modal-body {
+        overflow: visible !important;
+    }
+
+    .doc-controls,
+    .bpmn-controls,
+    .close-modal {
+        display: none !important;
+    }
+
+    .markdown-content * {
+        color: black !important;
+    }
+
+    /* Ensure clean print layout */
+    @page {
+        margin: 2cm;
+    }
+}

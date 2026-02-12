@@ -549,7 +549,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div id="viewControls" style="display:flex; gap:10px;">
                         ${canEdit ? `<button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>` : ''}
                         <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
-                        <button class="bpmn-btn primary" id="downloadSvg">Download SVG</button>
+                        <div class="dropdown" style="position:relative; display:inline-block;">
+                            <button class="bpmn-btn primary" id="exportBpmnBtn">Export ▼</button>
+                            <div id="bpmnExportMenu" class="dropdown-content hidden" style="position:absolute; right:0; background:var(--card-bg); border:1px solid var(--border-color); border-radius:var(--radius-md); min-width:120px; z-index:100; box-shadow:var(--shadow-lg);">
+                                <a href="#" id="exportBpmnXml" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">BPMN XML</a>
+                                <a href="#" id="exportBpmnPng" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">PNG Image</a>
+                                <a href="#" id="exportBpmnSvg" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">SVG Image</a>
+                            </div>
+                        </div>
                     </div>
                     <div id="editControls" class="hidden" style="display:none; gap:10px;">
                         <button class="bpmn-btn primary" id="saveBpmn">Save Changes</button>
@@ -560,8 +567,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
 
             loadBpmnViewer(content);
+
+            // Bind Export Menu
+            const exportBtn = document.getElementById('exportBpmnBtn');
+            const exportMenu = document.getElementById('bpmnExportMenu');
+            // Close other menus if any (simple toggle)
+            if (exportBtn) {
+                exportBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    exportMenu.classList.toggle('hidden');
+                };
+                // Close menu when clicking outside
+                window.addEventListener('click', () => {
+                    if (exportMenu && !exportMenu.classList.contains('hidden')) exportMenu.classList.add('hidden');
+                });
+            }
+
+            document.getElementById('exportBpmnXml').onclick = (e) => { e.preventDefault(); downloadBpmnXml(); };
+            document.getElementById('exportBpmnPng').onclick = (e) => { e.preventDefault(); downloadBpmnPng(); };
+            document.getElementById('exportBpmnSvg').onclick = (e) => { e.preventDefault(); downloadSvg(); };
         }
-        else if (type === 'sipoc' || type === 'raci') { // JSON Array
+        else if (type === 'sipoc' || type === 'raci') {
             if (!Array.isArray(content)) {
                 modalBody.innerHTML = '<pre>' + JSON.stringify(content, null, 2) + '</pre>';
                 return;
@@ -571,6 +597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             let html = `
                 <div class="table-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
                     ${canEdit ? `<button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>` : ''}
+                    <button class="bpmn-btn primary" id="btn-export-csv" style="background-color: #2e7d32; border-color: #2e7d32;">Export CSV</button>
                     <div id="editTableControls" class="hidden" style="display:none; gap:10px;">
                          <button class="bpmn-btn primary" id="btn-add-row">+ Add Row</button>
                          <button class="bpmn-btn primary" id="btn-save-table">Save Changes</button>
@@ -580,7 +607,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="table-container">
             `;
 
-            // View Mode Table
             const headers = isSipoc
                 ? ['Supplier', 'Input', 'Process', 'Output', 'Customer']
                 : ['Activity', 'Responsible', 'Accountable', 'Consulted', 'Informed'];
@@ -603,6 +629,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const editBtn = document.getElementById('btn-edit-table');
             if (editBtn) editBtn.addEventListener('click', () => switchToTableEditMode(type));
 
+            const exportBtn = document.getElementById('btn-export-csv');
+            if (exportBtn) exportBtn.addEventListener('click', () => downloadTableCsv(type));
+
             const addBtn = document.getElementById('btn-add-row');
             if (addBtn) addBtn.addEventListener('click', () => addTableRow(type));
 
@@ -620,6 +649,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             modalBody.innerHTML = `
                 <div class="doc-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
                     ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">Edit Document</button>` : ''}
+                    <button class="bpmn-btn primary" id="btn-export-md" style="background-color: #0277bd; border-color: #0277bd;">Download MD</button>
+                    <button class="bpmn-btn primary" id="btn-print-doc" style="background-color: #455a64; border-color: #455a64;">Print / PDF</button>
+
                     <div id="editDocControls" class="hidden" style="display:none; gap:10px;">
                          <button class="bpmn-btn primary" id="saveDoc">Save Changes</button>
                          <button class="bpmn-btn" id="cancelDocEdit">Cancel</button>
@@ -630,6 +662,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
 
             if (canEdit) document.getElementById('editDoc').onclick = () => switchToDocEditMode();
+            document.getElementById('btn-export-md').onclick = downloadMarkdown;
+            document.getElementById('btn-print-doc').onclick = printDoc;
         }
         else {
             modalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
@@ -799,7 +833,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function saveDocChanges() {
         try {
             const newContent = easyMDEInstance.value();
-
             const saveBtn = document.getElementById('saveDoc');
             saveBtn.textContent = 'Saving...';
             saveBtn.disabled = true;
@@ -825,6 +858,108 @@ document.addEventListener('DOMContentLoaded', async () => {
                 saveBtn.disabled = false;
             }
         }
+    }
+
+    // --- Export Functions ---
+
+    function downloadFile(filename, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function downloadBpmnXml() {
+        if (!bpmnInstance) return;
+        try {
+            const { xml } = await bpmnInstance.saveXML({ format: true });
+            downloadFile(`process-${currentArtifactId}.bpmn`, xml, 'application/xml');
+        } catch (err) {
+            console.error('Error exporting BPMN XML', err);
+            alert('Failed to export BPMN XML');
+        }
+    }
+
+    async function downloadBpmnPng() {
+        if (!bpmnInstance) return;
+        try {
+            const { svg } = await bpmnInstance.saveSVG();
+
+            // Create an image from the SVG
+            const img = new Image();
+            const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                canvas.toBlob(function (blob) {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = `process-${currentArtifactId}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            };
+
+            img.src = url;
+
+        } catch (err) {
+            console.error('Error exporting BPMN PNG', err);
+            alert('Failed to export BPMN PNG');
+        }
+    }
+
+    function downloadTableCsv(type) {
+        if (!Array.isArray(currentArtifactContent)) return;
+
+        const isSipoc = type === 'sipoc';
+        const headers = isSipoc
+            ? ['Supplier', 'Input', 'Process', 'Output', 'Customer']
+            : ['Activity', 'Responsible', 'Accountable', 'Consulted', 'Informed'];
+
+        const keys = isSipoc
+            ? ['supplier', 'input', 'process_step', 'output', 'customer']
+            : ['activity', 'responsible', 'accountable', 'consulted', 'informed'];
+
+        // CSV Header
+        let csvContent = headers.join(',') + '\n';
+
+        // CSV Rows
+        currentArtifactContent.forEach(row => {
+            const rowData = keys.map(key => {
+                let val = row[key] || '';
+                // Escape quotes and wrap in quotes if contains comma
+                if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+                    val = `"${val.replace(/"/g, '""')}"`;
+                }
+                return val;
+            });
+            csvContent += rowData.join(',') + '\n';
+        });
+
+        downloadFile(`${type}-${currentArtifactId}.csv`, csvContent, 'text/csv;charset=utf-8;');
+    }
+
+    function downloadMarkdown() {
+        downloadFile(`doc-${currentArtifactId}.md`, currentArtifactContent, 'text/markdown;charset=utf-8');
+    }
+
+    function printDoc() {
+        window.print();
     }
 
     function cancelDocEdit() {

@@ -81,14 +81,12 @@
 - [x] **Workspace Dashboard**: "My Workspaces" and "Shared Workspaces" views with job counts.
 - [x] **Workspace Deletion**: Owners can delete workspaces and related data.
 
-## Phase 13 - Role based access control [NEXT]
-- [ ] **Role based access control**: Set permissions for appliccation.
-- [ ] **Editor user**: Can view and edit all jobs and artifacts that he is owner or that he has beeing invited to view through workspace sharing.
-- [ ] **Viewer user**: Can only view jobs and artifacts that he is owner or that he has beeing invited to view through workspace sharing.
-- [ ] **Viewer user**: Can't create jobs or artifacts.
+## Phase 13 - Export artifacts [COMPLETED]
+- [x] **SIPOC and RACI export**: Export SIPOC and RACI matrices to CSV or Excel.
+- [x] **BPMN export**: Export BPMN diagrams to BPMN or PNG.
+- [x] **Narrative export**: Export narrative documentation to DOCX or PDF.
 
-
-## Phase 14 - Versioning [FUTURE]
+## Phase 14 - Versioning [NEXT]
 - [ ] **Artifact versioning**: Track changes to artifacts over time.
 - [ ] **Versioning V2**: Branching/Merging of process models.
 

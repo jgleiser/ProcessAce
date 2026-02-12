@@ -25,6 +25,10 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
     -   **BPMN Viewer/Editor**: View and modify diagrams directly in the browser (`bpmn-js` v18).
     -   **Rich Text**: Edit narrative docs with a WYSIWYG Markdown editor (`EasyMDE`).
     -   **Tables**: Interactive SIPOC/RACI editing with add/delete row support.
+-   **Export Artifacts**:
+    -   **BPMN**: Export as XML (for tools) or PNG (for presentations).
+    -   **SIPOC/RACI**: Export tables as CSV.
+    -   **Narrative**: Download as Markdown or Print/Save as PDF.
 -   **User Authentication & Workspaces**:
     -   **Secure Login**: Email/password with JWT (HTTP-only cookies).
     -   **Role-Based Access**: Admin, Editor, and Viewer roles. First registered user becomes Admin.

@@ -72,7 +72,20 @@ Once a job is **Completed**, you will see a list of generated artifacts:
 Click the **Eye Icon (👁️)** to view an artifact in the interactive modal.
 Click the **Button Label** to download the file directly.
 
-### 6. Process Name
+### 6. Exporting Artifacts
+You can export artifacts in various formats from the interactive view:
+
+-   **BPMN**:
+    -   **Export XML**: Download the `.bpmn` file for use in other tools (e.g., Camunda, Signavio).
+    -   **Export PNG**: Download a high-resolution image of the diagram.
+    -   **Download SVG**: Download the vector image.
+-   **SIPOC / RACI**:
+    -   **Export CSV**: Download the table as a CSV file compatible with Excel and Google Sheets.
+-   **Narrative (Doc)**:
+    -   **Download MD**: Download the raw Markdown file.
+    -   **Print / PDF**: Open a clean, print-friendly view to save as PDF.
+
+### 7. Process Name
 -   You can set a **Process Name** at upload time.
 -   To change it after creation, click the **Edit (✏️)** icon next to the process name in the job card.
 
