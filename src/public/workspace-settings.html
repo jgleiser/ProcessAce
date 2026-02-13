@@ -84,12 +84,11 @@
             Invite New Member
           </h4>
           <div id="inviteMessageContainer"></div>
-          <form id="invite-form" class="flex gap-2 flex-wrap">
+          <form id="invite-form">
             <input type="hidden" id="manage-workspace-id" />
-            <input type="email" id="invite-email" required placeholder="User email"
-              class="form-input flex-2 min-w-[200px]" />
+            <input type="email" id="invite-email" required placeholder="User email" class="form-input" />
 
-            <select id="invite-role-select" class="form-input flex-1 min-w-[120px]">
+            <select id="invite-role-select" class="form-input">
               <option value="viewer">Viewer</option>
               <option value="editor">Editor</option>
               <option value="admin">Admin</option>

@@ -130,12 +130,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     const artifactCount = workspace.artifact_count || 0;
     const memberCount = workspace.member_count || 0;
 
+    const roleText = isOwner ? 'OWNER' : workspace.role ? workspace.role.toUpperCase() : 'VIEWER';
+
+    let actionsContent = '';
+    if (isOwner) {
+      if (workspace.name === 'My Workspace') {
+        actionsContent = `
+                        <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Default Workspace</div>
+                    `;
+      } else {
+        actionsContent = `
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner">Manage</button>
+                        <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">Delete</button>
+                    `;
+      }
+    } else if (workspace.role === 'admin') {
+      actionsContent = `
+                    <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="admin">Manage</button>
+                `;
+    } else {
+      actionsContent = `
+                    <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">View Only</div>
+                `;
+    }
+
     return `
             <div class="workspace-card">
                 <div class="workspace-header">
                     <div>
                         <div class="workspace-title">${workspace.name}</div>
-                        <div class="workspace-role">${isOwner ? 'OWNER' : workspace.role}</div>
+                        <div class="workspace-role">${roleText}</div>
                     </div>
                 </div>
                 <div class="workspace-stats">
@@ -153,24 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
                 <div class="workspace-actions">
-                    ${
-                      isOwner
-                        ? `
-                        ${
-                          workspace.name === 'My Workspace'
-                            ? `
-                            <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Default Workspace</div>
-                        `
-                            : `
-                            <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}">Manage</button>
-                            <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">Delete</button>
-                        `
-                        }
-                    `
-                        : `
-                        <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">View Only</div>
-                    `
-                    }
+                    ${actionsContent}
                 </div>
             </div>
         `;
@@ -182,7 +189,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const id = btn.getAttribute('data-id');
         const name = btn.getAttribute('data-name');
         const ownerId = btn.getAttribute('data-owner-id');
-        openManageModal(id, name, ownerId);
+        const myRole = btn.getAttribute('data-role');
+        openManageModal(id, name, ownerId, myRole);
       });
     });
 
@@ -220,7 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Manage Modal Logic ---
 
-  async function openManageModal(id, name, ownerId) {
+  async function openManageModal(id, name, ownerId, myRole) {
     modalWorkspaceName.textContent = name;
     manageWorkspaceIdInput.value = id;
 
@@ -229,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Reset tabs
     switchTab('members');
 
-    loadMembers(id, ownerId);
+    loadMembers(id, ownerId, myRole);
     loadInvitations(id);
   }
 
@@ -264,25 +272,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (tabInvites) tabInvites.addEventListener('click', () => switchTab('invites'));
 
   // Loading Members/Invites
-  async function loadMembers(workspaceId, ownerId) {
+  async function loadMembers(workspaceId, ownerId, myRole) {
     try {
       const res = await fetch(`/api/workspaces/${workspaceId}/members?t=${Date.now()}`);
       const members = await res.json();
-
-      const isCurrentUserOwner = currentUser && currentUser.id === ownerId;
 
       if (membersList) {
         membersList.innerHTML = members
           .map((m) => {
             const isMemberOwner = m.role === 'owner';
+            const isMe = currentUser && m.id === currentUser.id;
+
+            // Determine if current user can manage this specific member
+            const canManage = myRole === 'owner' || myRole === 'admin';
+
+            // Can edit role:
+            // 1. I must be admin or owner
+            // 2. Member must NOT be owner
+            // 3. Member works be NOT ME (optional, but good UX)
+            // 4. If I am admin, I probably shouldn't edit other admins? (Let's allow it for simplicity, but block moving to/from owner which backend handles)
+            const canEdit = canManage && !isMemberOwner && !isMe;
+
+            // Can remove:
+            // 1. I must be admin or owner
+            // 2. Member must NOT be owner
+            // 3. Member must NOT be ME (leave workspace instead)
+            const canRemove = canManage && !isMemberOwner && !isMe;
+
+            const removeButton = canRemove
+              ? `
+                                <button class="btn-icon remove-member" data-uid="${m.id}" data-wid="${workspaceId}">
+                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                </button>
+                            `
+              : '';
 
             let roleDisplay;
             if (isMemberOwner) {
               roleDisplay = `<span class="role-badge role-owner">OWNER</span>`;
-            } else if (isCurrentUserOwner) {
+            } else if (canEdit) {
               // Edit button flow
               roleDisplay = `
-                            <div class="role-edit-container" data-uid="${m.id}" data-wid="${workspaceId}" data-current-role="${m.role}" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="role-edit-container" data-uid="${m.id}" data-wid="${workspaceId}" data-current-role="${m.role}" data-owner-id="${ownerId}" style="display: flex; align-items: center; gap: 0.5rem;">
                                 <span class="role-display-area">
                                     <span class="role-badge role-${m.role}">${m.role}</span>
                                 </span>
@@ -309,15 +340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             ${roleDisplay}
-                            ${
-                              !isMemberOwner && isCurrentUserOwner
-                                ? `
-                                <button class="btn-icon remove-member" data-uid="${m.id}" data-wid="${workspaceId}">
-                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                                </button>
-                            `
-                                : ''
-                            }
+                            ${removeButton}
                         </div>
                     </li>
                 `;
@@ -333,6 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const uid = container.dataset.uid;
             const currentRole = container.dataset.currentRole;
             const wid = container.dataset.wid;
+            // We can check container owners, etc. if needed
 
             // Switch to select + save
             container.innerHTML = `
@@ -362,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (res.ok) {
                   showInviteMessage('success', 'Member role updated successfully');
-                  loadMembers(wid, ownerId);
+                  loadMembers(wid, ownerId, myRole);
                 } else {
                   const err = await res.json();
                   showInviteMessage('error', err.error || 'Failed to update role');
@@ -376,7 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Attach cancel listener
             const cancelBtn = container.querySelector('.cancel-role-btn');
             cancelBtn.addEventListener('click', () => {
-              loadMembers(workspaceId, ownerId); // Reload to reset
+              loadMembers(workspaceId, ownerId, myRole); // Reload to reset
             });
           });
         });
