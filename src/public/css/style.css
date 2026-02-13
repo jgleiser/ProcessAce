@@ -1987,3 +1987,25 @@ body {
     outline: none;
     border-color: var(--primary);
 }
+/* Invite Form Inline Styling */
+#invite-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#invite-form .form-input {
+    width: auto;
+    flex: 1;
+    min-width: 150px;
+}
+
+#invite-form #invite-email {
+    flex: 2;
+    min-width: 200px;
+}
+
+#invite-form button {
+    white-space: nowrap;
+}
