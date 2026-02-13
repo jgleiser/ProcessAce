@@ -18,6 +18,7 @@ app.use(
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         'script-src': ["'self'", 'https://unpkg.com', "'unsafe-inline'"],
         'img-src': ["'self'", 'data:', 'blob:'], // Allow blob: for SVG download
+        'connect-src': ["'self'", 'https://unpkg.com'], // Allow source maps from unpkg
       },
     },
   }),
@@ -67,7 +68,7 @@ app.use((req, res) => {
 });
 
 // Error handler
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error({ err }, 'Unhandled exception');
   res.status(500).json({ error: 'Internal Server Error', message: err.message });
 });
