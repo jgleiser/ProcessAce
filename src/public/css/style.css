@@ -57,15 +57,11 @@ body {
     text-decoration: none;
 }
 
-.header-brand .logo-icon {
-    font-size: 1.5rem;
-}
-
 .header-brand h1 {
     font-size: 1.5rem;
     margin: 0;
     /* Use same gradient as before */
-    background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+    background: linear-gradient(135deg, #fff 0%, #E2E2E0 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1628,12 +1624,14 @@ body {
 }
 
 .auth-header h1 {
-    color: #7c4dff;
-    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #000 25%, #ABABA9 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .auth-header p {
-    color: #333;
+    color: #7c4dff;
 }
 
 .auth-box .form-group label {
@@ -1987,6 +1985,7 @@ body {
     outline: none;
     border-color: var(--primary);
 }
+
 /* Invite Form Inline Styling */
 #invite-form {
     display: flex;
