@@ -81,7 +81,7 @@ For precise interpretation, always refer to the full Sustainable Use License and
 
 For pricing, terms, and a sample Enterprise Agreement, please contact:
 
-- **Email:** `<your-email@example.com>`
+- **Email:** `jose.gleiser@gmail.com`
 - **Subject:** `ProcessAce – Commercial / Enterprise License`
 
 Please include:

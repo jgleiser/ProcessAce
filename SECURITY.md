@@ -14,7 +14,7 @@ If you believe you have found a security vulnerability in ProcessAce, **please d
 
 Instead, email:
 
-- **Security contact:** `<your-email@example.com>`
+- **Security contact:** `jose.gleiser@gmail.com`
 - **Subject:** `ProcessAce Security Report`
 
 Please include, when possible:

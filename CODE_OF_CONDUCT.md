@@ -61,7 +61,7 @@ It also applies when an individual is officially representing the project in pub
 
 If you experience or witness unacceptable behavior, or have any other concerns, please contact the maintainers at:
 
-- **Email:** `<your-email@example.com>`
+- **Email:** `jose.gleiser@gmail.com`
 
 All complaints will be reviewed and investigated as appropriate.  
 The maintainers will respect the privacy and security of reporters and will handle reports as confidentially as reasonably possible.
