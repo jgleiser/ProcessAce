@@ -28,18 +28,18 @@
                     <div id="userDropdown" class="user-dropdown hidden">
                         <a href="/user-settings.html">User Settings</a>
                         <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-                        <div id="adminOptionsHeader" class="admin-options-header" style="display: none">Admin options
+                        <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options
                         </div>
-                        <a href="/admin-users.html" id="adminLink" style="display: none">Users</a>
-                        <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
-                        <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+                        <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
+                        <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
+                        <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
                         <button id="logoutBtn">Logout</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="header-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem">
+        <div class="header-row header-row-stacked">
             <h1>👥 User Management</h1>
             <a href="/" class="back-link">← Back to Dashboard</a>
         </div>
@@ -48,7 +48,7 @@
 
         <div class="users-table-container">
             <div id="loadingState" class="loading">Loading users...</div>
-            <table class="users-table" id="usersTable" style="display: none">
+            <table class="users-table hidden" id="usersTable">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -61,7 +61,7 @@
                 <tbody id="usersTableBody"></tbody>
             </table>
 
-            <div class="pagination-container" id="paginationContainer" style="display: none">
+            <div class="pagination-container hidden" id="paginationContainer">
                 <div class="pagination-info" id="paginationInfo">Showing 0 of 0 users</div>
                 <div class="pagination-controls" id="paginationControls"></div>
                 <div class="limit-selector">

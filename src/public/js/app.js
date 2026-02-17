@@ -155,16 +155,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showEditMode() {
-    if (workspaceViewMode) workspaceViewMode.style.display = 'none';
-    if (workspaceEditMode) workspaceEditMode.style.display = 'flex';
+    if (workspaceViewMode) workspaceViewMode.classList.add('hidden');
+    if (workspaceEditMode) workspaceEditMode.classList.remove('hidden');
     workspaceSelect.value = currentWorkspaceId || '';
-    if (newWorkspaceInput) newWorkspaceInput.style.display = 'none';
+    if (newWorkspaceInput) newWorkspaceInput.classList.add('hidden');
     if (workspaceActionBtn) workspaceActionBtn.textContent = 'Select';
   }
 
   function showViewMode() {
-    if (workspaceViewMode) workspaceViewMode.style.display = 'flex';
-    if (workspaceEditMode) workspaceEditMode.style.display = 'none';
+    if (workspaceViewMode) workspaceViewMode.classList.remove('hidden');
+    if (workspaceEditMode) workspaceEditMode.classList.add('hidden');
   }
 
   // Handle "Change" link click
@@ -188,12 +188,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     workspaceSelect.addEventListener('change', (e) => {
       if (e.target.value === '__NEW__') {
         if (newWorkspaceInput) {
-          newWorkspaceInput.style.display = 'block';
+          newWorkspaceInput.classList.remove('hidden');
           newWorkspaceInput.focus();
         }
         if (workspaceActionBtn) workspaceActionBtn.textContent = 'Add';
       } else {
-        if (newWorkspaceInput) newWorkspaceInput.style.display = 'none';
+        if (newWorkspaceInput) newWorkspaceInput.classList.add('hidden');
         if (workspaceActionBtn) workspaceActionBtn.textContent = 'Select';
       }
     });

@@ -1,6 +1,6 @@
 # ProcessAce Architecture
 
-> Status: **Beta Implementation** – this document describes the current architecture as of Phase 11.
+> Status: **Beta Implementation** – this document describes the current architecture as of Phase 14.
 
 ProcessAce is a **self-hosted**, **BYO-LLM** process discovery and documentation engine.  
 It ingests heterogeneous "process evidence" (recordings, images, documents), normalizes it, and generates standard process artifacts such as **BPMN 2.0**, **SIPOC**, and **RACI**.

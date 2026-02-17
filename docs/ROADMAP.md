@@ -99,10 +99,10 @@
 - [x] **BPMN export**: Export BPMN diagrams to BPMN or PNG.
 - [x] **Narrative export**: Export narrative documentation to DOCX or PDF.
 
-## Phase 14 - Cleanup codebase [NEXT]
+## Phase 14 - Cleanup codebase [IN PROGRESS]
 
-- [x] **Refactor codebase**: Remove unused code, improve code quality, and add comments.
-- [x] **Refactor styles**: Remove unused styles, remove styles from HTML files and move to CSS files.
-- [ ] **Detect reusable code**: Identify reusable code and move it to a separate library.
-- [ ] **Add documentation**: Review and add or update documentation for the codebase, including API documentation, user documentation, and installation instructions.
+- [x] **Refactor codebase**: Removed unused debug scripts and temp files, cleaned up `.gitignore`.
+- [x] **Refactor styles**: Moved ~50 inline `style=` attributes from HTML files to `style.css` using proper CSS classes.
+- [ ] **Detect reusable code**: Identify reusable code and extract into shared modules.
+- [x] **Add documentation**: Updated `README.md`, `architecture.md`, `api_reference.md`, and `ROADMAP.md` for public release.
 - [ ] **Add tests**: Add tests for the codebase, including unit tests, integration tests, and end-to-end tests.

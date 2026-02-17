@@ -200,29 +200,68 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Admin (`/api/admin`) — Admin Only
 
-| Method | Path                          | Auth  | Description                          |
-| ------ | ----------------------------- | ----- | ------------------------------------ |
-| `GET`  | `/api/admin/users`            | Admin | List all users                       |
-| `PUT`  | `/api/admin/users/:id/role`   | Admin | Update a user's role                 |
-| `PUT`  | `/api/admin/users/:id/status` | Admin | Update a user's status               |
-| `GET`  | `/api/admin/jobs`             | Admin | List all jobs (paginated, all users) |
+| Method  | Path                   | Auth  | Description                          |
+| ------- | ---------------------- | ----- | ------------------------------------ |
+| `GET`   | `/api/admin/users`     | Admin | List all users (paginated)           |
+| `PATCH` | `/api/admin/users/:id` | Admin | Update a user's role and/or status   |
+| `GET`   | `/api/admin/jobs`      | Admin | List all jobs (paginated, all users) |
 
-### `PUT /api/admin/users/:id/role`
+### `GET /api/admin/users`
 
-**Body**: `{ "role": "admin" | "editor" | "viewer" }`
+**Query**: `?page=1&limit=10`
 
-### `PUT /api/admin/users/:id/status`
+- Returns `{ users: [...], pagination: { page, limit, total, totalPages } }`.
 
-**Body**: `{ "status": "active" | "inactive" }`
+### `PATCH /api/admin/users/:id`
+
+**Body**: `{ "role"?: "admin" | "editor" | "viewer", "status"?: "active" | "inactive" }`
+
+- Updates one or both fields.
+- Cannot modify your own user.
 
 ### `GET /api/admin/jobs`
 
 **Query**: `?page=1&limit=20`
 
 - Returns `{ jobs: [...], pagination: { page, limit, total, totalPages } }`.
-- Each job enriched with `llm_provider`, `llm_model`, `originalFilename`.
+- Each job enriched with `user`, `workspace`, `artifacts`, `llm_provider`, `llm_model`.
 
 ---
+
+## Notifications (`/api/notifications`)
+
+| Method   | Path                           | Auth | Description                |
+| -------- | ------------------------------ | ---- | -------------------------- |
+| `GET`    | `/api/notifications`           | Yes  | List user's notifications  |
+| `PUT`    | `/api/notifications/:id/read`  | Yes  | Mark a notification as read|
+| `PUT`    | `/api/notifications/read-all`  | Yes  | Mark all as read           |
+| `DELETE` | `/api/notifications/:id`       | Yes  | Delete a notification      |
+
+### `GET /api/notifications`
+
+- Returns an array of notifications for the authenticated user.
+- Each notification includes `id`, `type`, `message`, `data`, `is_read`, `created_at`.
+
+---
+
+## Invitations (`/api/invitations`)
+
+| Method | Path                                | Auth | Description                     |
+| ------ | ----------------------------------- | ---- | ------------------------------- |
+| `GET`  | `/api/invitations`                  | Yes  | List user's pending invitations |
+| `GET`  | `/api/invitations/:token`           | No   | Get invitation details by token |
+| `POST` | `/api/invitations/:token/accept`    | Yes  | Accept an invitation            |
+| `POST` | `/api/invitations/:token/decline`   | Yes  | Decline an invitation           |
+
+### `POST /api/invitations/:token/accept`
+
+- Adds the user to the workspace with the invited role.
+- Returns `200` with the updated invitation.
+
+### `POST /api/invitations/:token/decline`
+
+- Marks the invitation as declined.
+- Returns `200` with the updated invitation.
 
 ## Error Responses
 

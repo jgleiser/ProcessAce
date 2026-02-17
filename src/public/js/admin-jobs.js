@@ -80,9 +80,9 @@ async function loadJobs(page = 1, limit = 10) {
  * Show loading state
  */
 function showLoading() {
-  loadingState.style.display = 'block';
-  jobsTable.style.display = 'none';
-  paginationContainer.style.display = 'none';
+  loadingState.classList.remove('hidden');
+  jobsTable.classList.add('hidden');
+  paginationContainer.classList.add('hidden');
   errorContainer.innerHTML = '';
 }
 
@@ -90,7 +90,7 @@ function showLoading() {
  * Show error message
  */
 function showError(message) {
-  loadingState.style.display = 'none';
+  loadingState.classList.add('hidden');
   errorContainer.innerHTML = `<div class="error-message">${message}</div>`;
 }
 
@@ -98,9 +98,9 @@ function showError(message) {
  * Render the jobs table (simplified)
  */
 function renderTable(jobs) {
-  loadingState.style.display = 'none';
-  jobsTable.style.display = 'table';
-  paginationContainer.style.display = 'flex';
+  loadingState.classList.add('hidden');
+  jobsTable.classList.remove('hidden');
+  paginationContainer.classList.remove('hidden');
 
   if (jobs.length === 0) {
     jobsTableBody.innerHTML = `

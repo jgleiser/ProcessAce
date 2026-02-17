@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check if user is admin
     if (user.role !== 'admin') {
       showError('Access denied. Admin privileges required.');
-      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('loadingState').classList.add('hidden');
       return;
     }
 
@@ -74,9 +74,9 @@ async function loadUsers(page = 1, limit = 10) {
     const table = document.getElementById('usersTable');
     const pagContainer = document.getElementById('paginationContainer');
 
-    loading.style.display = 'block';
-    table.style.display = 'none';
-    pagContainer.style.display = 'none';
+    loading.classList.remove('hidden');
+    table.classList.add('hidden');
+    pagContainer.classList.add('hidden');
 
     const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`);
     if (!response.ok) {
@@ -119,8 +119,8 @@ function renderUsersTable(users) {
   const table = document.getElementById('usersTable');
   const loading = document.getElementById('loadingState');
 
-  loading.style.display = 'none';
-  table.style.display = 'table';
+  loading.classList.add('hidden');
+  table.classList.remove('hidden');
 
   tbody.innerHTML = users
     .map((user) => {
@@ -299,7 +299,7 @@ function renderPagination(pagination) {
   const end = Math.min(page * limit, total);
 
   // Show container
-  paginationContainer.style.display = 'flex';
+  paginationContainer.classList.remove('hidden');
 
   paginationInfo.textContent = `Showing ${start}-${end} of ${total} users`;
 

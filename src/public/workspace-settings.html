@@ -28,10 +28,10 @@
           <div id="userDropdown" class="user-dropdown hidden">
             <a href="/user-settings.html">User Settings</a>
             <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-            <div id="adminOptionsHeader" class="admin-options-header" style="display: none">Admin options</div>
-            <a href="/admin-users.html" id="adminLink" style="display: none">Users</a>
-            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
-            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
+            <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
             <button id="logoutBtn">Logout</button>
           </div>
         </div>
@@ -51,13 +51,13 @@
     <div class="section-header">
       <h2>My Workspaces</h2>
       <button id="create-workspace-btn" class="btn-primary flex items-center gap-2 text-sm px-4 py-2">
-        <i data-lucide="plus" style="width: 16px; height: 16px"></i>
+        <i data-lucide="plus" class="icon-sm"></i>
         New Workspace
       </button>
     </div>
     <div id="my-workspaces-list" class="workspaces-grid">
       <!-- Populated by JS -->
-      <div class="empty-state" style="grid-column: 1 / -1">Loading...</div>
+      <div class="empty-state grid-full-span">Loading...</div>
     </div>
 
     <!-- Shared Workspaces -->
@@ -66,7 +66,7 @@
     </div>
     <div id="shared-workspaces-list" class="workspaces-grid">
       <!-- Populated by JS -->
-      <div class="empty-state" style="grid-column: 1 / -1">No shared workspaces found.</div>
+      <div class="empty-state grid-full-span">No shared workspaces found.</div>
     </div>
   </div>
 
@@ -87,7 +87,7 @@
           <div id="inviteMessageContainer"></div>
           <form id="invite-form">
             <input type="hidden" id="manage-workspace-id" />
-            <div style="position: relative;">
+            <div class="position-relative">
               <input type="email" id="invite-email" required placeholder="User email" class="form-input"
                 autocomplete="off" />
               <div id="email-suggestions" class="suggestions-dropdown hidden"></div>
@@ -110,7 +110,7 @@
           <button class="tab-btn active" id="tab-members">
             Members
           </button>
-          <button class="tab-btn" id="tab-invites" style="color: var(--text-muted); border-bottom-color: transparent;">
+          <button class="tab-btn" id="tab-invites">
             Pending Invitations
           </button>
         </div>
@@ -139,12 +139,12 @@
       </div>
       <div class="modal-body">
         <form id="create-workspace-form">
-          <div style="margin-bottom: 1rem">
+          <div class="mb-1">
             <label class="form-label">Workspace Name</label>
             <input type="text" id="new-workspace-name" required class="form-input"
               placeholder="e.g. Finance Projects" />
           </div>
-          <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
+          <div class="flex-end-gap">
             <button type="button" id="cancel-create-btn" class="btn-secondary">Cancel</button>
             <button type="submit" class="btn-primary">Create</button>
           </div>

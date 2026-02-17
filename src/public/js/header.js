@@ -109,10 +109,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Show Admin Links
       if (user.role === 'admin') {
-        if (adminLink) adminLink.style.display = 'block';
-        if (adminJobsLink) adminJobsLink.style.display = 'block';
-        if (appSettingsLink) appSettingsLink.style.display = 'block';
-        if (adminOptionsHeader) adminOptionsHeader.style.display = 'block';
+        if (adminLink) adminLink.classList.remove('hidden');
+        if (adminJobsLink) adminJobsLink.classList.remove('hidden');
+        if (appSettingsLink) appSettingsLink.classList.remove('hidden');
+        if (adminOptionsHeader) adminOptionsHeader.classList.remove('hidden');
       } else {
         // Redirect non-admins if they are on an admin page
         const adminPages = ['/admin-jobs.html', '/admin-users.html', '/app-settings.html'];

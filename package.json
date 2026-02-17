@@ -1,8 +1,23 @@
 {
   "name": "processace",
-  "version": "0.0.1",
-  "private": true,
+  "version": "1.0.0",
   "description": "AI-powered process discovery and documentation engine – from recordings and docs to BPMN 2.0, SIPOC and RACI. Self-hosted with bring-your-own LLM.",
+  "author": "jgleiser",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgleiser/ProcessAce.git"
+  },
+  "homepage": "https://github.com/jgleiser/ProcessAce#readme",
+  "keywords": [
+    "bpmn",
+    "process-mining",
+    "sipoc",
+    "raci",
+    "llm",
+    "ai",
+    "process-documentation"
+  ],
   "scripts": {
     "dev": "node ./src/index.js",
     "lint": "eslint .",

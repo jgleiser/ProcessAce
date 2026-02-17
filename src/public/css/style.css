@@ -2020,6 +2020,7 @@ body {
 #invite-form button {
     white-space: nowrap;
 }
+
 /* Autocomplete Suggestions */
 .suggestions-dropdown {
     position: absolute;
@@ -2062,3 +2063,135 @@ body {
     color: var(--text-muted);
 }
 
+/* ── Utility classes (replacing inline styles) ── */
+
+/* Workspace selector labels and links */
+.ws-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.ws-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.ws-change-link {
+    font-size: 0.8rem;
+    color: var(--primary);
+    margin-left: 0.5rem;
+}
+
+.ws-cancel-link {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: 0.3rem;
+}
+
+/* Workspace selector form controls */
+.ws-select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #555;
+    font-size: 0.85rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.ws-new-input {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #555;
+    font-size: 0.85rem;
+    width: 140px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.ws-action-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Process name input in upload zone */
+.process-name-input {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    width: 80%;
+}
+
+/* Workspace creation modal */
+.modal-small {
+    max-width: 400px;
+}
+
+.close-modal-sm {
+    cursor: pointer;
+    font-size: 1.5rem;
+}
+
+.ws-modal-input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.btn-cancel {
+    background: #666;
+}
+
+/* Layout utility classes */
+.flex-end-gap {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.header-row-stacked {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.subtitle-banner {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Grid: full-span  */
+.grid-full-span {
+    grid-column: 1 / -1;
+}
+
+/* Icon sizing */
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+/* API key input container */
+.api-key-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Delete API key button */
+.btn-delete-key {
+    color: var(--error);
+}
+
+/* Form group bottom margin */
+.mb-1 {
+    margin-bottom: 1rem;
+}
+
+/* Position utility */
+.position-relative {
+    position: relative;
+}

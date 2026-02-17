@@ -63,8 +63,8 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 1.  **Clone the repository**:
 
     ```bash
-    git clone https://github.com/<your-org>/processace.git
-    cd processace
+    git clone https://github.com/jgleiser/ProcessAce.git
+    cd ProcessAce
     ```
 
 2.  **Configure Environment**:

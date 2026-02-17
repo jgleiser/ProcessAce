@@ -27,10 +27,10 @@
           <div id="userDropdown" class="user-dropdown hidden">
             <a href="/user-settings.html">User Settings</a>
             <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-            <div id="adminOptionsHeader" class="admin-options-header" style="display: none">Admin options</div>
-            <a href="/admin-users.html" id="adminLink" style="display: none">Users</a>
-            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
-            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
+            <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
             <button id="logoutBtn">Logout</button>
           </div>
         </div>
@@ -63,7 +63,7 @@
               <span class="status-icon">✓</span>
               <span>API Key is configured</span>
               <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
-              <button type="button" id="deleteApiKeyBtn" class="btn-change" style="color: var(--error)">
+              <button type="button" id="deleteApiKeyBtn" class="btn-change btn-delete-key">
                 Delete
               </button>
               <button type="button" id="loadModelsBtnConfigured" class="btn-compact">
@@ -72,7 +72,7 @@
             </div>
           </div>
           <!-- Input State -->
-          <div id="apiKeyInputContainer" style="display: flex; gap: 0.5rem">
+          <div id="apiKeyInputContainer" class="api-key-input-row">
             <input type="password" id="apiKeyInput" class="form-input" placeholder="Enter API Key" autocomplete="off" />
             <button type="button" id="loadModelsBtn" class="btn-secondary">
               Load Models

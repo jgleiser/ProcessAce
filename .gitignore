@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 uploads/
 samples/
 logo/
+data/
+debug/
+lint_output.txt

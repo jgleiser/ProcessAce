@@ -28,40 +28,21 @@
         <div class="workspace-selector" id="workspaceSelector">
           <!-- View Mode (default) -->
           <div id="workspaceViewMode" class="workspace-view-mode">
-            <span style="font-size: 0.85rem; color: var(--text-muted)">Workspace:</span>
-            <span id="currentWorkspaceName"
-              style="font-size: 0.85rem; font-weight: 500; color: var(--text-color)">Loading...</span>
-            <a href="#" id="changeWorkspaceLink"
-              style="font-size: 0.8rem; color: var(--primary); margin-left: 0.5rem">Change</a>
+            <span class="ws-label">Workspace:</span>
+            <span id="currentWorkspaceName" class="ws-name">Loading...</span>
+            <a href="#" id="changeWorkspaceLink" class="ws-change-link">Change</a>
           </div>
           <!-- Edit Mode (hidden by default) -->
-          <div id="workspaceEditMode" class="workspace-edit-mode" style="display: none">
-            <span style="font-size: 0.85rem; color: var(--text-muted)">Workspace:</span>
-            <select id="workspaceSelect" style="
-                  padding: 0.4rem 0.6rem;
-                  border-radius: 6px;
-                  border: 1px solid #555;
-                  font-size: 0.85rem;
-                  background: var(--bg-color);
-                  color: var(--text-color);
-                ">
+          <div id="workspaceEditMode" class="workspace-edit-mode hidden">
+            <span class="ws-label">Workspace:</span>
+            <select id="workspaceSelect" class="ws-select">
               <option value="">Loading...</option>
             </select>
-            <input type="text" id="newWorkspaceInput" placeholder="New workspace name..." style="
-                  display: none;
-                  padding: 0.4rem 0.6rem;
-                  border-radius: 6px;
-                  border: 1px solid #555;
-                  font-size: 0.85rem;
-                  width: 140px;
-                  background: var(--bg-color);
-                  color: var(--text-color);
-                " />
-            <button id="workspaceActionBtn" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem">
+            <input type="text" id="newWorkspaceInput" placeholder="New workspace name..." class="ws-new-input hidden" />
+            <button id="workspaceActionBtn" class="btn-primary ws-action-btn">
               Select
             </button>
-            <a href="#" id="cancelWorkspaceLink"
-              style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem">Cancel</a>
+            <a href="#" id="cancelWorkspaceLink" class="ws-cancel-link">Cancel</a>
           </div>
         </div>
 
@@ -73,16 +54,16 @@
           <div id="userDropdown" class="user-dropdown hidden">
             <a href="/user-settings.html">User Settings</a>
             <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-            <div id="adminOptionsHeader" class="admin-options-header" style="display: none">Admin options</div>
-            <a href="/admin-users.html" id="adminLink" style="display: none">Users</a>
-            <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
-            <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
+            <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
+            <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
+            <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
+            <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
             <button id="logoutBtn">Logout</button>
           </div>
         </div>
       </div>
     </header>
-    <div style="text-align: center; margin-bottom: 2rem">
+    <div class="subtitle-banner">
       <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
     </div>
 
@@ -100,13 +81,7 @@
             </div>
             <h3>Drop your evidence here</h3>
             <p>Support for Audio, Video, and Documents</p>
-            <input type="text" id="processNameInput" placeholder="Process Name (Optional)" style="
-                  margin-bottom: 20px;
-                  padding: 10px;
-                  border-radius: 6px;
-                  border: 1px solid #ccc;
-                  width: 80%;
-                " />
+            <input type="text" id="processNameInput" placeholder="Process Name (Optional)" class="process-name-input" />
             <input type="file" id="fileInput" hidden />
             <button class="btn-primary" id="browseBtn">Browse Files</button>
           </div>
@@ -143,22 +118,15 @@
   </div>
   <!-- Workspace Creation Modal -->
   <div id="workspaceModal" class="modal hidden">
-    <div class="modal-content" style="max-width: 400px">
+    <div class="modal-content modal-small">
       <div class="modal-header">
         <h3>Create Workspace</h3>
-        <span class="close-workspace-modal" style="cursor: pointer; font-size: 1.5rem">&times;</span>
+        <span class="close-workspace-modal close-modal-sm">&times;</span>
       </div>
-      <div class="modal-body" style="padding: 1.5rem">
-        <input type="text" id="newWorkspaceName" placeholder="Workspace Name" style="
-              width: 100%;
-              padding: 0.8rem;
-              border-radius: 6px;
-              border: 1px solid #ccc;
-              margin-bottom: 1rem;
-              box-sizing: border-box;
-            " />
-        <div style="display: flex; gap: 0.5rem; justify-content: flex-end">
-          <button id="cancelWorkspaceBtn" class="btn-primary" style="background: #666">
+      <div class="modal-body">
+        <input type="text" id="newWorkspaceName" placeholder="Workspace Name" class="ws-modal-input" />
+        <div class="flex-end-gap">
+          <button id="cancelWorkspaceBtn" class="btn-primary btn-cancel">
             Cancel
           </button>
           <button id="confirmCreateWorkspaceBtn" class="btn-primary">Create</button>
