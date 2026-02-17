@@ -151,3 +151,4 @@ vite.config.ts.timestamp-*
 # Local files
 uploads/
 samples/
+logo/
