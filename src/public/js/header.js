@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const adminLink = document.getElementById('adminLink');
   const adminJobsLink = document.getElementById('adminJobsLink');
   const appSettingsLink = document.getElementById('appSettingsLink');
+  const adminOptionsHeader = document.getElementById('adminOptionsHeader');
 
   const headerControls = document.querySelector('.header-controls');
 
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adminLink) adminLink.style.display = 'block';
         if (adminJobsLink) adminJobsLink.style.display = 'block';
         if (appSettingsLink) appSettingsLink.style.display = 'block';
+        if (adminOptionsHeader) adminOptionsHeader.style.display = 'block';
       } else {
         // Redirect non-admins if they are on an admin page
         const adminPages = ['/admin-jobs.html', '/admin-users.html', '/app-settings.html'];
@@ -126,8 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Not authenticated - redirect to login unless on public page
       if (
         window.location.pathname !== '/login.html' &&
-        window.location.pathname !== '/register.html' &&
-        window.location.pathname !== '/accept-invite.html'
+        window.location.pathname !== '/register.html'
       ) {
         window.location.href = '/login.html';
       }

@@ -177,16 +177,20 @@ class WorkspaceService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
+    // Fixed syntax error
     try {
+      // 1. Check if user exists (ENFORCED)
+      const recipientUser = db
+        .prepare('SELECT id, email, name FROM users WHERE email = ?')
+        .get(email);
+      if (!recipientUser) {
+        throw new Error('User must be registered to be invited');
+      }
+
       // Check if user is already a member
       const existingMember = db
-        .prepare(
-          `
-                SELECT user_id FROM workspace_members 
-                WHERE workspace_id = ? AND user_id = (SELECT id FROM users WHERE email = ?)
-            `,
-        )
-        .get(workspaceId, email);
+        .prepare('SELECT 1 FROM workspace_members WHERE workspace_id = ? AND user_id = ?')
+        .get(workspaceId, recipientUser.id);
 
       if (existingMember) {
         throw new Error('User is already a member of this workspace');
@@ -207,7 +211,6 @@ class WorkspaceService {
                     WHERE id = ?
                 `,
         ).run(token, inviterId, role, expiresAt, now.toISOString(), existingInvite.id);
-        return { token, email, expiresAt, status: 'updated' };
       } else {
         const id = uuidv4();
         db.prepare(
@@ -216,33 +219,30 @@ class WorkspaceService {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `,
         ).run(id, workspaceId, inviterId, email, role, token, now.toISOString(), expiresAt);
-
-        // Notify user if they exist
-        const recipientUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-        if (recipientUser) {
-          // Remove any existing notifications for this workspace to prevent stale tokens
-          notificationService.removeWorkspaceInvitations(recipientUser.id, workspaceId);
-
-          const workspace = this.getWorkspace(workspaceId);
-          const inviter = db.prepare('SELECT name, email FROM users WHERE id = ?').get(inviterId);
-          const inviterName = inviter ? inviter.name || inviter.email : 'Someone';
-
-          notificationService.createNotification(
-            recipientUser.id,
-            'workspace_invite',
-            'New Workspace Invitation',
-            `${inviterName} invited you to join ${workspace.name}`,
-            {
-              token,
-              workspaceId,
-              workspaceName: workspace.name,
-              inviterName,
-            },
-          );
-        }
-
-        return { token, email, expiresAt, status: 'created' };
       }
+
+      // Create In-App Notification
+      // Remove any existing notifications for this workspace to prevent stale tokens
+      notificationService.removeWorkspaceInvitations(recipientUser.id, workspaceId);
+
+      const workspace = this.getWorkspace(workspaceId);
+      const inviter = db.prepare('SELECT name, email FROM users WHERE id = ?').get(inviterId);
+      const inviterName = inviter ? inviter.name || inviter.email : 'Someone';
+
+      notificationService.createNotification(
+        recipientUser.id,
+        'workspace_invite',
+        'New Workspace Invitation',
+        `${inviterName} invited you to join ${workspace.name}`,
+        {
+          token,
+          workspaceId,
+          workspaceName: workspace.name,
+          inviterName,
+        },
+      );
+
+      return { token, email, expiresAt, status: existingInvite ? 'updated' : 'created' };
     } catch (error) {
       logger.error({ err: error }, 'Error creating invitation');
       throw error;

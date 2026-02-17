@@ -37,9 +37,9 @@ class AuthService {
       const userId = uuidv4();
       const now = new Date().toISOString();
 
-      // Determine role: first user becomes admin, others become viewer
+      // Determine role: first user becomes admin, others become editor
       const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
-      const role = userCount.count === 0 ? 'admin' : 'viewer';
+      const role = userCount.count === 0 ? 'admin' : 'editor';
       const status = 'active';
 
       // Insert user with role, status, and name
@@ -236,6 +236,21 @@ class AuthService {
     }
 
     return this.getUserById(id);
+  }
+  /**
+   * Search users by name or email
+   * @param {string} query
+   * @returns {Array} List of matching users (id, name, email)
+   */
+  searchUsers(query) {
+    if (!query || query.length < 2) return [];
+
+    const likeQuery = `%${query}%`;
+    return db
+      .prepare(
+        'SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10',
+      )
+      .all(likeQuery, likeQuery);
   }
 }
 

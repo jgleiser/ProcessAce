@@ -81,4 +81,19 @@ router.put('/me', authenticateToken, async (req, res) => {
   }
 });
 
+// Search Users
+router.get('/users/search', authenticateToken, (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.json([]);
+    }
+    const users = authService.searchUsers(q);
+    res.json(users);
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to search users');
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+});
+
 module.exports = router;

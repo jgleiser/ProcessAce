@@ -28,6 +28,7 @@
           <div id="userDropdown" class="user-dropdown hidden">
             <a href="/user-settings.html">User Settings</a>
             <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+            <div id="adminOptionsHeader" class="admin-options-header" style="display: none">Admin options</div>
             <a href="/admin-users.html" id="adminLink" style="display: none">Users</a>
             <a href="/admin-jobs.html" id="adminJobsLink" style="display: none">Jobs Dashboard</a>
             <a href="/app-settings.html" id="appSettingsLink" style="display: none">App Settings</a>
@@ -86,7 +87,11 @@
           <div id="inviteMessageContainer"></div>
           <form id="invite-form">
             <input type="hidden" id="manage-workspace-id" />
-            <input type="email" id="invite-email" required placeholder="User email" class="form-input" />
+            <div style="position: relative;">
+              <input type="email" id="invite-email" required placeholder="User email" class="form-input"
+                autocomplete="off" />
+              <div id="email-suggestions" class="suggestions-dropdown hidden"></div>
+            </div>
 
             <select id="invite-role-select" class="form-input">
               <option value="viewer">Viewer</option>

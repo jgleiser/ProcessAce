@@ -7,6 +7,7 @@
   <title>Register - ProcessAce</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/modal-utils.js"></script>
 </head>
 
 <body>
@@ -74,7 +75,11 @@
         const data = await response.json();
 
         if (response.ok) {
-          alert('Registration successful! Please login.');
+          await window.showAlertModal(
+            'Registration successful! Please login.',
+            'Success',
+            'Accept',
+          );
           window.location.href = '/login.html';
         } else {
           errorMsg.textContent = data.error || 'Registration failed';

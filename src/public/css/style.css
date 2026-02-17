@@ -799,6 +799,18 @@ body {
     background: var(--card-hover);
 }
 
+.user-dropdown .admin-options-header {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--primary);
+    pointer-events: none;
+}
+
 /* --- Admin & Jobs Shared Styles --- */
 
 .header-row {
@@ -2008,3 +2020,45 @@ body {
 #invite-form button {
     white-space: nowrap;
 }
+/* Autocomplete Suggestions */
+.suggestions-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestions-dropdown .suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+
+.suggestions-dropdown .suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestions-dropdown .suggestion-item:hover {
+    background: var(--card-hover);
+}
+
+.suggestions-dropdown .suggestion-name {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.suggestions-dropdown .suggestion-email {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+

@@ -83,3 +83,69 @@ window.showConfirmModal = function (
     yesBtn.focus();
   });
 };
+
+// Function to inject alert modal HTML if not present
+function ensureAlertModalExists() {
+  if (!document.getElementById('alertModal')) {
+    const modalHtml = `
+    <div id="alertModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0px; padding-top: 2rem;">
+                <h3 id="alertTitle" style="font-size: 1.5rem;">Alert</h3>
+            </div>
+            <div class="modal-body" style="padding: 1rem 2rem 2rem 2rem;">
+                <p id="alertMessage" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; white-space: pre-wrap;"></p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button id="alertBtn" class="btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+}
+
+// Global function to show alert modal
+window.showAlertModal = function (message, title = 'Alert', btnLabel = 'OK') {
+  ensureAlertModalExists();
+
+  return new Promise((resolve) => {
+    const modal = document.getElementById('alertModal');
+    const msgEl = document.getElementById('alertMessage');
+    const titleEl = document.getElementById('alertTitle');
+    const btn = document.getElementById('alertBtn');
+
+    if (msgEl) msgEl.textContent = message;
+    if (titleEl) titleEl.textContent = title;
+    if (btn) btn.textContent = btnLabel;
+
+    modal.classList.remove('hidden');
+
+    // Force reflow
+    void modal.offsetWidth;
+
+    const cleanup = () => {
+      modal.classList.add('hidden');
+      btn.removeEventListener('click', onBtn);
+      window.removeEventListener('keydown', onKey);
+    };
+
+    const onBtn = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault();
+        onBtn();
+      }
+    };
+
+    btn.addEventListener('click', onBtn);
+    window.addEventListener('keydown', onKey);
+
+    btn.focus();
+  });
+};

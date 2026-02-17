@@ -87,7 +87,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `/api/artifacts` – Artifact retrieval and content updates (authenticated).
   - `/api/workspaces` – Workspace CRUD (authenticated).
   - `/api/settings` – App settings management (admin only, `src/api/settings.js`).
-  - `/api/admin` – User management, all-jobs overview (admin only, `src/api/admin.js`).
+  - `/api/admin` – User management, all-jobs overview (admin only, `src/api/admin-users.js`).
 
 The backend **does not perform heavy work synchronously**.  
 Instead, it:

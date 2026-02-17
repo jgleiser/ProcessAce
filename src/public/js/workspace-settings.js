@@ -505,6 +505,70 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (inviteForm) {
+    const inviteEmailInput = document.getElementById('invite-email');
+    const suggestionsContainer = document.getElementById('email-suggestions');
+    let debounceTimer;
+
+    // Autocomplete Logic
+    if (inviteEmailInput && suggestionsContainer) {
+      inviteEmailInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+          suggestionsContainer.classList.add('hidden');
+          return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/auth/users/search?q=${encodeURIComponent(query)}`);
+            if (res.ok) {
+              const users = await res.json();
+              renderSuggestions(users);
+            }
+          } catch (err) {
+            console.error('Failed to search users', err);
+          }
+        }, 300);
+      });
+
+      function renderSuggestions(users) {
+        if (users.length === 0) {
+          suggestionsContainer.classList.add('hidden');
+          return;
+        }
+
+        suggestionsContainer.innerHTML = users
+          .map(
+            (u) => `
+                    <div class="suggestion-item" data-email="${u.email}">
+                        <span class="suggestion-name">${u.name}</span>
+                        <span class="suggestion-email">${u.email}</span>
+                    </div>
+                `,
+          )
+          .join('');
+
+        suggestionsContainer.classList.remove('hidden');
+
+        // Add click listeners
+        suggestionsContainer.querySelectorAll('.suggestion-item').forEach((item) => {
+          item.addEventListener('click', () => {
+            inviteEmailInput.value = item.dataset.email;
+            suggestionsContainer.classList.add('hidden');
+          });
+        });
+      }
+
+      // Hide when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!inviteEmailInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+          suggestionsContainer.classList.add('hidden');
+        }
+      });
+    }
+
     inviteForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const wid = manageWorkspaceIdInput.value;
