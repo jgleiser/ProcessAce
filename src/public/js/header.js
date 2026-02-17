@@ -111,6 +111,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adminLink) adminLink.style.display = 'block';
         if (adminJobsLink) adminJobsLink.style.display = 'block';
         if (appSettingsLink) appSettingsLink.style.display = 'block';
+      } else {
+        // Redirect non-admins if they are on an admin page
+        const adminPages = ['/admin-jobs.html', '/admin-users.html', '/app-settings.html'];
+        if (adminPages.includes(window.location.pathname)) {
+          window.location.href = '/';
+          return;
+        }
       }
 
       // Setup Notifications
