@@ -35,5 +35,5 @@ We chose the following approach:
 - All API routes (except `/health`, `/api/auth/register`, `/api/auth/login`) require a valid JWT.
 - JWT secret must be configured via `JWT_SECRET` env var in production.
 - Password complexity is enforced server-side (8+ chars, uppercase, lowercase, numbers).
-- Admin pages (`admin.html`, `admin-jobs.html`, `app-settings.html`) are protected by `requireAdmin` middleware.
+- Admin pages (`admin-users.html`, `admin-jobs.html`, `app-settings.html`) are protected by `requireAdmin` middleware.
 - Database schema expanded: `users`, `workspaces`, `workspace_members` tables added.

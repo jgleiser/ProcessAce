@@ -118,7 +118,7 @@ You can edit generated artifacts directly within the browser.
 ## Administration (Admin Only)
 
 ### User Management
-1.  Go to **Admin** (`/admin.html`).
+1.  Go to **Admin** (`/admin-users.html`).
 2.  View all registered users with their name, email, role, and status.
 3.  **Change Role**: Select Admin, Editor, or Viewer from the role dropdown.
 4.  **Change Status**: Toggle between Active and Inactive. Inactive users cannot log in.

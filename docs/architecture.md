@@ -62,7 +62,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
 - Pages:
   - `index.html` – Main dashboard (upload, job list, artifact viewer/editor).
   - `login.html` / `register.html` – Authentication.
-  - `admin.html` – Admin panel for user management (roles, status).
+  - `admin-users.html` – Admin panel for user management (roles, status).
   - `admin-jobs.html` – Admin view of all jobs across workspaces.
   - `app-settings.html` – Application settings (LLM providers, API keys).
   - `user-settings.html` – User profile (name, password).
