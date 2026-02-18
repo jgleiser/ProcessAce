@@ -325,7 +325,7 @@ function renderPagination(pagination) {
   if (startPage > 1) {
     buttonsHtml += `<button class="page-btn" data-page="1">1</button>`;
     if (startPage > 2) {
-      buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
     }
   }
 
@@ -339,7 +339,7 @@ function renderPagination(pagination) {
 
   if (endPage < pages) {
     if (endPage < pages - 1) {
-      buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
     }
     buttonsHtml += `<button class="page-btn" data-page="${pages}">${pages}</button>`;
   }

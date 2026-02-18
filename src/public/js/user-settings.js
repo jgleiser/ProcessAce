@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const messageContainer = document.getElementById('messageContainer');
 
   function showMessage(type, text) {
-    messageContainer.innerHTML = `<div style="padding: 1rem; margin-bottom: 1rem; border-radius: 8px; background: ${type === 'error' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 230, 118, 0.1)'}; color: ${type === 'error' ? 'var(--error)' : 'var(--success)'}; border: 1px solid ${type === 'error' ? 'var(--error)' : 'var(--success)'};">${text}</div>`;
+    messageContainer.innerHTML = `<div class="settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}">${text}</div>`;
   }
 
   // Load current user data

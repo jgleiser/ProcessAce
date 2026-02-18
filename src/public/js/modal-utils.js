@@ -3,13 +3,13 @@ function ensureConfirmModalExists() {
   if (!document.getElementById('confirmModal')) {
     const modalHtml = `
     <div id="confirmModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0px; padding-top: 2rem;">
-                <h3 id="confirmTitle" style="font-size: 1.5rem;">Confirm Action</h3>
+        <div class="modal-content modal-dialog">
+            <div class="modal-header modal-dialog-header">
+                <h3 id="confirmTitle" class="modal-dialog-title">Confirm Action</h3>
             </div>
-            <div class="modal-body" style="padding: 1rem 2rem 2rem 2rem;">
-                <p id="confirmMessage" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; white-space: pre-wrap;">Are you sure?</p>
-                <div style="display: flex; gap: 1rem; justify-content: center;">
+            <div class="modal-body modal-dialog-body">
+                <p id="confirmMessage" class="modal-dialog-message">Are you sure?</p>
+                <div class="modal-dialog-actions">
                     <button id="confirmNo" class="btn-secondary">Cancel</button>
                     <button id="confirmYes" class="btn-danger">Confirm</button>
                 </div>
@@ -89,13 +89,13 @@ function ensureAlertModalExists() {
   if (!document.getElementById('alertModal')) {
     const modalHtml = `
     <div id="alertModal" class="modal hidden">
-        <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0px; padding-top: 2rem;">
-                <h3 id="alertTitle" style="font-size: 1.5rem;">Alert</h3>
+        <div class="modal-content modal-dialog">
+            <div class="modal-header modal-dialog-header">
+                <h3 id="alertTitle" class="modal-dialog-title">Alert</h3>
             </div>
-            <div class="modal-body" style="padding: 1rem 2rem 2rem 2rem;">
-                <p id="alertMessage" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; white-space: pre-wrap;"></p>
-                <div style="display: flex; gap: 1rem; justify-content: center;">
+            <div class="modal-body modal-dialog-body">
+                <p id="alertMessage" class="modal-dialog-message"></p>
+                <div class="modal-dialog-actions">
                     <button id="alertBtn" class="btn-primary">OK</button>
                 </div>
             </div>

@@ -222,7 +222,7 @@ function renderPagination(pagination) {
   if (startPage > 1) {
     buttonsHtml += `<button class="page-btn" data-page="1">1</button>`;
     if (startPage > 2) {
-      buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
     }
   }
 
@@ -236,7 +236,7 @@ function renderPagination(pagination) {
 
   if (endPage < totalPages) {
     if (endPage < totalPages - 1) {
-      buttonsHtml += `<span style="color: var(--text-muted);">...</span>`;
+      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
     }
     buttonsHtml += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
   }
@@ -344,7 +344,7 @@ async function viewArtifact(id, type) {
   }
 
   openArtifactModalFn();
-  artifactModalBody.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+  artifactModalBody.innerHTML = '<div class="spinner spinner-centered"></div>';
   artifactModalTitle.textContent = `Viewing ${type.toUpperCase()}`;
 
   try {
@@ -362,7 +362,7 @@ async function viewArtifact(id, type) {
 
     renderArtifactContent(type, content, id);
   } catch (err) {
-    artifactModalBody.innerHTML = `<p style="color:var(--error)">Error loading artifact: ${err.message}</p>`;
+    artifactModalBody.innerHTML = `<p class="text-error">Error loading artifact: ${err.message}</p>`;
   }
 }
 
@@ -436,7 +436,7 @@ function renderArtifactContent(type, content, _artifactId) {
     setModalClasses(true);
     artifactModalBody.innerHTML = `
             <div class="bpmn-controls">
-                <div id="viewControls" style="display:flex; gap:10px;">
+                <div id="viewControls" class="bpmn-controls-group">
                     <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
                     <button class="bpmn-btn primary" id="downloadSvg">Download SVG</button>
                 </div>
@@ -473,8 +473,7 @@ function renderArtifactContent(type, content, _artifactId) {
   } else if (type === 'doc') {
     setModalClasses(false);
     if (typeof marked === 'undefined') {
-      artifactModalBody.innerHTML =
-        '<p style="color:var(--error)">Error: Marked library not loaded.</p>';
+      artifactModalBody.innerHTML = '<p class="text-error">Error: Marked library not loaded.</p>';
       return;
     }
     artifactModalBody.innerHTML = `
@@ -510,7 +509,7 @@ function renderArtifactContent(type, content, _artifactId) {
       .catch((err) => {
         console.error('BPMN Import Error', err);
         document.getElementById('bpmn-canvas').innerHTML =
-          `<p style="color:var(--error); padding:20px;">Error rendering BPMN: ${err.message}</p>`;
+          `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
       });
   }
 }

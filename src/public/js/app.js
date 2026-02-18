@@ -119,29 +119,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Let's hide uploadZone's parent if it's the main container.
 
     // Simpler: Just hide/disable uploadZone.
+    const viewerMsgId = 'viewer-msg';
+    let msg = document.getElementById(viewerMsgId);
+
     if (role === 'viewer') {
       if (uploadContainer) {
-        uploadContainer.style.display = 'none';
+        uploadContainer.classList.add('hidden');
       } else if (uploadZone) {
-        uploadZone.style.display = 'none';
+        uploadZone.classList.add('hidden');
       }
       // Show a message
-      let msg = document.getElementById('viewer-msg');
       if (!msg) {
         msg = document.createElement('div');
-        msg.id = 'viewer-msg';
-        msg.className = 'card';
-        msg.style.textAlign = 'center';
-        msg.style.color = '#888';
+        msg.id = viewerMsgId;
+        msg.className = 'card viewer-message';
         msg.textContent = 'You have viewer access. You cannot start new jobs.';
         uploadZone.parentNode.insertBefore(msg, uploadZone);
       } else {
-        msg.style.display = 'block';
+        msg.classList.remove('hidden');
       }
     } else {
-      if (uploadZone) uploadZone.style.display = 'block';
-      const msg = document.getElementById('viewer-msg');
-      if (msg) msg.style.display = 'none';
+      if (uploadZone) uploadZone.classList.remove('hidden');
+      if (msg) msg.classList.add('hidden');
     }
   }
 
@@ -197,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Create new workspace
         const name = newWorkspaceInput ? newWorkspaceInput.value.trim() : '';
         if (!name) {
-          alert('Please enter a workspace name');
+          await showAlertModal('Please enter a workspace name');
           return;
         }
 
@@ -329,10 +328,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const originalContent = uploadZone.innerHTML;
     uploadZone.innerHTML = `
             <div class="upload-progress">
-                <div class="spinner" style="border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+                <div class="spinner"></div>
                 <p>Uploading ${file.name}...</p>
             </div>
-            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
         `;
 
     const formData = new FormData();
@@ -419,8 +417,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById(`job-title-container-${jobId}`);
       const editContainer = document.getElementById(`job-edit-container-${jobId}`);
       if (container && editContainer) {
-        container.style.display = 'none';
-        editContainer.style.display = 'flex';
+        container.classList.add('hidden');
+        editContainer.classList.remove('hidden');
         editContainer.querySelector('input').focus();
       }
       return;
@@ -476,8 +474,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const container = document.getElementById(`job-title-container-${jobId}`);
       const editContainer = document.getElementById(`job-edit-container-${jobId}`);
       if (container && editContainer) {
-        container.style.display = 'flex';
-        editContainer.style.display = 'none';
+        container.classList.remove('hidden');
+        editContainer.classList.add('hidden');
       }
       return;
     }
@@ -508,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       modalContent.classList.remove('modal-content-expanded');
     }
     openArtifactModal();
-    modalBody.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+    modalBody.innerHTML = '<div class="spinner spinner-centered"></div>';
     modalTitle.textContent = `Viewing ${type.toUpperCase()}`;
 
     try {
@@ -524,9 +522,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         content = await res.text();
       }
 
+      currentCanEdit = canEdit;
       renderModalContent(type, content, id, canEdit);
     } catch (err) {
-      modalBody.innerHTML = `<p style="color:var(--error)">Error loading artifact: ${err.message}</p>`;
+      modalBody.innerHTML = `<p class="text-error">Error loading artifact: ${err.message}</p>`;
     }
   }
 
@@ -534,6 +533,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentArtifactId = null;
   let currentArtifactContent = null;
   let currentArtifactType = null; // Store type for re-rendering
+  let currentCanEdit = false; // Store permission for re-rendering
 
   function renderModalContent(type, content, artifactId, canEdit = false) {
     currentArtifactId = artifactId;
@@ -544,19 +544,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Set up container with Control Bar
       modalBody.innerHTML = `
                 <div class="bpmn-controls">
-                    <div id="viewControls" style="display:flex; gap:10px;">
+                    <div id="viewControls" class="bpmn-controls-group">
                         ${canEdit ? `<button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>` : ''}
                         <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
-                        <div class="dropdown" style="position:relative; display:inline-block;">
+                        <div class="dropdown-wrapper">
                             <button class="bpmn-btn primary" id="exportBpmnBtn">Export ▼</button>
-                            <div id="bpmnExportMenu" class="dropdown-content hidden" style="position:absolute; right:0; background:var(--card-bg); border:1px solid var(--border-color); border-radius:var(--radius-md); min-width:120px; z-index:100; box-shadow:var(--shadow-lg);">
-                                <a href="#" id="exportBpmnXml" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">BPMN XML</a>
-                                <a href="#" id="exportBpmnPng" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">PNG Image</a>
-                                <a href="#" id="exportBpmnSvg" style="display:block; padding:8px 12px; color:var(--text-main); text-decoration:none;">SVG Image</a>
+                            <div id="bpmnExportMenu" class="dropdown-menu hidden">
+                                <a href="#" id="exportBpmnXml" class="dropdown-menu-item">BPMN XML</a>
+                                <a href="#" id="exportBpmnPng" class="dropdown-menu-item">PNG Image</a>
+                                <a href="#" id="exportBpmnSvg" class="dropdown-menu-item">SVG Image</a>
                             </div>
                         </div>
                     </div>
-                    <div id="editControls" class="hidden" style="display:none; gap:10px;">
+                    <div id="editControls" class="bpmn-controls-group hidden">
                         <button class="bpmn-btn primary" id="saveBpmn">Save Changes</button>
                         <button class="bpmn-btn" id="cancelEdit">Cancel</button>
                     </div>
@@ -602,10 +602,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Control Bar
       const isSipoc = type === 'sipoc';
       let html = `
-                <div class="table-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
+                <div class="table-controls table-controls-bar">
                     ${canEdit ? `<button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>` : ''}
-                    <button class="bpmn-btn primary" id="btn-export-csv" style="background-color: #2e7d32; border-color: #2e7d32;">Export CSV</button>
-                    <div id="editTableControls" class="hidden" style="display:none; gap:10px;">
+                    <button class="bpmn-btn primary btn-export-csv" id="btn-export-csv">Export CSV</button>
+                    <div id="editTableControls" class="bpmn-controls-group hidden">
                          <button class="bpmn-btn primary" id="btn-add-row">+ Add Row</button>
                          <button class="bpmn-btn primary" id="btn-save-table">Save Changes</button>
                          <button class="bpmn-btn" id="btn-cancel-table">Cancel</button>
@@ -650,22 +650,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (type === 'doc') {
       // Markdown
       if (typeof marked === 'undefined') {
-        modalBody.innerHTML = '<p style="color:var(--error)">Error: Marked library not loaded.</p>';
+        modalBody.innerHTML = '<p class="text-error">Error: Marked library not loaded.</p>';
         return;
       }
       modalBody.innerHTML = `
-                <div class="doc-controls" style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:10px;">
+                <div class="doc-controls doc-controls-bar">
                     ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">Edit Document</button>` : ''}
-                    <button class="bpmn-btn primary" id="btn-export-md" style="background-color: #0277bd; border-color: #0277bd;">Download MD</button>
-                    <button class="bpmn-btn primary" id="btn-print-doc" style="background-color: #455a64; border-color: #455a64;">Print / PDF</button>
+                    <button class="bpmn-btn primary btn-download-md" id="btn-export-md">Download MD</button>
+                    <button class="bpmn-btn primary btn-print-doc" id="btn-print-doc">Print / PDF</button>
 
-                    <div id="editDocControls" class="hidden" style="display:none; gap:10px;">
+                    <div id="editDocControls" class="bpmn-controls-group hidden">
                          <button class="bpmn-btn primary" id="saveDoc">Save Changes</button>
                          <button class="bpmn-btn" id="cancelDocEdit">Cancel</button>
                     </div>
                 </div>
                 <div id="markdown-content" class="markdown-content">${marked.parse(content)}</div>
-                <textarea id="markdown-editor" style="display:none;"></textarea>
+                <textarea id="markdown-editor" class="hidden"></textarea>
             `;
 
       if (canEdit) document.getElementById('editDoc').onclick = () => switchToDocEditMode();
@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('BPMN Import Error', err);
         const canvas = document.getElementById('bpmn-canvas');
         if (canvas)
-          canvas.innerHTML = `<p style="color:var(--error); padding:20px;">Error rendering BPMN: ${err.message}</p>`;
+          canvas.innerHTML = `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
       });
   }
 
@@ -720,9 +720,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     destroyBpmn();
 
     // Toggle UI
-    document.getElementById('viewControls').style.display = 'none';
+    document.getElementById('viewControls').classList.add('hidden');
     document.getElementById('editControls').classList.remove('hidden');
-    document.getElementById('editControls').style.display = 'flex';
 
     // Initialize MODELER
     bpmnInstance = new BpmnJS({
@@ -782,8 +781,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function cancelEdit() {
     // Revert UI
-    document.getElementById('viewControls').style.display = 'flex';
-    document.getElementById('editControls').style.display = 'none';
+    document.getElementById('viewControls').classList.remove('hidden');
+    document.getElementById('editControls').classList.add('hidden');
 
     loadBpmnViewer(currentArtifactContent);
   }
@@ -815,6 +814,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function switchToDocEditMode() {
     // UI Toggles
     document.getElementById('editDoc').style.display = 'none';
+    document.getElementById('btn-export-md').style.display = 'none';
+    document.getElementById('btn-print-doc').style.display = 'none';
+
     const controls = document.getElementById('editDocControls');
     controls.classList.remove('hidden');
     controls.style.display = 'flex';
@@ -978,7 +980,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     viewDiv.style.display = 'block';
 
     // UI Toggles
+    // UI Toggles
     document.getElementById('editDoc').style.display = 'inline-block';
+    document.getElementById('btn-export-md').style.display = 'inline-block';
+    document.getElementById('btn-print-doc').style.display = 'inline-block';
     document.getElementById('editDocControls').style.display = 'none';
   }
 
@@ -1025,22 +1030,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         (job) => `
             <div class="job-card">
                 <div class="job-info">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                        <div class="job-title-container" id="job-title-container-${job.id}" style="display:flex; align-items:center; gap:8px;">
-                            <h4 style="margin:0;">${job.processName || job.filename}</h4>
-                            ${job.processName ? `<span style="font-size:0.8em; color:#666; font-weight:normal">(${job.filename})</span>` : ''}
-                            ${job.canEdit ? `<button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.9rem; padding:0;">✏️</button>` : ''}
+                    <div class="job-title-row">
+                        <div class="job-title-container" id="job-title-container-${job.id}">
+                            <h4>${job.processName || job.filename}</h4>
+                            ${job.processName ? `<span class="job-filename-label">(${job.filename})</span>` : ''}
+                            ${job.canEdit ? `<button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name">✏️</button>` : ''}
                         </div>
-                         <div id="job-edit-container-${job.id}" style="display:none; align-items:center; gap:5px;">
-                            <input type="text" id="job-input-${job.id}" value="${job.processName || ''}" placeholder="Process Name" style="padding:4px; border:1px solid #ccc; border-radius:4px; font-size:0.9rem;">
-                            <button class="save-job-btn btn-primary" data-id="${job.id}" style="padding:4px 8px; font-size:0.8rem;">Save</button>
-                            <button class="cancel-job-btn" data-id="${job.id}" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.8rem; text-decoration:underline;">Cancel</button>
+                         <div id="job-edit-container-${job.id}" class="job-edit-container hidden">
+                            <input type="text" id="job-input-${job.id}" value="${job.processName || ''}" placeholder="Process Name" class="job-edit-input">
+                            <button class="save-job-btn btn-primary" data-id="${job.id}">Save</button>
+                            <button class="cancel-job-btn" data-id="${job.id}">Cancel</button>
                         </div>
                         ${job.canDelete ? `<button class="delete-job-btn" data-id="${job.id}">&times;</button>` : ''}
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
                     ${renderArtifacts(job.result, job.canEdit)}
-                    ${job.status === 'lost' ? `<div style="color:#d32f2f; font-size:0.8rem; margin-top:5px;">Job lost during server restart</div>` : ''}
+                    ${job.status === 'lost' ? `<div class="job-lost-message">Job lost during server restart</div>` : ''}
                 </div>
                 <div class="job-status status-${job.status}">
                     <span class="status-dot"></span>
@@ -1055,11 +1060,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderArtifacts(result, canEdit = false) {
     if (!result) return '';
 
-    let html = '<div style="margin-top:8px; display:flex; gap:5px; flex-wrap:wrap;">';
+    let html = '<div class="artifact-container">';
 
     // Backward compatibility
     if (result.artifactId && !result.artifacts) {
-      html += `<a href="/api/artifacts/${result.artifactId}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px;">Download BPMN</a>`;
+      html += `<a href="/api/artifacts/${result.artifactId}/content" class="btn-primary artifact-btn-download">Download BPMN</a>`;
     }
 
     // New formatted artifacts
@@ -1068,16 +1073,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const label = art.type.toUpperCase();
 
         // container for buttons group
-        html += `<div style="display:inline-flex; gap:1px; margin-right:5px;">`;
+        html += `<div class="artifact-btn-group">`;
 
         // Download Button
-        html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary" style="text-decoration:none; font-size: 0.8rem; padding: 4px 10px; border-top-right-radius:0; border-bottom-right-radius:0;">${label}</a>`;
+        html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
 
         if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
-          html += `<button class="btn-primary view-artifact-btn" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}" style="border-left:1px solid rgba(0,0,0,0.2); font-size: 0.8rem; padding: 4px 8px; border-top-left-radius:0; border-bottom-left-radius:0;">👁️</button>`;
+          html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
         } else {
           // Just rounded corner fix if no view button
-          html = html.replace('border-top-right-radius:0; border-bottom-right-radius:0;', '');
+          html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
         }
 
         html += `</div>`;
@@ -1091,10 +1096,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Table Helper Functions ---
   function switchToTableEditMode(type) {
     // UI Toggles
-    document.querySelector('.table-controls button').style.display = 'none'; // Hide "Edit"
+    // UI Toggles
+    document.querySelector('.table-controls button').classList.add('hidden'); // Hide "Edit"
+    const exportBtn = document.getElementById('btn-export-csv');
+    if (exportBtn) exportBtn.classList.add('hidden');
+
     const controls = document.getElementById('editTableControls');
     controls.classList.remove('hidden');
-    controls.style.display = 'flex';
 
     // Render Editable Table
     const container = document.getElementById('table-container');
@@ -1115,10 +1123,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Or just assume sipoc if not detectable?
       // Better: Pass type to cancel or store it.
       // Ideally we stored `currentArtifactType` in `viewArtifact`
-      renderModalContent(currentArtifactType, currentArtifactContent, currentArtifactId);
+      renderModalContent(
+        currentArtifactType,
+        currentArtifactContent,
+        currentArtifactId,
+        currentCanEdit,
+      );
     } else {
       // Fallback
-      renderModalContent('sipoc', currentArtifactContent, currentArtifactId);
+      renderModalContent('sipoc', currentArtifactContent, currentArtifactId, currentCanEdit);
     }
   }
 

@@ -1,4 +1,4 @@
-/* global lucide, showConfirmModal */
+/* global lucide, showConfirmModal, showAlertModal */
 // workspace-settings.js
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // My Workspaces
     if (myWorkspaces.length === 0) {
       myWorkspacesList.innerHTML =
-        '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">You haven\'t created any workspaces yet.</div>';
+        '<div class="empty-state ws-empty-state">You haven\'t created any workspaces yet.</div>';
     } else {
       myWorkspacesList.innerHTML = myWorkspaces.map((w) => createWorkspaceCard(w, true)).join('');
     }
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Shared Workspaces
     if (sharedWorkspaces.length === 0) {
       sharedWorkspacesList.innerHTML =
-        '<div class="empty-state" style="grid-column: 1 / -1; padding: 2rem;">No shared workspaces found.</div>';
+        '<div class="empty-state ws-empty-state">No shared workspaces found.</div>';
     } else {
       sharedWorkspacesList.innerHTML = sharedWorkspaces
         .map((w) => createWorkspaceCard(w, false))
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isOwner) {
       if (workspace.name === 'My Workspace') {
         actionsContent = `
-                        <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">Default Workspace</div>
+                        <div class="ws-card-info-text">Default Workspace</div>
                     `;
       } else {
         actionsContent = `
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
     } else {
       actionsContent = `
-                    <div style="flex:1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 0.5rem;">View Only</div>
+                    <div class="ws-card-info-text">View Only</div>
                 `;
     }
 
@@ -218,11 +218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (res.ok) {
         loadWorkspaces();
       } else {
-        alert('Failed to delete workspace');
+        await showAlertModal('Failed to delete workspace');
       }
     } catch (e) {
       console.error(e);
-      alert('Error deleting workspace');
+      await showAlertModal('Error deleting workspace');
     }
   }
 
@@ -247,21 +247,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Tab Switching
   function switchTab(tab) {
     if (tab === 'members') {
-      tabMembers.classList.add('active', 'text-primary', 'border-b-2', 'border-primary'); // Tailwind classes concept but applied via style in HTML
-      tabMembers.style.color = 'var(--primary)';
-      tabMembers.style.borderBottom = '2px solid var(--primary)';
+      tabMembers.classList.add('active', 'tab-active');
+      tabMembers.classList.remove('tab-inactive');
 
-      tabInvites.style.color = 'var(--text-muted)';
-      tabInvites.style.borderBottom = 'none';
+      tabInvites.classList.add('tab-inactive');
+      tabInvites.classList.remove('active', 'tab-active');
 
       membersList.classList.remove('hidden');
       invitationsList.classList.add('hidden');
     } else {
-      tabInvites.style.color = 'var(--primary)';
-      tabInvites.style.borderBottom = '2px solid var(--primary)';
+      tabInvites.classList.add('active', 'tab-active');
+      tabInvites.classList.remove('tab-inactive');
 
-      tabMembers.style.color = 'var(--text-muted)';
-      tabMembers.style.borderBottom = 'none';
+      tabMembers.classList.add('tab-inactive');
+      tabMembers.classList.remove('active', 'tab-active');
 
       invitationsList.classList.remove('hidden');
       membersList.classList.add('hidden');
@@ -302,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const removeButton = canRemove
               ? `
                                 <button class="btn-icon remove-member" data-uid="${m.id}" data-wid="${workspaceId}">
-                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                    <i data-lucide="trash-2" class="icon-sm"></i>
                                 </button>
                             `
               : '';
@@ -313,12 +312,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (canEdit) {
               // Edit button flow
               roleDisplay = `
-                            <div class="role-edit-container" data-uid="${m.id}" data-wid="${workspaceId}" data-current-role="${m.role}" data-owner-id="${ownerId}" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="role-edit-container role-edit-row" data-uid="${m.id}" data-wid="${workspaceId}" data-current-role="${m.role}" data-owner-id="${ownerId}">
                                 <span class="role-display-area">
                                     <span class="role-badge role-${m.role}">${m.role}</span>
                                 </span>
                                 <button class="btn-icon edit-role-btn" title="Edit Role">
-                                    <i data-lucide="pencil" style="width: 14px; height: 14px;"></i>
+                                    <i data-lucide="pencil" class="icon-xs"></i>
                                 </button>
                             </div>
                         `;
@@ -329,16 +328,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             return `
                     <li class="list-group-item">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                        <div class="member-row">
+                            <div class="member-avatar">
                                 ${m.name ? m.name[0] : m.email[0].toUpperCase()}
                             </div>
                             <div>
-                                <div style="font-weight: 500;">${m.name || 'User'}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-muted);">${m.email}</div>
+                                <div class="member-name">${m.name || 'User'}</div>
+                                <div class="member-email">${m.email}</div>
                             </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="member-row">
                             ${roleDisplay}
                             ${removeButton}
                         </div>
@@ -360,14 +359,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Switch to select + save
             container.innerHTML = `
-                             <select class="form-input member-role-select" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 4px; height: auto; width: auto;">
+                             <select class="form-input member-role-select role-edit-select">
                                 <option value="viewer" ${currentRole === 'viewer' ? 'selected' : ''}>Viewer</option>
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>Editor</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Admin</option>
                             </select>
-                            <button class="action-btn primary save-role-btn" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; flex: 0 0 auto;">Save</button>
+                            <button class="action-btn primary save-role-btn role-edit-save">Save</button>
                             <button class="btn-icon cancel-role-btn" title="Cancel">
-                                <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                                <i data-lucide="x" class="icon-xs"></i>
                             </button>
                         `;
             lucide.createIcons();
@@ -421,7 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error(e);
       if (membersList)
         membersList.innerHTML =
-          '<li style="padding: 1rem; color: var(--error);">Failed to load members</li>';
+          '<li class="list-item-padded text-error">Failed to load members</li>';
     }
   }
 
@@ -432,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (invitationsList) {
         if (invites.length === 0) {
           invitationsList.innerHTML =
-            '<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No pending invitations</li>';
+            '<li class="list-item-padded text-center text-muted">No pending invitations</li>';
           return;
         }
         invitationsList.innerHTML = invites
@@ -441,12 +440,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <li class="list-group-item">
                         <div>
                             <div>${i.recipient_email}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Invited by ${i.inviter_email}</div>
+                            <div class="invite-info-line">Invited by ${i.inviter_email}</div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="member-row">
                             <span class="role-badge role-viewer">Pending</span>
                             <button class="btn-icon revoke-invite" data-id="${i.id}" data-wid="${workspaceId}">
-                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                                <i data-lucide="trash-2" class="icon-sm"></i>
                             </button>
                         </div>
                     </li>
@@ -471,7 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error(e);
       if (invitationsList)
         invitationsList.innerHTML =
-          '<li style="padding: 1rem; color: var(--error);">Failed to load invitations</li>';
+          '<li class="list-item-padded text-error">Failed to load invitations</li>';
     }
   }
 
@@ -493,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!inviteMessageContainer) return;
 
     inviteMessageContainer.innerHTML = `
-            <div style="padding: 0.75rem; margin-bottom: 0.75rem; border-radius: 6px; font-size: 0.85rem; background: ${type === 'error' ? 'rgba(255, 82, 82, 0.1)' : 'rgba(0, 230, 118, 0.1)'}; color: ${type === 'error' ? 'var(--error)' : 'var(--success)'}; border: 1px solid ${type === 'error' ? 'var(--error)' : 'var(--success)'};">
+            <div class="invite-message ${type === 'error' ? 'invite-message-error' : 'invite-message-success'}">
                 ${text}
             </div>
         `;

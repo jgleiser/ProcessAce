@@ -99,10 +99,12 @@
 - [x] **BPMN export**: Export BPMN diagrams to BPMN or PNG.
 - [x] **Narrative export**: Export narrative documentation to DOCX or PDF.
 
-## Phase 14 - Cleanup codebase [IN PROGRESS]
+## Phase 14 - Cleanup codebase [COMPLETED]
 
 - [x] **Refactor codebase**: Removed unused debug scripts and temp files, cleaned up `.gitignore`.
 - [x] **Refactor styles**: Moved ~50 inline `style=` attributes from HTML files to `style.css` using proper CSS classes.
-- [ ] **Detect reusable code**: Identify reusable code and extract into shared modules.
-- [x] **Add documentation**: Updated `README.md`, `architecture.md`, `api_reference.md`, and `ROADMAP.md` for public release.
-- [ ] **Add tests**: Add tests for the codebase, including unit tests, integration tests, and end-to-end tests.
+- [x] **Detect reusable code**: Extracted shared header into `header.js` with dynamic injection; replaced native `alert()` with `showAlertModal()` from `modal-utils.js`.
+- [x] **Code quality**: Added JSDoc comments to backend services and API routes; fixed all ESLint errors.
+- [x] **Add documentation**: Updated `README.md`, `architecture.md`, `api_reference.md`, `user_guide.md`, and `ROADMAP.md` for public release.
+- [x] **Package readiness**: Updated `package.json` to v1.0.0, added repository metadata, updated `.env.example`.
+- [x] **Add tests**: Added unit tests (settingsService, workspaceService) and integration tests (workspaces, jobs) — 59 tests, 0 failures.

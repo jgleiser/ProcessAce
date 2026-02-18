@@ -1,0 +1,86 @@
+/* =========================================
+   Vendor / Third-Party Library Overrides
+   ========================================= */
+
+/* ── BPMN.js Palette Overrides ── */
+.djs-palette {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    top: 20px !important;
+    left: 20px !important;
+}
+
+.djs-palette .entry,
+.djs-context-pad .entry {
+    color: #333 !important;
+}
+
+.djs-popup .entry-label {
+    color: #333 !important;
+}
+
+.djs-popup .djs-popup-body .entry {
+    color: #333 !important;
+}
+
+.djs-direct-editing-content {
+    color: #333 !important;
+    background-color: #fff !important;
+}
+
+.djs-palette .entry:hover,
+.djs-context-pad .entry:hover {
+    color: var(--primary) !important;
+}
+
+.djs-palette .djs-palette-entries i,
+.djs-context-pad .djs-context-pad-entries i {
+    color: #333 !important;
+}
+
+/* ── EasyMDE Dark Mode Overrides ── */
+.editor-toolbar {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    opacity: 1 !important;
+}
+
+.editor-toolbar button {
+    color: var(--text-main) !important;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar button.active {
+    background-color: var(--card-hover) !important;
+    border-color: var(--border-color) !important;
+}
+
+.editor-toolbar i.separator {
+    border-color: var(--border-color) !important;
+}
+
+.CodeMirror {
+    background-color: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+.CodeMirror-cursor {
+    border-left: 1px solid var(--text-main) !important;
+}
+
+.editor-preview,
+.editor-preview-side {
+    background-color: var(--card-bg) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+.editor-preview pre,
+.editor-preview-side pre {
+    background: #000 !important;
+}
+
+.editor-statusbar {
+    color: var(--text-muted) !important;
+}
