@@ -18,13 +18,7 @@ const { evidenceQueue } = require('../services/queueInstance');
 
 const { deleteEvidence } = require('../models/evidence');
 const { deleteArtifact } = require('../models/artifact');
-const {
-  getJobsByUserId,
-  getJobsByUserAndWorkspace,
-  getJob,
-  saveJob,
-  getJobsByWorkspace,
-} = require('../models/job');
+const { getJobsByUserId, getJob, saveJob, getJobsByWorkspace } = require('../models/job');
 const workspaceService = require('../services/workspaceService');
 
 // List all jobs for current user (optionally filtered by workspace)

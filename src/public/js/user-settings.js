@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const data = await res.json();
         showMessage('error', data.error || 'Failed to update profile');
       }
-    } catch (err) {
+    } catch {
       showMessage('error', 'An error occurred');
     } finally {
       saveBtn.disabled = false;

@@ -6,7 +6,7 @@ const getLlmProvider = (options = {}) => {
   // Support mock provider for testing
   if (process.env.MOCK_LLM === 'true') {
     return {
-      complete: async (prompt, system) => {
+      complete: async (_prompt, _system) => {
         return `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Mock">
   <bpmn:process id="Process_Mock" isExecutable="false">

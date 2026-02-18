@@ -1,4 +1,4 @@
-/* global showToast, showConfirmModal */
+/* global showToast */
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('notificationsContainer');
   const markAllReadBtn = document.getElementById('markAllReadBtn');

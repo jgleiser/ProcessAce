@@ -121,7 +121,7 @@ class AuthService {
   verifyToken(token) {
     try {
       return jwt.verify(token, JWT_SECRET);
-    } catch (error) {
+    } catch {
       throw new Error('Invalid token');
     }
   }

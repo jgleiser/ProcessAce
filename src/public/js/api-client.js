@@ -41,7 +41,7 @@ const apiClient = {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
+        } catch {
           // If response is not JSON, use status text
           errorMessage = response.statusText;
         }

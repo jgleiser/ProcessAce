@@ -12,7 +12,7 @@ class LlmProvider {
    * @param {string} [system] - Optional system instruction.
    * @returns {Promise<string>} - The generated text.
    */
-  async complete(prompt, system) {
+  async complete(_prompt, _system) {
     throw new Error('Method "complete" must be implemented');
   }
 

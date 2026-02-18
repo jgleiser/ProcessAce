@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
     });
 
     res.json({ message: 'Login successful', user });
-  } catch (error) {
+  } catch {
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
@@ -60,7 +60,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json(user);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });

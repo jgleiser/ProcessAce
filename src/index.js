@@ -2,7 +2,6 @@ require('dotenv').config();
 const app = require('./app');
 const logger = require('./logging/logger');
 
-const evidenceRoutes = require('./api/evidence');
 const { processEvidence } = require('./workers/evidenceWorker');
 const { evidenceQueue } = require('./services/queueInstance');
 

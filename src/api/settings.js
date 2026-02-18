@@ -17,7 +17,7 @@ router.get('/', requireAdmin, (req, res) => {
   try {
     const settings = settingsService.getSettings();
     res.json(settings);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });
@@ -32,7 +32,7 @@ router.put('/', requireAdmin, (req, res) => {
 
     const updated = settingsService.updateSetting(key, value);
     res.json(updated);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to update setting' });
   }
 });
@@ -47,7 +47,7 @@ router.delete('/', requireAdmin, (req, res) => {
 
     settingsService.deleteSetting(key);
     res.json({ success: true, key });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to delete setting' });
   }
 });

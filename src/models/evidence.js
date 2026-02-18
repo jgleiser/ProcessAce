@@ -96,7 +96,7 @@ const deleteEvidence = async (id) => {
   if (evidence) {
     try {
       await require('fs').promises.unlink(evidence.path);
-    } catch (err) {
+    } catch {
       // Ignore missing file
     }
     deleteStmt.run(id);

@@ -117,9 +117,6 @@ Include:
 - **Exceptions**: How to handle errors.
 - **Business Rules**: Critical constraints.
 Return ONLY Markdown content.`;
-
-    const userPrompt = `Analyze the following process description:\n\n${fileContent}`;
-
     // Determine provider name for traceability
     const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
     const modelName = llm.config?.model || model || llmConfig.model;
