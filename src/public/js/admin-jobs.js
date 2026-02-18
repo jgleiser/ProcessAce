@@ -20,6 +20,14 @@ const paginationControls = document.getElementById('paginationControls');
 const limitSelect = document.getElementById('limitSelect');
 const errorContainer = document.getElementById('errorContainer');
 
+// Filter Elements
+const filterUser = document.getElementById('filterUser');
+const filterWorkspace = document.getElementById('filterWorkspace');
+const filterStatus = document.getElementById('filterStatus');
+const filterProvider = document.getElementById('filterProvider');
+const filterModel = document.getElementById('filterModel');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
 // Modal Elements
 const jobModal = document.getElementById('jobModal');
 const modalClose = document.getElementById('modalClose');
@@ -43,7 +51,14 @@ async function loadJobs(page = 1, limit = 10) {
   try {
     showLoading();
 
-    const response = await fetch(`/api/admin/jobs?page=${page}&limit=${limit}`, {
+    const filters = getFilters();
+    const queryParams = new URLSearchParams({
+      page,
+      limit,
+      ...filters,
+    });
+
+    const response = await fetch(`/api/admin/jobs?${queryParams.toString()}`, {
       credentials: 'include',
     });
 
@@ -318,8 +333,68 @@ document.addEventListener('keydown', (e) => {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  setupFilters();
   loadJobs(currentPage, currentLimit);
 });
+
+// ============================================
+// FILTER FUNCTIONS
+// ============================================
+
+function getFilters() {
+  return {
+    user: filterUser.value.trim(),
+    workspace: filterWorkspace.value.trim(),
+    status: filterStatus.value,
+    provider: filterProvider.value,
+    model: filterModel.value.trim(),
+  };
+}
+
+function setupFilters() {
+  const debouncedLoad = debounce(() => {
+    currentPage = 1;
+    loadJobs(currentPage, currentLimit);
+  }, 500);
+
+  // Text inputs
+  filterUser.addEventListener('input', debouncedLoad);
+  filterWorkspace.addEventListener('input', debouncedLoad);
+  filterModel.addEventListener('input', debouncedLoad);
+
+  // Select inputs
+  filterStatus.addEventListener('change', () => {
+    currentPage = 1;
+    loadJobs(currentPage, currentLimit);
+  });
+  filterProvider.addEventListener('change', () => {
+    currentPage = 1;
+    loadJobs(currentPage, currentLimit);
+  });
+
+  // Clear button
+  clearFiltersBtn.addEventListener('click', () => {
+    filterUser.value = '';
+    filterWorkspace.value = '';
+    filterStatus.value = 'All';
+    filterProvider.value = 'All';
+    filterModel.value = '';
+    currentPage = 1;
+    loadJobs(currentPage, currentLimit);
+  });
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
 // ============================================
 // ARTIFACT VIEWER FUNCTIONS

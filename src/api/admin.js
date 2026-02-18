@@ -61,41 +61,114 @@ router.get('/users', (req, res) => {
 router.get('/jobs', (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 10, 100); // Cap at 100
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
     const offset = (page - 1) * limit;
 
-    // Count total jobs
-    const countResult = db.prepare('SELECT COUNT(*) as total FROM jobs').get();
+    // Filters
+    const { user, workspace, status, provider, model } = req.query;
+
+    let whereClauses = [];
+    let params = [];
+
+    // Filter by User (name or email)
+    if (user) {
+      whereClauses.push('(u.name LIKE ? OR u.email LIKE ?)');
+      params.push(`%${user}%`, `%${user}%`);
+    }
+
+    // Filter by Workspace (name)
+    if (workspace) {
+      whereClauses.push('w.name LIKE ?');
+      params.push(`%${workspace}%`);
+    }
+
+    // Filter by Status (exact match)
+    if (status && status !== 'All') {
+      whereClauses.push('j.status = ?');
+      params.push(status);
+    }
+
+    // Filter by LLM Provider/Model
+    // Since provider/model are in artifacts, we check if ANY artifact associated with this job matches.
+    // The link is strictly Job -> Result (JSON) -> Artifact ID -> Artifact Table
+    // However, for performance and simplicity in SQLite, we can try to join with artifacts if we can extract ID.
+    // Given the complexity of JSON extraction in SQL for an array of artifacts, 
+    // we will use a subquery that checks `j.result LIKE '%"id":"' || a.id || '"%'` which is a bit hacky but works for JSON strings.
+    // A better approach in standard SQL would be JSON_TABLE, but SQLite uses json_each.
+
+    // SQLite JSON approach:
+    // EXISTS (SELECT 1 FROM artifacts a, json_each(j.result, '$.artifacts') as ja WHERE a.id = ja.value ->> 'id' AND a.llm_provider = ?)
+
+    if (provider && provider !== 'All') {
+      const providerQuery = `
+            EXISTS (
+                SELECT 1 FROM artifacts a 
+                WHERE (
+                    j.result LIKE '%' || a.id || '%' 
+                )
+                AND a.llm_provider = ?
+            )
+        `;
+      whereClauses.push(providerQuery);
+      params.push(provider);
+    }
+
+    if (model) {
+      const modelQuery = `
+            EXISTS (
+                SELECT 1 FROM artifacts a 
+                WHERE (
+                    j.result LIKE '%' || a.id || '%' 
+                )
+                AND a.llm_model LIKE ?
+            )
+        `;
+      whereClauses.push(modelQuery);
+      params.push(`%${model}%`);
+    }
+
+    const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
+
+    // Count total jobs (with filters)
+    const countQueryStr = `
+        SELECT COUNT(*) as total 
+        FROM jobs j
+        LEFT JOIN users u ON j.user_id = u.id
+        LEFT JOIN workspaces w ON j.workspace_id = w.id
+        ${whereSql}
+    `;
+    const countResult = db.prepare(countQueryStr).get(...params);
     const total = countResult.total;
     const totalPages = Math.ceil(total / limit);
 
-    // Get paginated jobs with user and workspace info
-    const jobsQuery = db.prepare(`
-            SELECT 
-                j.id,
-                j.type,
-                j.status,
-                j.data,
-                j.result,
-                j.process_name,
-                j.createdAt,
-                j.user_id,
-                j.workspace_id,
-                u.name as user_name,
-                u.email as user_email,
-                w.name as workspace_name
-            FROM jobs j
-            LEFT JOIN users u ON j.user_id = u.id
-            LEFT JOIN workspaces w ON j.workspace_id = w.id
-            ORDER BY j.createdAt DESC
-            LIMIT ? OFFSET ?
-        `);
+    // Get paginated jobs
+    const jobsQueryStr = `
+        SELECT 
+            j.id,
+            j.type,
+            j.status,
+            j.data,
+            j.result,
+            j.process_name,
+            j.createdAt,
+            j.user_id,
+            j.workspace_id,
+            u.name as user_name,
+            u.email as user_email,
+            w.name as workspace_name
+        FROM jobs j
+        LEFT JOIN users u ON j.user_id = u.id
+        LEFT JOIN workspaces w ON j.workspace_id = w.id
+        ${whereSql}
+        ORDER BY j.createdAt DESC
+        LIMIT ? OFFSET ?
+    `;
 
-    const jobs = jobsQuery.all(limit, offset);
+    // Execute query to fetch jobs
+    const jobs = db.prepare(jobsQueryStr).all(...params, limit, offset);
 
-    // For each job, get LLM info from the first artifact if available
+    // Enrich jobs (same as before)
     const artifactQuery = db.prepare('SELECT llm_provider, llm_model FROM artifacts WHERE id = ?');
-    // Query to get evidence originalName
     const evidenceQuery = db.prepare('SELECT originalName FROM evidence WHERE id = ?');
 
     const enrichedJobs = jobs.map((job) => {
@@ -107,7 +180,6 @@ router.get('/jobs', (req, res) => {
       let artifacts = [];
       let originalName = null;
 
-      // Get original filename from evidence
       if (data.evidenceId) {
         const evidence = evidenceQuery.get(data.evidenceId);
         if (evidence) {
@@ -115,10 +187,8 @@ router.get('/jobs', (req, res) => {
         }
       }
 
-      // Get artifacts from result
       if (result && result.artifacts && Array.isArray(result.artifacts)) {
         artifacts = result.artifacts;
-        // Get LLM info from first artifact
         if (artifacts.length > 0) {
           const firstArtifact = artifactQuery.get(artifacts[0].id);
           if (firstArtifact) {
@@ -127,7 +197,6 @@ router.get('/jobs', (req, res) => {
           }
         }
       } else if (result && result.artifactId) {
-        // Backward compat for single artifact
         artifacts = [{ id: result.artifactId, type: 'bpmn' }];
         const artifact = artifactQuery.get(result.artifactId);
         if (artifact) {
@@ -165,8 +234,9 @@ router.get('/jobs', (req, res) => {
         page,
         limit,
         total,
+        filters: { user, workspace, status, provider, model },
       },
-      'Admin retrieved jobs list',
+      'Admin retrieved jobs list with filters',
     );
 
     res.json({

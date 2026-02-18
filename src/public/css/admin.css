@@ -223,6 +223,56 @@
     overflow: hidden;
 }
 
+/* ── Filters ── */
+.filters-container {
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filter-group label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.filter-input,
+.filter-select {
+    background: var(--card-hover);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    min-width: 120px;
+}
+
+#filterStatus,
+#filterProvider {
+    min-width: 90px;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.filter-actions {
+    margin-left: auto;
+}
+
 .jobs-table {
     width: 100%;
     border-collapse: collapse;

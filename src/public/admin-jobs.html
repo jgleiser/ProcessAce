@@ -30,6 +30,44 @@
         <div id="errorContainer"></div>
 
         <div class="jobs-table-container">
+            <!-- Filter Bar -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="filterUser">User</label>
+                    <input type="text" id="filterUser" placeholder="Name or email..." class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filterWorkspace">Workspace</label>
+                    <input type="text" id="filterWorkspace" placeholder="Workspace name..." class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="All">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterProvider">Provider</label>
+                    <select id="filterProvider" class="filter-select">
+                        <option value="All">All</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google</option>
+                        <option value="anthropic">Anthropic</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterModel">Model</label>
+                    <input type="text" id="filterModel" placeholder="e.g. gpt-4..." class="filter-input">
+                </div>
+                <div class="filter-actions">
+                    <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
+                </div>
+            </div>
+
             <div id="loadingState" class="loading">Loading jobs...</div>
             <table class="jobs-table hidden" id="jobsTable">
                 <thead>
