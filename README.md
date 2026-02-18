@@ -157,7 +157,7 @@ ProcessAce is **source-available** under the **ProcessAce Sustainable Use Licens
 - Free to use internally, self-host, and modify for internal use.
 - You **may not** run ProcessAce as a multi-tenant SaaS/platform or resell it without a commercial license.
 
-See [`LICENSE`](./LICENSE) for the full terms. For commercial/enterprise licensing, see [`COMMERCIAL_LICENSE.md`](./COMMERCIAL_LICENSE.md).
+See [`LICENSE.md`](./LICENSE.md) for the full terms. For commercial/enterprise licensing, see [`COMMERCIAL_LICENSE.md`](./COMMERCIAL_LICENSE.md).
 
 ---
 
