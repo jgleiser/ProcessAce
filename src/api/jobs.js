@@ -21,7 +21,10 @@ const { deleteArtifact } = require('../models/artifact');
 const { getJobsByUserId, getJob, saveJob, getJobsByWorkspace } = require('../models/job');
 const workspaceService = require('../services/workspaceService');
 
-// List all jobs for current user (optionally filtered by workspace)
+/**
+ * GET /api/jobs
+ * List all jobs for the authenticated user, optionally filtered by workspaceId query param.
+ */
 router.get('/', async (req, res) => {
   try {
     const { workspaceId } = req.query;
@@ -102,6 +105,10 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/jobs/:id
+ * Get details of a specific job by ID.
+ */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const job = await evidenceQueue.get(id);
@@ -127,7 +134,10 @@ router.get('/:id', async (req, res) => {
   });
 });
 
-// Update Job (e.g. processName)
+/**
+ * PATCH /api/jobs/:id
+ * Update a job (e.g., set process name). Requires edit permissions.
+ */
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const { processName } = req.body;
@@ -220,6 +230,10 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/jobs/:id
+ * Delete a job. Requires owner/admin permissions.
+ */
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const job = await evidenceQueue.get(id);

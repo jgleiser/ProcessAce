@@ -5,7 +5,10 @@ const logger = require('../logging/logger');
 
 const router = express.Router();
 
-// Register
+/**
+ * POST /api/auth/register
+ * Register a new user account. First user becomes admin.
+ */
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -26,7 +29,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login
+/**
+ * POST /api/auth/login
+ * Authenticate user and set HTTP-only auth cookie.
+ */
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -46,13 +52,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Logout
+/**
+ * POST /api/auth/logout
+ * Clear auth cookie and end session.
+ */
 router.post('/logout', (req, res) => {
   res.clearCookie('auth_token');
   res.json({ message: 'Logged out successfully' });
 });
 
-// Get Current User (Protected)
+/**
+ * GET /api/auth/me
+ * Get the current authenticated user's profile.
+ */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = authService.getUserById(req.user.id);
@@ -65,7 +77,10 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
-// Update Current User Profile
+/**
+ * PUT /api/auth/me
+ * Update the current user's name and/or password.
+ */
 router.put('/me', authenticateToken, async (req, res) => {
   try {
     const { name, password, currentPassword } = req.body;
@@ -81,7 +96,10 @@ router.put('/me', authenticateToken, async (req, res) => {
   }
 });
 
-// Search Users
+/**
+ * GET /api/auth/users/search
+ * Search users by name or email. Query param: q.
+ */
 router.get('/users/search', authenticateToken, (req, res) => {
   try {
     const { q } = req.query;

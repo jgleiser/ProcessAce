@@ -4,7 +4,9 @@ const logger = require('../logging/logger');
 
 const router = express.Router();
 
-// Middleware to check for Admin role
+/**
+ * Middleware to restrict access to admin users only.
+ */
 const requireAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Access denied. Admins only.' });
@@ -12,7 +14,10 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-// Get all settings (Admin only)
+/**
+ * GET /api/settings
+ * Get all application settings. API keys are masked. Admin only.
+ */
 router.get('/', requireAdmin, (req, res) => {
   try {
     const settings = settingsService.getSettings();
@@ -22,7 +27,10 @@ router.get('/', requireAdmin, (req, res) => {
   }
 });
 
-// Update a setting (Admin only)
+/**
+ * PUT /api/settings
+ * Update a single application setting. API keys are encrypted. Admin only.
+ */
 router.put('/', requireAdmin, (req, res) => {
   try {
     const { key, value } = req.body;
@@ -37,7 +45,10 @@ router.put('/', requireAdmin, (req, res) => {
   }
 });
 
-// Delete a setting (Admin only)
+/**
+ * DELETE /api/settings
+ * Delete a specific application setting by key. Admin only.
+ */
 router.delete('/', requireAdmin, (req, res) => {
   try {
     const { key } = req.body;
@@ -52,7 +63,10 @@ router.delete('/', requireAdmin, (req, res) => {
   }
 });
 
-// Verify Provider and List Models (Admin only)
+/**
+ * POST /api/settings/verify-provider
+ * Verify an LLM provider connection and list available models. Admin only.
+ */
 router.post('/verify-provider', requireAdmin, async (req, res) => {
   try {
     const { provider, apiKey, baseUrl } = req.body;

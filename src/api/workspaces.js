@@ -4,7 +4,10 @@ const logger = require('../logging/logger');
 
 const router = express.Router();
 
-// Get user's workspaces
+/**
+ * GET /api/workspaces
+ * List all workspaces the authenticated user is a member of.
+ */
 router.get('/', async (req, res) => {
   try {
     const workspaces = workspaceService.getUserWorkspaces(req.user.id);
@@ -15,7 +18,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create workspace
+/**
+ * POST /api/workspaces
+ * Create a new workspace. The creator becomes the owner.
+ */
 router.post('/', async (req, res) => {
   try {
     const { name } = req.body;
@@ -30,7 +36,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Delete workspace
+/**
+ * DELETE /api/workspaces/:id
+ * Delete a workspace. Only the workspace owner can delete it.
+ */
 router.delete('/:id', async (req, res) => {
   try {
     const workspaceId = req.params.id;
@@ -54,7 +63,10 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Get workspace members
+/**
+ * GET /api/workspaces/:id/members
+ * List all members of a workspace with their roles.
+ */
 router.get('/:id/members', async (req, res) => {
   try {
     // TODO: Check if user is member of workspace first
@@ -66,7 +78,10 @@ router.get('/:id/members', async (req, res) => {
   }
 });
 
-// Remove member
+/**
+ * DELETE /api/workspaces/:id/members/:userId
+ * Remove a member from a workspace. Requires admin or owner role.
+ */
 router.delete('/:id/members/:userId', async (req, res) => {
   try {
     const workspaceId = req.params.id;
@@ -93,7 +108,10 @@ router.delete('/:id/members/:userId', async (req, res) => {
   }
 });
 
-// Update member role
+/**
+ * PUT /api/workspaces/:id/members/:userId
+ * Update a workspace member's role. Requires admin or owner role.
+ */
 router.put('/:id/members/:userId', async (req, res) => {
   try {
     const workspaceId = req.params.id;
@@ -132,7 +150,10 @@ router.put('/:id/members/:userId', async (req, res) => {
   }
 });
 
-// Invite user
+/**
+ * POST /api/workspaces/:id/invite
+ * Invite a registered user to a workspace. Requires admin or owner role.
+ */
 router.post('/:id/invite', async (req, res) => {
   try {
     const { email, role } = req.body;
@@ -156,7 +177,10 @@ router.post('/:id/invite', async (req, res) => {
   }
 });
 
-// Get pending invitations
+/**
+ * GET /api/workspaces/:id/invitations
+ * List pending invitations for a workspace. Requires admin or owner role.
+ */
 router.get('/:id/invitations', async (req, res) => {
   try {
     const workspaceId = req.params.id;
@@ -178,7 +202,10 @@ router.get('/:id/invitations', async (req, res) => {
   }
 });
 
-// Revoke invitation
+/**
+ * DELETE /api/workspaces/:id/invitations/:inviteId
+ * Revoke a pending invitation. Requires admin or owner role.
+ */
 router.delete('/:id/invitations/:inviteId', async (req, res) => {
   try {
     const workspaceId = req.params.id;

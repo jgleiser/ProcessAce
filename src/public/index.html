@@ -19,50 +19,7 @@
 
 <body>
   <div class="app-container">
-    <header class="page-header">
-      <a href="/" class="header-brand">
-        <img src="images/ProcessAce-w-100x100.png" alt="ProcessAce Logo" width="32" height="32">
-        <h1>ProcessAce</h1>
-      </a>
-      <div class="header-controls">
-        <div class="workspace-selector" id="workspaceSelector">
-          <!-- View Mode (default) -->
-          <div id="workspaceViewMode" class="workspace-view-mode">
-            <span class="ws-label">Workspace:</span>
-            <span id="currentWorkspaceName" class="ws-name">Loading...</span>
-            <a href="#" id="changeWorkspaceLink" class="ws-change-link">Change</a>
-          </div>
-          <!-- Edit Mode (hidden by default) -->
-          <div id="workspaceEditMode" class="workspace-edit-mode hidden">
-            <span class="ws-label">Workspace:</span>
-            <select id="workspaceSelect" class="ws-select">
-              <option value="">Loading...</option>
-            </select>
-            <input type="text" id="newWorkspaceInput" placeholder="New workspace name..." class="ws-new-input hidden" />
-            <button id="workspaceActionBtn" class="btn-primary ws-action-btn">
-              Select
-            </button>
-            <a href="#" id="cancelWorkspaceLink" class="ws-cancel-link">Cancel</a>
-          </div>
-        </div>
-
-        <div class="user-menu-container">
-          <button id="userMenuBtn" class="user-menu-btn">
-            <span id="userDisplay">Loading...</span>
-            <span>▼</span>
-          </button>
-          <div id="userDropdown" class="user-dropdown hidden">
-            <a href="/user-settings.html">User Settings</a>
-            <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-            <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
-            <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
-            <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
-            <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
-            <button id="logoutBtn">Logout</button>
-          </div>
-        </div>
-      </div>
-    </header>
+    <div id="app-header"></div>
     <div class="subtitle-banner">
       <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
     </div>

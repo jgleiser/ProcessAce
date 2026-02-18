@@ -4,7 +4,10 @@ const logger = require('../logging/logger');
 
 const router = express.Router();
 
-// Get my notifications
+/**
+ * GET /api/notifications
+ * Get all notifications for the authenticated user, including unread count.
+ */
 router.get('/', async (req, res) => {
   try {
     if (!req.user) {
@@ -19,7 +22,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Mark as read
+/**
+ * PUT /api/notifications/:id/read
+ * Mark a single notification as read.
+ */
 router.put('/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
@@ -31,7 +37,10 @@ router.put('/:id/read', async (req, res) => {
   }
 });
 
-// Mark all as read
+/**
+ * PUT /api/notifications/read-all
+ * Mark all notifications as read for the authenticated user.
+ */
 router.put('/read-all', async (req, res) => {
   try {
     if (!req.user) {
@@ -45,7 +54,10 @@ router.put('/read-all', async (req, res) => {
   }
 });
 
-// Delete notification
+/**
+ * DELETE /api/notifications/:id
+ * Delete a specific notification.
+ */
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

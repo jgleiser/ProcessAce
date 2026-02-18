@@ -23,6 +23,11 @@ const upload = multer({ storage: storage });
 // Initialize JobQueue (ideally simulated dependency injection)
 // const evidenceQueue = new JobQueue('evidence-queue'); // REPLACED WITH SINGLETON
 
+/**
+ * POST /api/evidence/upload
+ * Upload a file (video, audio, image, doc) for processing.
+ * Creates an Evidence record and enqueues a processing job.
+ */
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {

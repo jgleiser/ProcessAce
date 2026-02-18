@@ -1,9 +1,84 @@
 /* global apiClient */
+
 /**
- * Shared Header Logic
- * Handles User Menu Dropdown and Auth Display
+ * Shared Header Logic & Template
+ * Handles HTML injection, User Menu Dropdown, and Auth Display
  */
+
+const HeaderTemplate = `
+<header class="page-header">
+  <a href="/" class="header-brand">
+    <img src="images/ProcessAce-w-100x100.png" alt="ProcessAce Logo" width="32" height="32">
+    <h1>ProcessAce</h1>
+  </a>
+  <div class="header-controls">
+    <!-- Workspace Selector (Hidden by default, enabled by app.js on dashboard) -->
+    <div class="workspace-selector hidden" id="workspaceSelector">
+      <!-- View Mode (default) -->
+      <div id="workspaceViewMode" class="workspace-view-mode">
+        <span class="ws-label">Workspace:</span>
+        <span id="currentWorkspaceName" class="ws-name">Loading...</span>
+        <a href="#" id="changeWorkspaceLink" class="ws-change-link">Change</a>
+      </div>
+      <!-- Edit Mode (hidden by default) -->
+      <div id="workspaceEditMode" class="workspace-edit-mode hidden">
+        <span class="ws-label">Workspace:</span>
+        <select id="workspaceSelect" class="ws-select">
+          <option value="">Loading...</option>
+        </select>
+        <input type="text" id="newWorkspaceInput" placeholder="New workspace name..." class="ws-new-input hidden" />
+        <button id="workspaceActionBtn" class="btn-primary ws-action-btn">
+          Select
+        </button>
+        <a href="#" id="cancelWorkspaceLink" class="ws-cancel-link">Cancel</a>
+      </div>
+    </div>
+
+    <div class="user-menu-container">
+      <button id="userMenuBtn" class="user-menu-btn">
+        <span id="userDisplay">Loading...</span>
+        <span>▼</span>
+      </button>
+      <div id="userDropdown" class="user-dropdown hidden">
+        <a href="/user-settings.html">User Settings</a>
+        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
+        <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
+        <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
+        <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
+        <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
+        <button id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+`;
+
+function injectHeader() {
+  const customHeader = document.getElementById('app-header');
+  // Also check for existing static headers to replace (migration support)
+  const existingHeader = document.querySelector('.page-header');
+
+  if (customHeader) {
+    customHeader.innerHTML = HeaderTemplate;
+    // Unwrap the header from the container to avoid double nesting?
+    // Actually, keeping it in the container is fine if we style it right, or we can replace outer HTML.
+    // For simplicity, let's just replace the innerHTML of existing container or replace the container itself.
+    // The template has <header class="page-header">.
+    // If we put that inside <div id="app-header">, we get div > header.
+    // That's acceptable.
+  } else if (existingHeader && !document.getElementById('workspaceSelector')) {
+    // If we found a static header but NOT one that seems to be the dashboard one (check for workspace selector existence before injection to avoid nuking active stuff if script runs late)
+    // Actually, for migration, we want to replace *all* static headers.
+    // But we must be careful not to replace it if strictly handled by something else?
+    // Let's rely on explicit <div id="app-header"></div> in HTML files for safety.
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Inject Header HTML
+  injectHeader();
+
+  // 2. Select Elements (now that they exist)
   const userDisplay = document.getElementById('userDisplay');
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userDropdown = document.getElementById('userDropdown');

@@ -1,29 +1,19 @@
-/* global marked, BpmnJS, EasyMDE, showConfirmModal */
+/* global marked, BpmnJS, EasyMDE, showConfirmModal, showAlertModal */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Auth Check handled by header.js for UI, but we might want to ensure we have the user object for other things?
-  // app.js uses currentUser for some things?
-  // Let's check lines 1-48 carefully.
-  // It fetches /api/auth/me to get currentUser.
-  // It also updates userDisplay/adminLink which header.js now does.
-  // It also sets global `currentUser` variable (line 3).
-  // Does app.js usage `currentUser` later?
-  // Scanning...
-  // It doesn't seem to use `currentUser` anywhere else in the provided code snippet (lines 1-800).
-  // But `evidence.js` (upload) uses `req.user` on backend. Frontend just sends file.
-  // So we might get away with just removing the UI update parts.
+  // Auth Check and UI updates are now handled by header.js
 
-  // However, to be safe, let's keep the fetch but remove the UI manipulation.
-  // AND remove the logout listener.
+  // Create global variables for UI elements (some might be injected by header.js)
+  // We need to wait for header.js to inject them?
+  // header.js runs on DOMContentLoaded and injects synchronously.
+  // Since header.js is included before app.js, its listener *should* run first, or at least injectHeader
+  // is called before we access these if we are careful.
 
-  // Better yet: header.js is included BEFORE app.js.
-  // We can rely on header.js to handle UI.
-  // We can just keep the redirection logic if needed.
-
-  // Let's remove lines 3-33 (Auth Check & UI) and 41-48 (Logout).
-
-  // Wait, line 1 is event listener.
-  // I will replace start of file.
+  // Unhide Workspace Selector for Dashboard
+  const workspaceSelector = document.getElementById('workspaceSelector');
+  if (workspaceSelector) {
+    workspaceSelector.classList.remove('hidden');
+  }
 
   const uploadZone = document.getElementById('uploadZone');
   const fileInput = document.getElementById('fileInput');
@@ -34,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Workspace logic follows...
 
   // NEW WORKSPACE SWITCHER (View/Edit Mode)
+  // These elements are injected by header.js
   const workspaceViewMode = document.getElementById('workspaceViewMode');
   const workspaceEditMode = document.getElementById('workspaceEditMode');
   const currentWorkspaceNameEl = document.getElementById('currentWorkspaceName');
@@ -227,11 +218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             showViewMode();
             loadJobsFromServer();
           } else {
-            alert('Failed to create workspace');
+            await showAlertModal('Failed to create workspace');
           }
         } catch (err) {
           console.error('Error creating workspace', err);
-          alert('Error creating workspace');
+          await showAlertModal('Error creating workspace');
         }
       } else {
         // Select existing workspace
@@ -374,11 +365,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const processName = processNameInput ? processNameInput.value.trim() : null;
         addJobToTrack(data.jobId, file.name, processName);
       } else {
-        alert('Upload failed: ' + (data.error || 'Unknown error'));
+        await showAlertModal('Upload failed: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Upload error');
+      await showAlertModal('Upload error');
     } finally {
       // Reset upload zone after short delay
       setTimeout(() => {
@@ -453,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (res.ok) {
             loadJobsFromServer(); // Refresh list
           } else {
-            alert('Failed to update name');
+            await showAlertModal('Failed to update name');
           }
         } catch (err) {
           console.error('Error updating job name', err);
@@ -752,9 +743,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('saveBpmn').onclick = saveBpmnChanges;
         document.getElementById('cancelEdit').onclick = cancelEdit;
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.error('Modeler Error', err);
-        alert('Error entering edit mode');
+        await showAlertModal('Error entering edit mode');
       });
   }
 
@@ -780,7 +771,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       cancelEdit();
     } catch (err) {
       console.error(err);
-      alert('Failed to save changes');
+      await showAlertModal('Failed to save changes');
       const saveBtn = document.getElementById('saveBpmn');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -864,7 +855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       cancelDocEdit();
     } catch (err) {
       console.error(err);
-      alert('Failed to save changes');
+      await showAlertModal('Failed to save changes');
       const saveBtn = document.getElementById('saveDoc');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -894,7 +885,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       downloadFile(`process-${currentArtifactId}.bpmn`, xml, 'application/xml');
     } catch (err) {
       console.error('Error exporting BPMN XML', err);
-      alert('Failed to export BPMN XML');
+      await showAlertModal('Failed to export BPMN XML');
     }
   }
 
@@ -931,7 +922,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       img.src = url;
     } catch (err) {
       console.error('Error exporting BPMN PNG', err);
-      alert('Failed to export BPMN PNG');
+      await showAlertModal('Failed to export BPMN PNG');
     }
   }
 
@@ -1213,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       cancelTableEdit();
     } catch (err) {
       console.error(err);
-      alert('Failed to save changes');
+      await showAlertModal('Failed to save changes');
       const saveBtn = document.querySelector('#btn-save-table');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';

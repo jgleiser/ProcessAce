@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { getArtifact } = require('../models/artifact');
 
+/**
+ * GET /api/artifacts/:id/content
+ * Download or view an artifact's content. Set ?view=true for inline display.
+ */
 router.get('/:id/content', async (req, res) => {
   const { id } = req.params;
   const artifact = await getArtifact(id);
@@ -31,6 +35,10 @@ router.get('/:id/content', async (req, res) => {
   res.send(artifact.content);
 });
 
+/**
+ * PUT /api/artifacts/:id/content
+ * Update an artifact's content. Requires edit permissions.
+ */
 router.put('/:id/content', async (req, res) => {
   const { id } = req.params;
   const { content } = req.body;

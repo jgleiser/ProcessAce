@@ -161,7 +161,9 @@ try {
                 previousVersionId TEXT,
                 filename TEXT,
                 user_id TEXT,
-                workspace_id TEXT
+                workspace_id TEXT,
+                llm_provider TEXT,
+                llm_model TEXT
             )
         `,
     ).run();
@@ -205,7 +207,8 @@ try {
                 createdAt TEXT,
                 updatedAt TEXT,
                 user_id TEXT,
-                workspace_id TEXT
+                workspace_id TEXT,
+                process_name TEXT
             )
         `,
     ).run();

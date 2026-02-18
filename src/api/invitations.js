@@ -5,7 +5,10 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get my invitations
+/**
+ * GET /api/invitations
+ * Get all pending workspace invitations for the authenticated user.
+ */
 router.get('/', async (req, res) => {
   try {
     if (!req.user || !req.user.email) {
@@ -19,7 +22,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get invitation details
+/**
+ * GET /api/invitations/:token
+ * Get invitation details by token. Returns 410 if expired.
+ */
 router.get('/:token', async (req, res) => {
   try {
     const { token } = req.params;
@@ -40,7 +46,10 @@ router.get('/:token', async (req, res) => {
   }
 });
 
-// Accept invitation
+/**
+ * POST /api/invitations/:token/accept
+ * Accept a workspace invitation, adding the user as a member.
+ */
 router.post('/:token/accept', authenticateToken, async (req, res) => {
   try {
     const { token } = req.params;
@@ -60,7 +69,10 @@ router.post('/:token/accept', authenticateToken, async (req, res) => {
   }
 });
 
-// Decline invitation
+/**
+ * POST /api/invitations/:token/decline
+ * Decline a workspace invitation.
+ */
 router.post('/:token/decline', authenticateToken, async (req, res) => {
   try {
     const { token } = req.params;

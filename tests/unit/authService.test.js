@@ -17,10 +17,10 @@ describe('AuthService', async () => {
     assert.ok(user.id);
   });
 
-  it('should register a second user as viewer', async () => {
-    const user = await authService.registerUser('Test Viewer', 'viewer@example.com', 'Password123');
-    assert.strictEqual(user.email, 'viewer@example.com');
-    assert.strictEqual(user.role, 'viewer');
+  it('should register a second user as editor', async () => {
+    const user = await authService.registerUser('Test Editor', 'editor@example.com', 'Password123');
+    assert.strictEqual(user.email, 'editor@example.com');
+    assert.strictEqual(user.role, 'editor'); // Non-first user gets editor role
   });
 
   it('should fail to register user with weak password', async () => {
