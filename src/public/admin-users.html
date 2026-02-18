@@ -24,6 +24,38 @@
         <div id="errorContainer"></div>
 
         <div class="users-table-container">
+            <!-- Filter Bar -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="filterName">Name</label>
+                    <input type="text" id="filterName" placeholder="Search by name..." class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filterEmail">Email</label>
+                    <input type="text" id="filterEmail" placeholder="Search by email..." class="filter-input">
+                </div>
+                <div class="filter-group">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus" class="filter-select">
+                        <option value="All">All</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterRole">Role</label>
+                    <select id="filterRole" class="filter-select">
+                        <option value="All">All</option>
+                        <option value="admin">Admin</option>
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
+                </div>
+            </div>
+
             <div id="loadingState" class="loading">Loading users...</div>
             <table class="users-table hidden" id="usersTable">
                 <thead>

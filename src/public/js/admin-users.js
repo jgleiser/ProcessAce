@@ -15,6 +15,13 @@ const paginationInfo = document.getElementById('paginationInfo');
 const paginationControls = document.getElementById('paginationControls');
 const limitSelect = document.getElementById('limitSelect');
 
+// Filter Elements
+const filterName = document.getElementById('filterName');
+const filterEmail = document.getElementById('filterEmail');
+const filterStatus = document.getElementById('filterStatus');
+const filterRole = document.getElementById('filterRole');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+
 // Check authentication and admin status on load
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -59,6 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+
+    setupFilters();
   } catch (error) {
     console.error('Auth check failed:', error);
     window.location.href = '/login.html';
@@ -78,7 +87,16 @@ async function loadUsers(page = 1, limit = 10) {
     table.classList.add('hidden');
     pagContainer.classList.add('hidden');
 
-    const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}`);
+    pagContainer.classList.add('hidden');
+
+    const filters = getFilters();
+    const queryParams = new URLSearchParams({
+      page,
+      limit,
+      ...filters,
+    });
+
+    const response = await fetch(`/api/admin/users?${queryParams.toString()}`);
     if (!response.ok) {
       if (response.status === 403) {
         showError('Access denied. Admin privileges required.');
@@ -361,4 +379,60 @@ function goToPage(page) {
   if (page < 1 || page > totalPages) return;
   currentPage = page;
   loadUsers(currentPage, currentLimit);
+}
+
+// ============================================
+// FILTER FUNCTIONS
+// ============================================
+
+function getFilters() {
+  return {
+    name: filterName.value.trim(),
+    email: filterEmail.value.trim(),
+    status: filterStatus.value,
+    role: filterRole.value,
+  };
+}
+
+function setupFilters() {
+  const debouncedLoad = debounce(() => {
+    currentPage = 1;
+    loadUsers(currentPage, currentLimit);
+  }, 500);
+
+  // Text inputs
+  filterName.addEventListener('input', debouncedLoad);
+  filterEmail.addEventListener('input', debouncedLoad);
+
+  // Select inputs
+  filterStatus.addEventListener('change', () => {
+    currentPage = 1;
+    loadUsers(currentPage, currentLimit);
+  });
+  filterRole.addEventListener('change', () => {
+    currentPage = 1;
+    loadUsers(currentPage, currentLimit);
+  });
+
+  // Clear button
+  clearFiltersBtn.addEventListener('click', () => {
+    filterName.value = '';
+    filterEmail.value = '';
+    filterStatus.value = 'All';
+    filterRole.value = 'All';
+    currentPage = 1;
+    loadUsers(currentPage, currentLimit);
+  });
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }

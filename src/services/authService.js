@@ -149,22 +149,54 @@ class AuthService {
   }
 
   /**
-   * Get users with pagination
+   * Get users with pagination and filters
    * @param {number} page
    * @param {number} limit
+   * @param {Object} filters - { name, email, role, status }
    * @returns {Object} { users, total, totalPages }
    */
-  getUsersPaginated(page = 1, limit = 10) {
+  getUsersPaginated(page = 1, limit = 10, filters = {}) {
     const offset = (page - 1) * limit;
-    const countResult = db.prepare('SELECT COUNT(*) as count FROM users').get();
+
+    let whereClauses = [];
+    let params = [];
+
+    if (filters.name) {
+      whereClauses.push('name LIKE ?');
+      params.push(`%${filters.name}%`);
+    }
+
+    if (filters.email) {
+      whereClauses.push('email LIKE ?');
+      params.push(`%${filters.email}%`);
+    }
+
+    if (filters.role && filters.role !== 'All') {
+      whereClauses.push('role = ?');
+      params.push(filters.role);
+    }
+
+    if (filters.status && filters.status !== 'All') {
+      whereClauses.push('status = ?');
+      params.push(filters.status);
+    }
+
+    const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
+
+    const countQuery = `SELECT COUNT(*) as count FROM users ${whereSql}`;
+    const countResult = db.prepare(countQuery).get(...params);
     const total = countResult.count;
     const totalPages = Math.ceil(total / limit);
 
-    const users = db
-      .prepare(
-        'SELECT id, name, email, role, status, created_at FROM users ORDER BY created_at ASC LIMIT ? OFFSET ?',
-      )
-      .all(limit, offset);
+    const usersQuery = `
+      SELECT id, name, email, role, status, created_at 
+      FROM users 
+      ${whereSql}
+      ORDER BY created_at ASC 
+      LIMIT ? OFFSET ?
+    `;
+
+    const users = db.prepare(usersQuery).all(...params, limit, offset);
 
     return { users, total, totalPages };
   }

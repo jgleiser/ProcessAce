@@ -25,7 +25,15 @@ router.get('/users', (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = authService.getUsersPaginated(page, limit);
+    // Extract filters
+    const filters = {
+      name: req.query.name,
+      email: req.query.email,
+      role: req.query.role,
+      status: req.query.status
+    };
+
+    const result = authService.getUsersPaginated(page, limit, filters);
 
     logger.info(
       {
@@ -33,6 +41,7 @@ router.get('/users', (req, res) => {
         actor: req.user.id,
         page,
         limit,
+        filters,
         userCount: result.users.length,
       },
       'Admin retrieved user list',
