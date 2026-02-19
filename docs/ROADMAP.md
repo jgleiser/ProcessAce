@@ -108,3 +108,10 @@
 - [x] **Add documentation**: Updated `README.md`, `architecture.md`, `api_reference.md`, `user_guide.md`, and `ROADMAP.md` for public release.
 - [x] **Package readiness**: Updated `package.json` to v1.0.0, added repository metadata, updated `.env.example`.
 - [x] **Add tests**: Added unit tests (settingsService, workspaceService) and integration tests (workspaces, jobs) — 59 tests, 0 failures.
+
+## Phase 15 – Audio Transcription [PLANNED]
+
+- [ ] **Audio Ingestion**: Support for uploading audio/video files (mp3, wav, mp4, etc.).
+- [ ] **Transcription Configuration**: Configure a dedicated LLM Provider and Model for transcription (STT) in App Settings involving separate configuration from the main generation model.
+- [ ] **Transcription Processing**: If an audio file is uploaded, automatically transcribe it to text using the configured model.
+- [ ] **Evidence Pipeline Integration**: Use the transcribed text as process evidence to generate artifacts (BPMN, SIPOC, RACI).
