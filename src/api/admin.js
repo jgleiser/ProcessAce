@@ -30,7 +30,7 @@ router.get('/users', (req, res) => {
       name: req.query.name,
       email: req.query.email,
       role: req.query.role,
-      status: req.query.status
+      status: req.query.status,
     };
 
     const result = authService.getUsersPaginated(page, limit, filters);
@@ -101,7 +101,7 @@ router.get('/jobs', (req, res) => {
     // Since provider/model are in artifacts, we check if ANY artifact associated with this job matches.
     // The link is strictly Job -> Result (JSON) -> Artifact ID -> Artifact Table
     // However, for performance and simplicity in SQLite, we can try to join with artifacts if we can extract ID.
-    // Given the complexity of JSON extraction in SQL for an array of artifacts, 
+    // Given the complexity of JSON extraction in SQL for an array of artifacts,
     // we will use a subquery that checks `j.result LIKE '%"id":"' || a.id || '"%'` which is a bit hacky but works for JSON strings.
     // A better approach in standard SQL would be JSON_TABLE, but SQLite uses json_each.
 
