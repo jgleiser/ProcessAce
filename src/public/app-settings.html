@@ -1,112 +1,232 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>App Settings - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
 
-  <body>
-    <div class="app-container">
-      <div id="app-header"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Settings - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-      <div class="header-stacked">
-        <h1>App Settings</h1>
-        <a href="/" class="back-link">← Back to Dashboard</a>
+<body>
+  <div class="app-container">
+    <div id="app-header"></div>
+
+    <div class="header-stacked">
+      <h1>App Settings</h1>
+      <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <!-- SECTION 1: Provider Configuration -->
+    <div class="card app-settings-card collapsed">
+      <div class="card-header-collapsible" title="Click to collapse/expand">
+        <h2 class="section-title mb-0">1. LLM Providers Configuration</h2>
+        <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="collapse-icon">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </button>
       </div>
+      <div class="card-content">
+        <div id="providers-container" class="space-y-4">
+          <!-- OpenAI -->
+          <div class="provider-config-block border rounded p-4 mb-4">
+            <h3 class="font-semibold mb-2">OpenAI</h3>
+            <div class="api-key-row mt-2">
+              <label class="form-label">API Key</label>
+              <div class="api-key-content">
+                <!-- Configured State -->
+                <div id="openaiKeyConfigured" class="hidden">
+                  <div class="api-key-status">
+                    <span class="status-icon">✓</span>
+                    <span>API Key is configured</span>
+                    <button type="button" class="btn-change" data-action="change" data-provider="openai">Change</button>
+                    <button type="button" class="btn-change btn-delete-key" data-action="delete"
+                      data-provider="openai">Delete</button>
+                  </div>
+                </div>
+                <!-- Input State -->
+                <div id="openaiKeyInputContainer" class="api-key-input-row">
+                  <input type="password" id="openaiKeyInput" class="form-input form-input-sm"
+                    placeholder="Enter OpenAI API Key" autocomplete="off" />
+                  <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="openai">Save Key</button>
+                  <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden"
+                    data-provider="openai">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div id="messageContainer"></div>
+          <!-- Google GenAI -->
+          <div class="provider-config-block border rounded p-4 mb-4">
+            <h3 class="font-semibold mb-2">Google GenAI</h3>
+            <div class="api-key-row mt-2">
+              <label class="form-label">API Key</label>
+              <div class="api-key-content">
+                <!-- Configured State -->
+                <div id="googleKeyConfigured" class="hidden">
+                  <div class="api-key-status">
+                    <span class="status-icon">✓</span>
+                    <span>API Key is configured</span>
+                    <button type="button" class="btn-change" data-action="change" data-provider="google">Change</button>
+                    <button type="button" class="btn-change btn-delete-key" data-action="delete"
+                      data-provider="google">Delete</button>
+                  </div>
+                </div>
+                <!-- Input State -->
+                <div id="googleKeyInputContainer" class="api-key-input-row">
+                  <input type="password" id="googleKeyInput" class="form-input form-input-sm"
+                    placeholder="Enter Google GenAI API Key" autocomplete="off" />
+                  <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="google">Save Key</button>
+                  <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden"
+                    data-provider="google">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      <div class="card">
+          <!-- Anthropic -->
+          <div class="provider-config-block border rounded p-4 mb-4">
+            <h3 class="font-semibold mb-2">Anthropic</h3>
+            <div class="api-key-row mt-2">
+              <label class="form-label">API Key</label>
+              <div class="api-key-content">
+                <!-- Configured State -->
+                <div id="anthropicKeyConfigured" class="hidden">
+                  <div class="api-key-status">
+                    <span class="status-icon">✓</span>
+                    <span>API Key is configured</span>
+                    <button type="button" class="btn-change" data-action="change"
+                      data-provider="anthropic">Change</button>
+                    <button type="button" class="btn-change btn-delete-key" data-action="delete"
+                      data-provider="anthropic">Delete</button>
+                  </div>
+                </div>
+                <!-- Input State -->
+                <div id="anthropicKeyInputContainer" class="api-key-input-row">
+                  <input type="password" id="anthropicKeyInput" class="form-input form-input-sm"
+                    placeholder="Enter Anthropic API Key" autocomplete="off" />
+                  <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="anthropic">Save
+                    Key</button>
+                  <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden"
+                    data-provider="anthropic">Cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Default Model Selection -->
+    <div class="card app-settings-card collapsed">
+      <div class="card-header-collapsible" title="Click to collapse/expand">
+        <h2 class="section-title mb-0">2. Default Model Selection</h2>
+        <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="collapse-icon">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="card-content mt-4">
         <form id="appSettingsForm">
           <div class="form-group">
-            <label class="form-label">Default LLM Provider</label>
+            <label class="form-label">Configured Provider</label>
             <select id="providerSelect" class="form-select">
-              <option value="openai">OpenAI</option>
-              <option value="google">Google GenAI</option>
-              <option value="anthropic">Anthropic</option>
+              <option value="">-- Select a Provider --</option>
+              <!-- Options populated dynamically -->
             </select>
           </div>
 
           <div class="form-group">
-            <label class="form-label">API Key</label>
-            <!-- Configured State -->
-            <div id="apiKeyConfigured" class="hidden">
-              <div class="api-key-status">
-                <span class="status-icon">✓</span>
-                <span>API Key is configured</span>
-                <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
-                <button type="button" id="deleteApiKeyBtn" class="btn-change btn-delete-key">
-                  Delete
-                </button>
-                <button type="button" id="loadModelsBtnConfigured" class="btn-compact">
-                  Load Models
-                </button>
-              </div>
-            </div>
-            <!-- Input State -->
-            <div id="apiKeyInputContainer" class="api-key-input-row">
-              <input
-                type="password"
-                id="apiKeyInput"
-                class="form-input"
-                placeholder="Enter API Key"
-                autocomplete="off"
-              />
-              <button type="button" id="loadModelsBtn" class="btn-secondary">Load Models</button>
-            </div>
-            <small id="apiKeyHelp" class="text-muted mt-1 block"
-              >Click "Load Models" to verify key and fetch available models.</small
-            >
+            <label class="form-label">Base URL (Optional)</label>
+            <input type="text" id="baseUrlInput" class="form-input"
+              placeholder="e.g., http://localhost:11434/v1 for Ollama" />
+            <small class="text-muted mt-1 block">Leave empty for default provider URLs. Use for local LLMs like Ollama
+              or
+              LocalAI.</small>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Base URL (Optional)</label>
-            <input
-              type="text"
-              id="baseUrlInput"
-              class="form-input"
-              placeholder="e.g., http://localhost:11434/v1 for Ollama"
-            />
-            <small class="text-muted mt-1 block"
-              >Leave empty for default provider URLs. Use for local LLMs like Ollama or
-              LocalAI.</small
-            >
+          <div class="form-group mt-4 mb-4">
+            <button type="button" id="loadModelsBtn" class="btn-secondary">Load Models</button>
+            <small class="text-muted mt-1 block">Click "Load Models" to fetch available models for the selected
+              provider.</small>
           </div>
 
           <div class="form-group">
             <label class="form-label">Default Model</label>
             <div class="combobox-container" id="modelCombobox">
-              <input
-                type="text"
-                id="modelInput"
-                class="combobox-input"
-                placeholder="Type to search models..."
-                autocomplete="off"
-              />
+              <input type="text" id="modelInput" class="combobox-input" placeholder="Type to search models..."
+                autocomplete="off" />
               <input type="hidden" id="modelValue" />
               <div class="combobox-dropdown" id="modelDropdown"></div>
             </div>
-            <small class="text-muted mt-1 block"
-              >Type to filter models. Use "Load Models" to refresh options.</small
-            >
+            <small class="text-muted mt-1 block">Type to filter models. Use "Load Models" to refresh options.</small>
           </div>
           <div class="text-right">
-            <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+            <button type="submit" class="btn-primary" id="saveBtn">Save Default Model</button>
           </div>
         </form>
       </div>
     </div>
-    <script src="js/api-client.js"></script>
-    <script src="js/header.js"></script>
-    <script src="js/modal-utils.js"></script>
-    <script src="js/app-settings.js"></script>
-  </body>
+
+    <!-- SECTION 3: Information -->
+    <div class="card app-settings-card collapsed">
+      <div class="card-header-collapsible" title="Click to collapse/expand">
+        <h2 class="section-title mb-0">3. Supported Models & Configuration Info</h2>
+        <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" class="collapse-icon">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+        </button>
+      </div>
+      <div class="card-content mt-4">
+        <div class="info-section-content">
+          <div class="mb-4">
+            <h3>Tested LLM Providers</h3>
+            <ul class="provider-list">
+              <li><strong>OpenAI:</strong>
+                <ul class="provider-models-list">
+                  <li><code>gpt-5-nano-2025-08-07</code>: Good overall results</li>
+                </ul>
+              </li>
+              <li class="mt-2"><strong>Google GenAI:</strong>
+                <ul class="provider-models-list">
+                  <li><code>gemini-2.5-flash-lite</code>: Need to be fixed, not working with current implementation</li>
+                  <li><code>gemini-3.0-flash-preview</code>: Good BPMS results, wrong SIPOC and RACI format</li>
+                </ul>
+              </li>
+              <li class="mt-2"><strong>Anthropic:</strong>
+                <ul class="provider-models-list">
+                  <li><code>claude-haiku-4-5-20251001</code>: Good overall results</li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-4">
+            <h3>Local / Custom Models (Ollama, LocalAI, etc.)</h3>
+            <p class="text-muted mt-2">You can connect to a local or custom LLM by overriding the Base URL above. For
+              instance, if you run
+              Ollama locally, you can configure a dummy API key for OpenAI, select OpenAI as the provider, and set the
+              Base URL to <code>http://localhost:11434/v1</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="js/api-client.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/modal-utils.js"></script>
+  <script src="js/app-settings.js"></script>
+</body>
+
 </html>

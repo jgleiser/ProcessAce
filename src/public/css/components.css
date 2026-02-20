@@ -103,6 +103,19 @@
   background: #ff8a80;
 }
 
+.btn-primary.btn-sm,
+.btn-secondary.btn-sm,
+.btn-danger.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+}
+
+.btn-save-key {
+  min-width: 90px;
+  white-space: nowrap;
+}
+
 .btn-icon {
   background: transparent;
   border: none;
@@ -488,6 +501,21 @@
   margin-bottom: 1.5rem;
 }
 
+.api-key-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.api-key-row .form-label {
+  margin-bottom: 0;
+  min-width: 60px;
+}
+
+.api-key-content {
+  flex: 1;
+}
+
 .form-input {
   width: 100%;
   padding: 0.8rem;
@@ -501,6 +529,69 @@
 .form-input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.form-input.form-input-sm {
+  font-size: 0.85rem;
+  border-radius: 4px;
+}
+
+/* ── Modal Forms ── */
+.modal-form-group {
+  margin-bottom: 1.25rem;
+}
+
+.modal-form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.modal-form-group input,
+.modal-form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  color: var(--text-main);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.modal-form-group input:focus,
+.modal-form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ── Info Section (Settings) ── */
+.info-section-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.info-section-content h3 {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  margin-bottom: 0.75rem;
+}
+
+.provider-list {
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.provider-models-list {
+  margin-left: 1.5rem;
+  margin-top: 0.4rem;
+  list-style-type: circle;
+}
+
+.provider-models-list li {
+  margin-bottom: 0.3rem;
+  color: var(--text-muted);
 }
 
 .form-label {
@@ -789,6 +880,41 @@
   padding: 2rem;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
+}
+
+.app-settings-card {
+  margin-bottom: 2.5rem;
+}
+
+/* ── Collapsible Card ── */
+.card-header-collapsible {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card-header-collapsible .section-title {
+  margin-bottom: 0;
+}
+
+.collapse-icon {
+  transition: transform 0.3s ease;
+  color: var(--text-muted);
+}
+
+.card.collapsed .collapse-icon {
+  transform: rotate(180deg);
+}
+
+.card-content {
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.card.collapsed .card-content {
+  display: none;
 }
 
 /* ── Header Stacked Layout ── */
