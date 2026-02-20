@@ -13,7 +13,7 @@ class GoogleProvider extends LlmProvider {
     this.modelName = config.model || 'gemini-2.5-flash-lite';
   }
 
-  async complete(prompt, system) {
+  async complete(prompt, system, options = {}) {
     try {
       logger.info({ model: this.modelName }, 'Calling Google GenAI API');
 
@@ -33,15 +33,38 @@ class GoogleProvider extends LlmProvider {
 
       logger.info(
         {
-          model: this.modelName,
-          usage: response.usageMetadata,
+          event_type: 'llm_call',
+          jobId: options.jobId,
+          llm_provider: 'google',
+          llm_model: this.modelName,
+          prompt_type: options.use_case || 'unknown',
+          prompt_metadata: {
+            prompt_length: prompt.length,
+            system_length: system ? system.length : 0,
+          },
+          response_metadata: {
+            usage: response.usageMetadata,
+            status: 'success',
+            response_length: text.length,
+          },
         },
         'Google GenAI API response received',
       );
 
       return text;
     } catch (err) {
-      logger.error({ err, model: this.modelName }, 'Google GenAI API call failed');
+      logger.error(
+        {
+          event_type: 'llm_call',
+          jobId: options.jobId,
+          llm_provider: 'google',
+          llm_model: this.modelName,
+          prompt_type: options.use_case || 'unknown',
+          response_metadata: { status: 'error' },
+          err,
+        },
+        'Google GenAI API call failed',
+      );
       throw err;
     }
   }

@@ -15,7 +15,7 @@ class OpenAIProvider extends LlmProvider {
     this.model = config.model || 'gpt-5-nano-2025-08-07';
   }
 
-  async complete(prompt, system) {
+  async complete(prompt, system, options = {}) {
     try {
       logger.info({ model: this.model }, 'Calling OpenAI API');
 
@@ -34,15 +34,38 @@ class OpenAIProvider extends LlmProvider {
 
       logger.info(
         {
-          model: this.model,
-          tokens: completion.usage?.total_tokens,
+          event_type: 'llm_call',
+          jobId: options.jobId,
+          llm_provider: 'openai',
+          llm_model: this.model,
+          prompt_type: options.use_case || 'unknown',
+          prompt_metadata: {
+            prompt_length: prompt.length,
+            system_length: system ? system.length : 0,
+          },
+          response_metadata: {
+            tokens: completion.usage?.total_tokens,
+            status: 'success',
+            response_length: responseText.length,
+          },
         },
         'OpenAI API response received',
       );
 
       return responseText;
     } catch (err) {
-      logger.error({ err, model: this.model }, 'OpenAI API call failed');
+      logger.error(
+        {
+          event_type: 'llm_call',
+          jobId: options.jobId,
+          llm_provider: 'openai',
+          llm_model: this.model,
+          prompt_type: options.use_case || 'unknown',
+          response_metadata: { status: 'error' },
+          err,
+        },
+        'OpenAI API call failed',
+      );
       throw err;
     }
   }

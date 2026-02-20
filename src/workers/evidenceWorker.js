@@ -123,7 +123,10 @@ Return ONLY Markdown content.`;
 
     // Helper to generate and save
     const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
-      const response = await llm.complete(prompt, systemPrompt);
+      const response = await llm.complete(prompt, systemPrompt, {
+        use_case: `${type}_generation`,
+        jobId: job.id,
+      });
       let content = response.trim();
       // Basic Cleanup
       if (content.startsWith('```')) {
@@ -147,6 +150,15 @@ Return ONLY Markdown content.`;
         llm_model: modelName,
       });
       await saveArtifact(artifact);
+      logger.info(
+        {
+          event_type: 'artifact_generated',
+          artifact_id: artifact.id,
+          artifact_type: type,
+          jobId: job.id,
+        },
+        `Generated ${type} artifact`,
+      );
       return artifact;
     };
 

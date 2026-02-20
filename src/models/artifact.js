@@ -39,8 +39,13 @@ const insertStmt = db.prepare(`
     VALUES (@id, @type, @version, @content, @metadata, @createdBy, @createdAt, @previousVersionId, @filename, @user_id, @workspace_id, @llm_provider, @llm_model)
 `);
 
-const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ?');
+const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ? ORDER BY version DESC LIMIT 1');
 const deleteStmt = db.prepare('DELETE FROM artifacts WHERE id = ?');
+
+const getHistoryStmt = db.prepare(
+  'SELECT version, createdAt, createdBy FROM artifacts WHERE id = ? ORDER BY version DESC',
+);
+const getVersionStmt = db.prepare('SELECT * FROM artifacts WHERE id = ? AND version = ?');
 
 const saveArtifact = async (artifact) => {
   const data = {
@@ -63,26 +68,56 @@ const getArtifact = async (id) => {
   });
 };
 
+const getArtifactVersionHistory = async (id) => {
+  const rows = getHistoryStmt.all(id);
+  return rows.map((row) => ({
+    version: row.version,
+    createdAt: new Date(row.createdAt),
+    createdBy: row.createdBy,
+  }));
+};
+
+const getArtifactVersion = async (id, version) => {
+  const row = getVersionStmt.get(id, version);
+  if (!row) return null;
+
+  return new Artifact({
+    ...row,
+    metadata: JSON.parse(row.metadata),
+    createdAt: new Date(row.createdAt),
+  });
+};
+
 const deleteArtifact = async (id) => {
   const result = deleteStmt.run(id);
   return result.changes > 0;
 };
 
-const updateStmt = db.prepare(`
-    UPDATE artifacts 
-    SET content = @content, 
-        version = version + 1,
-        createdAt = @createdAt
-    WHERE id = @id
-`);
-
 const updateArtifact = async (id, content) => {
-  const info = updateStmt.run({
-    id,
+  const current = await getArtifact(id);
+  if (!current) return false;
+
+  const newVersion = current.version + 1;
+  const now = new Date();
+
+  const data = {
+    id: current.id,
+    type: current.type,
+    version: newVersion,
     content,
-    createdAt: new Date().toISOString(),
-  });
-  return info.changes > 0;
+    metadata: JSON.stringify(current.metadata || {}),
+    createdBy: current.createdBy,
+    createdAt: now.toISOString(),
+    previousVersionId: current.id,
+    filename: current.filename,
+    user_id: current.user_id,
+    workspace_id: current.workspace_id,
+    llm_provider: current.llm_provider,
+    llm_model: current.llm_model,
+  };
+
+  insertStmt.run(data);
+  return true;
 };
 
 module.exports = {
@@ -91,4 +126,6 @@ module.exports = {
   getArtifact,
   deleteArtifact,
   updateArtifact,
+  getArtifactVersionHistory,
+  getArtifactVersion,
 };

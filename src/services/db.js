@@ -115,7 +115,7 @@ try {
   db.prepare(
     `
         CREATE TABLE IF NOT EXISTS artifacts (
-            id TEXT PRIMARY KEY,
+            id TEXT,
             type TEXT,
             version INTEGER,
             content TEXT,
@@ -127,7 +127,8 @@ try {
             user_id TEXT,
             workspace_id TEXT,
             llm_provider TEXT,
-            llm_model TEXT
+            llm_model TEXT,
+            PRIMARY KEY (id, version)
         )
     `,
   ).run();

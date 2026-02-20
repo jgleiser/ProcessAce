@@ -43,7 +43,7 @@ class JobQueue {
       },
     );
 
-    logger.info({ jobId, queue: this.name }, 'Job added to queue');
+    logger.info({ event_type: 'job_queued', jobId, queue: this.name }, 'Job added to queue');
     return jobRecord;
   }
 
@@ -80,6 +80,7 @@ class JobQueue {
         }
 
         try {
+          logger.info({ event_type: 'job_started', jobId, type }, 'Job started processing');
           // Execute Handler
           // Construct a job-like object compatible with old handler signature
           const jobContext = {
@@ -106,6 +107,7 @@ class JobQueue {
               }
             }
           }
+          logger.info({ event_type: 'job_completed', jobId, type }, 'Job completed successfully');
           return result;
         } catch (err) {
           // Sync failure
@@ -124,6 +126,7 @@ class JobQueue {
               }
             }
           }
+          logger.error({ event_type: 'job_failed', jobId, type, err }, 'Job failed');
           throw err;
         }
       },
