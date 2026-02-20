@@ -22,3 +22,5 @@ local
 *.md
 data
 debug
+lint_output.txt
+logo
