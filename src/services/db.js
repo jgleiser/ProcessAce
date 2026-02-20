@@ -37,27 +37,13 @@ try {
             id TEXT PRIMARY KEY,
             email TEXT UNIQUE,
             password_hash TEXT,
+            role TEXT DEFAULT 'editor',
+            status TEXT DEFAULT 'active',
+            name TEXT,
             created_at TEXT
         )
     `,
   ).run();
-
-  // Migration: Add role and status columns to users table
-  try {
-    db.prepare("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer'").run();
-  } catch {
-    /* ignore if exists */
-  }
-  try {
-    db.prepare("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'").run();
-  } catch {
-    /* ignore if exists */
-  }
-  try {
-    db.prepare('ALTER TABLE users ADD COLUMN name TEXT').run();
-  } catch {
-    /* ignore if exists */
-  }
 
   // Workspaces Table
   db.prepare(
@@ -106,129 +92,64 @@ try {
   ).run();
 
   // Evidence Table
-  // Check if table exists to decide whether to create or alter
-  const evidenceTableExists = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='evidence'")
-    .get();
-  if (!evidenceTableExists) {
-    db.prepare(
-      `
-            CREATE TABLE evidence (
-                id TEXT PRIMARY KEY,
-                filename TEXT,
-                originalName TEXT,
-                mimeType TEXT,
-                size INTEGER,
-                path TEXT,
-                status TEXT DEFAULT 'pending',
-                metadata TEXT,
-                createdAt TEXT,
-                updatedAt TEXT,
-                user_id TEXT,
-                workspace_id TEXT
-            )
-        `,
-    ).run();
-  } else {
-    // Migration: Add columns if they don't exist
-    try {
-      db.prepare('ALTER TABLE evidence ADD COLUMN user_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE evidence ADD COLUMN workspace_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-  }
+  db.prepare(
+    `
+        CREATE TABLE IF NOT EXISTS evidence (
+            id TEXT PRIMARY KEY,
+            filename TEXT,
+            originalName TEXT,
+            mimeType TEXT,
+            size INTEGER,
+            path TEXT,
+            status TEXT DEFAULT 'pending',
+            metadata TEXT,
+            createdAt TEXT,
+            updatedAt TEXT,
+            user_id TEXT,
+            workspace_id TEXT
+        )
+    `,
+  ).run();
 
   // Artifact Table
-  const artifactsTableExists = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='artifacts'")
-    .get();
-  if (!artifactsTableExists) {
-    db.prepare(
-      `
-            CREATE TABLE artifacts (
-                id TEXT PRIMARY KEY,
-                type TEXT,
-                version INTEGER,
-                content TEXT,
-                metadata TEXT,
-                createdBy TEXT,
-                createdAt TEXT,
-                previousVersionId TEXT,
-                filename TEXT,
-                user_id TEXT,
-                workspace_id TEXT,
-                llm_provider TEXT,
-                llm_model TEXT
-            )
-        `,
-    ).run();
-  } else {
-    try {
-      db.prepare('ALTER TABLE artifacts ADD COLUMN user_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE artifacts ADD COLUMN workspace_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE artifacts ADD COLUMN llm_provider TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE artifacts ADD COLUMN llm_model TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-  }
+  db.prepare(
+    `
+        CREATE TABLE IF NOT EXISTS artifacts (
+            id TEXT PRIMARY KEY,
+            type TEXT,
+            version INTEGER,
+            content TEXT,
+            metadata TEXT,
+            createdBy TEXT,
+            createdAt TEXT,
+            previousVersionId TEXT,
+            filename TEXT,
+            user_id TEXT,
+            workspace_id TEXT,
+            llm_provider TEXT,
+            llm_model TEXT
+        )
+    `,
+  ).run();
 
   // Jobs Table
-  const jobsTableExists = db
-    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='jobs'")
-    .get();
-  if (!jobsTableExists) {
-    db.prepare(
-      `
-            CREATE TABLE jobs (
-                id TEXT PRIMARY KEY,
-                type TEXT,
-                data TEXT,
-                status TEXT,
-                result TEXT,
-                error TEXT,
-                createdAt TEXT,
-                updatedAt TEXT,
-                user_id TEXT,
-                workspace_id TEXT,
-                process_name TEXT
-            )
-        `,
-    ).run();
-  } else {
-    try {
-      db.prepare('ALTER TABLE jobs ADD COLUMN user_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE jobs ADD COLUMN workspace_id TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-    try {
-      db.prepare('ALTER TABLE jobs ADD COLUMN process_name TEXT').run();
-    } catch {
-      /* ignore if exists */
-    }
-  }
+  db.prepare(
+    `
+        CREATE TABLE IF NOT EXISTS jobs (
+            id TEXT PRIMARY KEY,
+            type TEXT,
+            data TEXT,
+            status TEXT,
+            result TEXT,
+            error TEXT,
+            createdAt TEXT,
+            updatedAt TEXT,
+            user_id TEXT,
+            workspace_id TEXT,
+            process_name TEXT
+        )
+    `,
+  ).run();
 
   // App Settings Table
   db.prepare(
