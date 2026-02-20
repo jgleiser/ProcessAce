@@ -1,105 +1,137 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <!-- BPMN-JS -->
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
+    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css"
+    />
+    <!-- EasyMDE -->
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ProcessAce</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <!-- BPMN-JS -->
-  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
-  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
-  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css" />
-  <!-- EasyMDE -->
-  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
-  <link rel="stylesheet" href="css/style.css" />
-</head>
+  <body>
+    <div class="app-container">
+      <div id="app-header"></div>
+      <div class="subtitle-banner">
+        <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
+      </div>
 
-<body>
-  <div class="app-container">
-    <div id="app-header"></div>
-    <div class="subtitle-banner">
-      <p class="subtitle">AI-Powered Process Discovery & Documentation</p>
-    </div>
-
-    <main>
-      <section class="upload-section">
-        <div class="upload-zone" id="uploadZone">
-          <div class="upload-content">
-            <div class="icon-container">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 16V8M12 8L9 11M12 8L15 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-                <path d="M17 12V17C17 18.1046 16.1046 19 15 19H9C7.89543 19 7 18.1046 7 17V12" stroke="currentColor"
-                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
+      <main>
+        <section class="upload-section">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-content">
+              <div class="icon-container">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 16V8M12 8L9 11M12 8L15 11"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M17 12V17C17 18.1046 16.1046 19 15 19H9C7.89543 19 7 18.1046 7 17V12"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3>Drop your evidence here</h3>
+              <p>Support for Audio (future), Video (future), and Documents (available!)</p>
+              <input
+                type="text"
+                id="processNameInput"
+                placeholder="Process Name (Optional)"
+                class="process-name-input"
+              />
+              <input type="file" id="fileInput" hidden />
+              <button class="btn-primary" id="browseBtn">Browse Files</button>
             </div>
-            <h3>Drop your evidence here</h3>
-            <p>Support for Audio, Video, and Documents</p>
-            <input type="text" id="processNameInput" placeholder="Process Name (Optional)" class="process-name-input" />
-            <input type="file" id="fileInput" hidden />
-            <button class="btn-primary" id="browseBtn">Browse Files</button>
+            <div class="upload-progress" id="uploadProgress" hidden>
+              <div class="spinner"></div>
+              <span>Uploading...</span>
+            </div>
           </div>
-          <div class="upload-progress" id="uploadProgress" hidden>
-            <div class="spinner"></div>
-            <span>Uploading...</span>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="jobs-section">
-        <div class="section-header">
-          <h2>Recent Activity</h2>
-          <span class="badge" id="jobCount">0</span>
-        </div>
-        <div class="jobs-list" id="jobsList">
-          <!-- Jobs will be injected here -->
-          <div class="empty-state">
-            <p>No jobs yet. Upload evidence to start.</p>
+        <section class="jobs-section">
+          <div class="section-header">
+            <h2>Recent Activity</h2>
+            <span class="badge" id="jobCount">0</span>
           </div>
-        </div>
-      </section>
-    </main>
-  </div>
-  <!-- Artifact View Modal -->
-  <div id="artifactModal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalTitle">Artifact View</h3>
-        <span class="close-modal">&times;</span>
-      </div>
-      <div id="modalBody" class="modal-body"></div>
+          <div class="jobs-list" id="jobsList">
+            <!-- Jobs will be injected here -->
+            <div class="empty-state">
+              <p>No jobs yet. Upload evidence to start.</p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
-  </div>
-  <!-- Workspace Creation Modal -->
-  <div id="workspaceModal" class="modal hidden">
-    <div class="modal-content modal-small">
-      <div class="modal-header">
-        <h3>Create Workspace</h3>
-        <span class="close-workspace-modal close-modal-sm">&times;</span>
+    <!-- Artifact View Modal -->
+    <div id="artifactModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Artifact View</h3>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
       </div>
-      <div class="modal-body">
-        <input type="text" id="newWorkspaceName" placeholder="Workspace Name" class="ws-modal-input" />
-        <div class="flex-end-gap">
-          <button id="cancelWorkspaceBtn" class="btn-primary btn-cancel">
-            Cancel
-          </button>
-          <button id="confirmCreateWorkspaceBtn" class="btn-primary">Create</button>
+    </div>
+    <!-- Workspace Creation Modal -->
+    <div id="workspaceModal" class="modal hidden">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h3>Create Workspace</h3>
+          <span class="close-workspace-modal close-modal-sm">&times;</span>
+        </div>
+        <div class="modal-body">
+          <input
+            type="text"
+            id="newWorkspaceName"
+            placeholder="Workspace Name"
+            class="ws-modal-input"
+          />
+          <div class="flex-end-gap">
+            <button id="cancelWorkspaceBtn" class="btn-primary btn-cancel">Cancel</button>
+            <button id="confirmCreateWorkspaceBtn" class="btn-primary">Create</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
-  <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
-  <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
+    <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
+    <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
+    <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
 
-  <script src="js/api-client.js"></script>
-  <script src="js/header.js"></script>
-  <script src="js/modal-utils.js"></script>
-  <script src="js/app.js"></script>
-</body>
-
+    <script src="js/api-client.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/modal-utils.js"></script>
+    <script src="js/components/workspace-manager.js"></script>
+    <script src="js/components/job-tracker.js"></script>
+    <script src="js/components/evidence-upload.js"></script>
+    <script src="js/components/artifact-viewer.js"></script>
+    <script src="js/app.js"></script>
+  </body>
 </html>

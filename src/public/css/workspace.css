@@ -4,414 +4,416 @@
 
 /* ── Grid & Cards ── */
 .workspaces-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .workspace-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    position: relative;
-    transition: transform 0.2s, box-shadow 0.2s;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  position: relative;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .workspace-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary);
 }
 
 .workspace-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
 .workspace-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-main);
-    margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.25rem;
 }
 
 .workspace-role {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .workspace-stats {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-item {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-value {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
 }
 
 .stat-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .workspace-actions {
-    display: flex;
-    gap: 0.5rem;
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
 }
 
 /* ── Lists ── */
 .list-group {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .list-group-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .list-group-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 /* ── Role Badges ── */
 .role-badge {
-    padding: 0.2rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .role-admin {
-    background: rgba(124, 77, 255, 0.1);
-    color: var(--primary);
-    border: 1px solid rgba(124, 77, 255, 0.2);
+  background: rgba(124, 77, 255, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(124, 77, 255, 0.2);
 }
 
 .role-editor {
-    background: rgba(41, 121, 255, 0.1);
-    color: var(--processing);
-    border: 1px solid rgba(41, 121, 255, 0.2);
+  background: rgba(41, 121, 255, 0.1);
+  color: var(--processing);
+  border: 1px solid rgba(41, 121, 255, 0.2);
 }
 
 .role-viewer {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
 .role-owner {
-    background: #fff;
-    color: #000;
-    font-weight: 700;
+  background: #fff;
+  color: #000;
+  font-weight: 700;
 }
 
 /* ── Invite Section ── */
 .invite-section {
-    background: rgba(255, 255, 255, 0.03);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
 }
 
 #invite-form {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 #invite-form .form-input {
-    width: auto;
-    flex: 1;
-    min-width: 150px;
+  width: auto;
+  flex: 1;
+  min-width: 150px;
 }
 
 #invite-form #invite-email {
-    flex: 2;
-    min-width: 200px;
+  flex: 2;
+  min-width: 200px;
 }
 
 #invite-form button {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 /* ── Tabs ── */
 .tabs-container {
-    display: flex;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 1rem;
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
 }
 
 .tab-btn {
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-weight: 500;
-    border-bottom: 2px solid transparent;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
 }
 
 .tab-btn.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 
 .scrollable-list {
-    max-height: 300px;
-    overflow-y: auto;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 /* ── Suggestions Dropdown ── */
 .suggestions-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .suggestions-dropdown .suggestion-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    transition: background 0.2s;
-    display: flex;
-    flex-direction: column;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .suggestions-dropdown .suggestion-item:last-child {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .suggestions-dropdown .suggestion-item:hover {
-    background: var(--card-hover);
+  background: var(--card-hover);
 }
 
 .suggestions-dropdown .suggestion-name {
-    font-weight: 500;
-    color: var(--text-main);
+  font-weight: 500;
+  color: var(--text-main);
 }
 
 .suggestions-dropdown .suggestion-email {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 /* ── Common Settings ── */
 .divider {
-    border: 0;
-    border-top: 1px solid var(--border-color);
-    margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
 }
 
 .section-title {
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-    color: var(--text-main);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--text-main);
 }
 
 /* ── API Key Settings ── */
 .api-key-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.8rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: var(--card-bg);
-    color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--success);
 }
 
 .api-key-status .status-icon {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 /* ── Member/Invite Utilities ── */
 .ws-card-info-text {
-    flex: 1;
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    padding: 0.5rem;
+  flex: 1;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.5rem;
 }
 
 .ws-empty-state {
-    grid-column: 1 / -1;
-    padding: 2rem;
+  grid-column: 1 / -1;
+  padding: 2rem;
 }
 
 .member-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .member-avatar {
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .member-name {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .member-email {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .tab-active {
-    color: var(--primary);
-    border-bottom: 2px solid var(--primary);
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
 }
 
 .tab-inactive {
-    color: var(--text-muted);
-    border-bottom: none;
+  color: var(--text-muted);
+  border-bottom: none;
 }
 
 .role-edit-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .role-edit-select {
-    padding: 0.2rem 0.5rem;
-    font-size: 0.75rem;
-    border-radius: 4px;
-    height: auto;
-    width: auto;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  height: auto;
+  width: auto;
 }
 
 .role-edit-save {
-    padding: 0.2rem 0.5rem;
-    font-size: 0.75rem;
-    flex: 0 0 auto;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  flex: 0 0 auto;
 }
 
 .invite-message {
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
 }
 
 .invite-message-success {
-    background: rgba(0, 230, 118, 0.1);
-    color: var(--success);
-    border: 1px solid var(--success);
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .invite-message-error {
-    background: rgba(255, 82, 82, 0.1);
-    color: var(--error);
-    border: 1px solid var(--error);
+  background: rgba(255, 82, 82, 0.1);
+  color: var(--error);
+  border: 1px solid var(--error);
 }
 
 .invite-info-line {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 /* ── Workspace Selector Form Controls ── */
 .ws-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 .ws-name {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-color);
 }
 
 .ws-change-link {
-    font-size: 0.8rem;
-    color: var(--primary);
-    margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--primary);
+  margin-left: 0.5rem;
 }
 
 .ws-cancel-link {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-left: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: 0.3rem;
 }
 
 .ws-select {
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    border: 1px solid #555;
-    font-size: 0.85rem;
-    background: var(--bg-color);
-    color: var(--text-color);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #555;
+  font-size: 0.85rem;
+  background: var(--bg-color);
+  color: var(--text-color);
 }
 
 .ws-new-input {
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    border: 1px solid #555;
-    font-size: 0.85rem;
-    width: 140px;
-    background: var(--bg-color);
-    color: var(--text-color);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #555;
+  font-size: 0.85rem;
+  width: 140px;
+  background: var(--bg-color);
+  color: var(--text-color);
 }
 
 .ws-action-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
 }
 
 .process-name-input {
-    margin-bottom: 20px;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    width: 80%;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  width: 80%;
 }
 
 .ws-modal-input {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    margin-bottom: 1rem;
-    box-sizing: border-box;
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
 }

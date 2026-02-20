@@ -1,93 +1,112 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Settings - ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App Settings - ProcessAce</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-</head>
+  <body>
+    <div class="app-container">
+      <div id="app-header"></div>
 
-<body>
-  <div class="app-container">
-    <div id="app-header"></div>
+      <div class="header-stacked">
+        <h1>App Settings</h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+      </div>
 
-    <div class="header-stacked">
-      <h1>App Settings</h1>
-      <a href="/" class="back-link">← Back to Dashboard</a>
-    </div>
+      <div id="messageContainer"></div>
 
-    <div id="messageContainer"></div>
+      <div class="card">
+        <form id="appSettingsForm">
+          <div class="form-group">
+            <label class="form-label">Default LLM Provider</label>
+            <select id="providerSelect" class="form-select">
+              <option value="openai">OpenAI</option>
+              <option value="google">Google GenAI</option>
+              <option value="anthropic">Anthropic</option>
+            </select>
+          </div>
 
-    <div class="card">
-      <form id="appSettingsForm">
-        <div class="form-group">
-          <label class="form-label">Default LLM Provider</label>
-          <select id="providerSelect" class="form-select">
-            <option value="openai">OpenAI</option>
-            <option value="google">Google GenAI</option>
-            <option value="anthropic">Anthropic</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">API Key</label>
-          <!-- Configured State -->
-          <div id="apiKeyConfigured" class="hidden">
-            <div class="api-key-status">
-              <span class="status-icon">✓</span>
-              <span>API Key is configured</span>
-              <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
-              <button type="button" id="deleteApiKeyBtn" class="btn-change btn-delete-key">
-                Delete
-              </button>
-              <button type="button" id="loadModelsBtnConfigured" class="btn-compact">
-                Load Models
-              </button>
+          <div class="form-group">
+            <label class="form-label">API Key</label>
+            <!-- Configured State -->
+            <div id="apiKeyConfigured" class="hidden">
+              <div class="api-key-status">
+                <span class="status-icon">✓</span>
+                <span>API Key is configured</span>
+                <button type="button" id="changeApiKeyBtn" class="btn-change">Change</button>
+                <button type="button" id="deleteApiKeyBtn" class="btn-change btn-delete-key">
+                  Delete
+                </button>
+                <button type="button" id="loadModelsBtnConfigured" class="btn-compact">
+                  Load Models
+                </button>
+              </div>
             </div>
+            <!-- Input State -->
+            <div id="apiKeyInputContainer" class="api-key-input-row">
+              <input
+                type="password"
+                id="apiKeyInput"
+                class="form-input"
+                placeholder="Enter API Key"
+                autocomplete="off"
+              />
+              <button type="button" id="loadModelsBtn" class="btn-secondary">Load Models</button>
+            </div>
+            <small id="apiKeyHelp" class="text-muted mt-1 block"
+              >Click "Load Models" to verify key and fetch available models.</small
+            >
           </div>
-          <!-- Input State -->
-          <div id="apiKeyInputContainer" class="api-key-input-row">
-            <input type="password" id="apiKeyInput" class="form-input" placeholder="Enter API Key" autocomplete="off" />
-            <button type="button" id="loadModelsBtn" class="btn-secondary">
-              Load Models
-            </button>
-          </div>
-          <small id="apiKeyHelp" class="text-muted mt-1 block">Click "Load Models" to verify key and fetch available
-            models.</small>
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Base URL (Optional)</label>
-          <input type="text" id="baseUrlInput" class="form-input"
-            placeholder="e.g., http://localhost:11434/v1 for Ollama" />
-          <small class="text-muted mt-1 block">Leave empty for default provider URLs. Use for local LLMs like Ollama or
-            LocalAI.</small>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Default Model</label>
-          <div class="combobox-container" id="modelCombobox">
-            <input type="text" id="modelInput" class="combobox-input" placeholder="Type to search models..."
-              autocomplete="off" />
-            <input type="hidden" id="modelValue" />
-            <div class="combobox-dropdown" id="modelDropdown"></div>
+          <div class="form-group">
+            <label class="form-label">Base URL (Optional)</label>
+            <input
+              type="text"
+              id="baseUrlInput"
+              class="form-input"
+              placeholder="e.g., http://localhost:11434/v1 for Ollama"
+            />
+            <small class="text-muted mt-1 block"
+              >Leave empty for default provider URLs. Use for local LLMs like Ollama or
+              LocalAI.</small
+            >
           </div>
-          <small class="text-muted mt-1 block">Type to filter models. Use "Load Models" to refresh options.</small>
-        </div>
-        <div class="text-right">
-          <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
-        </div>
-      </form>
+
+          <div class="form-group">
+            <label class="form-label">Default Model</label>
+            <div class="combobox-container" id="modelCombobox">
+              <input
+                type="text"
+                id="modelInput"
+                class="combobox-input"
+                placeholder="Type to search models..."
+                autocomplete="off"
+              />
+              <input type="hidden" id="modelValue" />
+              <div class="combobox-dropdown" id="modelDropdown"></div>
+            </div>
+            <small class="text-muted mt-1 block"
+              >Type to filter models. Use "Load Models" to refresh options.</small
+            >
+          </div>
+          <div class="text-right">
+            <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-  <script src="js/api-client.js"></script>
-  <script src="js/header.js"></script>
-  <script src="js/modal-utils.js"></script>
-  <script src="js/app-settings.js"></script>
-</body>
-
+    <script src="js/api-client.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/modal-utils.js"></script>
+    <script src="js/app-settings.js"></script>
+  </body>
 </html>

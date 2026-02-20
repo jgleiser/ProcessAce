@@ -4,379 +4,379 @@
 
 /* ── User Menu Dropdown ── */
 .user-menu-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 
 .user-menu-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
 .user-menu-btn:hover {
-    background: var(--card-hover);
-    border-color: var(--text-muted);
+  background: var(--card-hover);
+  border-color: var(--text-muted);
 }
 
 .user-dropdown {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    min-width: 180px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
-    margin-top: 0.25rem;
-    overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 180px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  margin-top: 0.25rem;
+  overflow: hidden;
 }
 
 .user-dropdown a,
 .user-dropdown button {
-    display: block;
-    padding: 0.5rem 1rem;
-    color: var(--text-main);
-    text-decoration: none;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.9rem;
-    width: 100%;
-    transition: background 0.2s;
-    border-bottom: 1px solid var(--border-color);
+  display: block;
+  padding: 0.5rem 1rem;
+  color: var(--text-main);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: background 0.2s;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .user-dropdown a:hover,
 .user-dropdown button:hover {
-    background: var(--card-hover);
-    color: var(--primary);
+  background: var(--card-hover);
+  color: var(--primary);
 }
 
 .user-dropdown button {
-    border-bottom: none;
-    color: var(--error);
+  border-bottom: none;
+  color: var(--error);
 }
 
 .user-dropdown button:hover {
-    color: #ff8a80;
+  color: #ff8a80;
 }
 
 .user-dropdown .admin-options-header {
-    padding: 0.5rem 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-main);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--primary);
-    cursor: default;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--primary);
+  cursor: default;
 }
 
 /* ── Admin User Management ── */
 .users-table-container {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .users-table {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .users-table th,
 .users-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .users-table th {
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-muted);
-    font-weight: 500;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .users-table tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .users-table tr:hover {
-    background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .user-email {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .user-date {
-    color: var(--text-muted);
-    font-size: 0.875rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .you-badge {
-    background: var(--primary);
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    margin-left: 0.5rem;
-    font-weight: 600;
+  background: var(--primary);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+  font-weight: 600;
 }
 
 .status-select,
 .role-select {
-    background: var(--card-hover);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 0.875rem;
-    cursor: pointer;
-    min-width: 100px;
+  background: var(--card-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  min-width: 100px;
 }
 
 .status-select:focus,
 .role-select:focus {
-    outline: none;
-    border-color: var(--primary);
+  outline: none;
+  border-color: var(--primary);
 }
 
 .status-active {
-    color: var(--success);
+  color: var(--success);
 }
 
 .status-inactive {
-    color: var(--error);
+  color: var(--error);
 }
 
 .role-admin {
-    color: #ffd700;
+  color: #ffd700;
 }
 
 .role-editor {
-    color: #00bcd4;
+  color: #00bcd4;
 }
 
 .role-viewer {
-    color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 .save-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
 }
 
 .changes-count {
-    color: var(--text-muted);
-    font-size: 0.875rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
 }
 
 .save-all-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.6rem 1.5rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .save-all-btn:hover:not(:disabled) {
-    background: var(--primary-hover);
+  background: var(--primary-hover);
 }
 
 .save-all-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ── Admin Jobs Dashboard ── */
 .jobs-table-container {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 /* ── Filters ── */
 .filters-container {
-    padding: 0.75rem;
-    background: var(--card-bg);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: flex-end;
+  padding: 0.75rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
 }
 
 .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .filter-group label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .filter-input,
 .filter-select {
-    background: var(--card-hover);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    min-width: 120px;
+  background: var(--card-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  min-width: 120px;
 }
 
 #filterStatus,
 #filterProvider {
-    min-width: 90px;
+  min-width: 90px;
 }
 
 .filter-input:focus,
 .filter-select:focus {
-    outline: none;
-    border-color: var(--primary);
+  outline: none;
+  border-color: var(--primary);
 }
 
 .filter-actions {
-    margin-left: auto;
+  margin-left: auto;
 }
 
 .jobs-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 }
 
 .jobs-table th,
 .jobs-table td {
-    padding: 0.875rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
+  padding: 0.875rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .jobs-table th {
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--text-muted);
-    font-weight: 500;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .jobs-table tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .jobs-table tr:hover {
-    background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .jobs-table tbody tr {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .user-name {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .workspace-name {
-    color: var(--primary);
+  color: var(--primary);
 }
 
 .process-name {
-    font-weight: 500;
+  font-weight: 500;
 }
 
 .filename {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .llm-info {
-    font-size: 0.8rem;
+  font-size: 0.8rem;
 }
 
 .llm-provider {
-    color: #00e676;
-    font-weight: 500;
-    text-transform: capitalize;
+  color: #00e676;
+  font-weight: 500;
+  text-transform: capitalize;
 }
 
 .llm-model {
-    color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 .artifact-links {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .artifact-link {
-    background: var(--card-hover);
-    color: var(--primary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    text-decoration: none;
-    text-transform: uppercase;
-    font-weight: 500;
-    transition: all 0.2s;
+  background: var(--card-hover);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .artifact-link:hover {
-    background: var(--primary);
-    color: white;
+  background: var(--primary);
+  color: white;
 }
 
 .status-badge {
-    display: inline-block;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 .date-cell {
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
 }

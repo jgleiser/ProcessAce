@@ -4,420 +4,420 @@
 
 /* Generic Modal */
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(5px);
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
 }
 
 .modal:not(.hidden) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
 }
 
 .modal-content {
-    background-color: var(--card-bg);
-    margin: auto;
-    padding: 0;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    width: 90%;
-    max-width: 900px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: var(--shadow-lg);
-    animation: slideUp 0.3s;
+  background-color: var(--card-bg);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s;
 }
 
 .modal-content-expanded {
-    width: 95% !important;
-    max-width: 95vw !important;
-    height: 95vh !important;
-    max-height: 95vh !important;
+  width: 95% !important;
+  max-width: 95vw !important;
+  height: 95vh !important;
+  max-height: 95vh !important;
 }
 
 .modal-content-expanded .modal-body {
-    flex: 1;
-    overflow-y: auto;
-    max-height: none !important;
+  flex: 1;
+  overflow-y: auto;
+  max-height: none !important;
 }
 
 .modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modal-header h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: var(--text-main);
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-main);
 }
 
 .close-modal {
-    color: var(--text-muted);
-    font-size: 2rem;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
+  color: var(--text-muted);
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
 }
 
 .close-modal:hover {
-    color: var(--text-main);
+  color: var(--text-main);
 }
 
 .modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
-    color: var(--text-main);
-    font-size: 0.95rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+  color: var(--text-main);
+  font-size: 0.95rem;
 }
 
 /* Modal Size Variants */
 .modal-small {
-    max-width: 400px;
+  max-width: 400px;
 }
 
 .modal-content-wide {
-    width: 90% !important;
-    max-width: 900px !important;
+  width: 90% !important;
+  max-width: 900px !important;
 }
 
 /* ── Confirm/Alert Dialog Modal ── */
 .modal-dialog {
-    max-width: 400px;
-    text-align: center;
+  max-width: 400px;
+  text-align: center;
 }
 
 .modal-dialog-header {
-    justify-content: center;
-    border-bottom: none;
-    padding-bottom: 0;
-    padding-top: 2rem;
+  justify-content: center;
+  border-bottom: none;
+  padding-bottom: 0;
+  padding-top: 2rem;
 }
 
 .modal-dialog-title {
-    font-size: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .modal-dialog-body {
-    padding: 1rem 2rem 2rem 2rem;
+  padding: 1rem 2rem 2rem 2rem;
 }
 
 .modal-dialog-message {
-    color: var(--text-muted);
-    margin-bottom: 2rem;
-    font-size: 1rem;
-    white-space: pre-wrap;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  font-size: 1rem;
+  white-space: pre-wrap;
 }
 
 .modal-dialog-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 /* ── Modal Overlay (Admin Jobs detail) ── */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s;
 }
 
 .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 .modal-overlay .modal-content {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    width: 90%;
-    max-width: 500px;
-    padding: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  width: 90%;
+  max-width: 500px;
+  padding: 1.5rem;
 }
 
 .modal-overlay.active .modal-content {
-    transform: scale(1);
+  transform: scale(1);
 }
 
 .modal-section {
-    margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .modal-section:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .modal-label {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
 }
 
 .modal-value {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 .modal-artifacts {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .modal-artifact-btn {
-    background: var(--primary);
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    text-decoration: none;
-    text-transform: uppercase;
-    font-weight: 500;
-    transition: all 0.2s;
+  background: var(--primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
 .modal-artifact-btn:hover {
-    background: var(--primary-hover);
+  background: var(--primary-hover);
 }
 
 .modal-no-artifacts {
-    color: var(--text-muted);
-    font-style: italic;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .close-modal-sm {
-    cursor: pointer;
-    font-size: 1.5rem;
+  cursor: pointer;
+  font-size: 1.5rem;
 }
 
 /* ── BPMN/Table Controls (inside modal) ── */
 #bpmn-canvas {
-    width: 100%;
-    height: 600px;
-    background-color: #ffffff;
-    border-radius: var(--radius-md);
-    overflow: hidden;
+  width: 100%;
+  height: 600px;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .bpmn-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-    justify-content: flex-end;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  justify-content: flex-end;
 }
 
 .bpmn-btn {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    color: var(--text-main);
-    padding: 5px 10px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: 0.8rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.8rem;
 }
 
 .bpmn-btn:hover {
-    background: var(--card-hover);
+  background: var(--card-hover);
 }
 
 .bpmn-btn.primary {
-    background: var(--primary);
-    border: 1px solid var(--primary);
+  background: var(--primary);
+  border: 1px solid var(--primary);
 }
 
 .bpmn-btn.primary:hover {
-    background: var(--primary-hover);
+  background: var(--primary-hover);
 }
 
 .bjs-powered-by {
-    display: block !important;
+  display: block !important;
 }
 
 /* ── Dropdown Menus (used in BPMN export, etc.) ── */
 .dropdown-wrapper {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 
 .dropdown-menu {
-    position: absolute;
-    right: 0;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    min-width: 120px;
-    z-index: 100;
-    box-shadow: var(--shadow-lg);
+  position: absolute;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  min-width: 120px;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
 }
 
 .dropdown-menu-item {
-    display: block;
-    padding: 8px 12px;
-    color: var(--text-main);
-    text-decoration: none;
+  display: block;
+  padding: 8px 12px;
+  color: var(--text-main);
+  text-decoration: none;
 }
 
 .dropdown-menu-item:hover {
-    background: var(--card-hover);
+  background: var(--card-hover);
 }
 
 /* ── Table Controls Bar ── */
 .table-controls-bar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .bpmn-controls-group {
-    display: flex;
-    gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 /* Export CSV button */
 .btn-export-csv {
-    background-color: #2e7d32;
-    border-color: #2e7d32;
+  background-color: #2e7d32;
+  border-color: #2e7d32;
 }
 
 .btn-export-csv:hover {
-    background-color: #388e3c;
+  background-color: #388e3c;
 }
 
 /* Download MD button */
 .btn-download-md {
-    background-color: #0277bd;
-    border-color: #0277bd;
+  background-color: #0277bd;
+  border-color: #0277bd;
 }
 
 .btn-download-md:hover {
-    background-color: #0288d1;
+  background-color: #0288d1;
 }
 
 /* Print / PDF button */
 .btn-print-doc {
-    background-color: #455a64;
-    border-color: #455a64;
+  background-color: #455a64;
+  border-color: #455a64;
 }
 
 .btn-print-doc:hover {
-    background-color: #546e7a;
+  background-color: #546e7a;
 }
 
 /* Doc controls bar (reuses table-controls-bar layout) */
 .doc-controls-bar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 /* ── Artifact Container (in job card) ── */
 .artifact-container {
-    margin-top: 8px;
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
+  margin-top: 8px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
 }
 
 /* ── Lost Job Warning ── */
 .job-lost-message {
-    color: #d32f2f;
-    font-size: 0.8rem;
-    margin-top: 5px;
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 5px;
 }
 
 /* ── Artifact Button Group ── */
 .artifact-btn-group {
-    display: inline-flex;
-    gap: 1px;
-    margin-right: 5px;
+  display: inline-flex;
+  gap: 1px;
+  margin-right: 5px;
 }
 
 .artifact-btn-download {
-    text-decoration: none;
-    font-size: 0.8rem;
-    padding: 4px 10px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding: 4px 10px;
 }
 
 .artifact-btn-download.grouped {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .artifact-btn-view {
-    border-left: 1px solid rgba(0, 0, 0, 0.2);
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.2);
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 /* ── Error inline ── */
 .error-inline {
-    color: var(--error);
-    padding: 20px;
+  color: var(--error);
+  padding: 20px;
 }
 
 /* ── Print Styles ── */
 @media print {
-    body>*:not(.modal) {
-        display: none !important;
-    }
+  body > *:not(.modal) {
+    display: none !important;
+  }
 
-    .modal {
-        position: absolute;
-        background: white;
-    }
+  .modal {
+    position: absolute;
+    background: white;
+  }
 
-    .modal-content {
-        box-shadow: none;
-        border: none;
-        width: 100%;
-        max-width: 100%;
-        height: auto !important;
-        overflow: visible !important;
-    }
+  .modal-content {
+    box-shadow: none;
+    border: none;
+    width: 100%;
+    max-width: 100%;
+    height: auto !important;
+    overflow: visible !important;
+  }
 
-    .modal-body {
-        overflow: visible !important;
-    }
+  .modal-body {
+    overflow: visible !important;
+  }
 
-    .doc-controls,
-    .bpmn-controls,
-    .close-modal {
-        display: none !important;
-    }
+  .doc-controls,
+  .bpmn-controls,
+  .close-modal {
+    display: none !important;
+  }
 
-    .markdown-content * {
-        color: black !important;
-    }
+  .markdown-content * {
+    color: black !important;
+  }
 
-    @page {
-        margin: 2cm;
-    }
+  @page {
+    margin: 2cm;
+  }
 }

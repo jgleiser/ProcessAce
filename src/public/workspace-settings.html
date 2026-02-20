@@ -1,141 +1,145 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workspace Settings - ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Workspace Settings - ProcessAce</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
-</head>
+  <body class="bg-gray-50 font-[Outfit] antialiased text-gray-900">
+    <div class="app-container">
+      <div id="app-header"></div>
 
-<body class="bg-gray-50 font-[Outfit] antialiased text-gray-900">
-  <div class="app-container">
-    <div id="app-header"></div>
-
-    <!-- Main Content -->
-    <div class="header-stacked">
-      <h1 class="text-2xl m-0">Workspace Dashboard</h1>
-      <p class="text-muted m-0">
-        Manage your workspaces and shared collaborations
-      </p>
-      <a href="/" class="back-link mt-1">&larr; Back to Dashboard</a>
-    </div>
-
-    <!-- My Workspaces -->
-    <div class="section-header">
-      <h2>My Workspaces</h2>
-      <button id="create-workspace-btn" class="btn-primary flex items-center gap-2 text-sm px-4 py-2">
-        <i data-lucide="plus" class="icon-sm"></i>
-        New Workspace
-      </button>
-    </div>
-    <div id="my-workspaces-list" class="workspaces-grid">
-      <!-- Populated by JS -->
-      <div class="empty-state grid-full-span">Loading...</div>
-    </div>
-
-    <!-- Shared Workspaces -->
-    <div class="section-header mt-12">
-      <h2>Shared Workspaces</h2>
-    </div>
-    <div id="shared-workspaces-list" class="workspaces-grid">
-      <!-- Populated by JS -->
-      <div class="empty-state grid-full-span">No shared workspaces found.</div>
-    </div>
-  </div>
-
-  <!-- Manage Members Modal -->
-  <div id="manage-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Manage Workspace: <span id="modal-workspace-name"></span></h3>
-        <span id="close-manage-modal" class="close-modal">&times;</span>
+      <!-- Main Content -->
+      <div class="header-stacked">
+        <h1 class="text-2xl m-0">Workspace Dashboard</h1>
+        <p class="text-muted m-0">Manage your workspaces and shared collaborations</p>
+        <a href="/" class="back-link mt-1">&larr; Back to Dashboard</a>
       </div>
 
-      <div class="modal-body">
-        <!-- Invite Section -->
-        <div class="invite-section">
-          <h4 class="text-muted text-sm mb-2">
-            Invite New Member
-          </h4>
-          <div id="inviteMessageContainer"></div>
-          <form id="invite-form">
-            <input type="hidden" id="manage-workspace-id" />
-            <div class="position-relative">
-              <input type="email" id="invite-email" required placeholder="User email" class="form-input"
-                autocomplete="off" />
-              <div id="email-suggestions" class="suggestions-dropdown hidden"></div>
+      <!-- My Workspaces -->
+      <div class="section-header">
+        <h2>My Workspaces</h2>
+        <button
+          id="create-workspace-btn"
+          class="btn-primary flex items-center gap-2 text-sm px-4 py-2"
+        >
+          <i data-lucide="plus" class="icon-sm"></i>
+          New Workspace
+        </button>
+      </div>
+      <div id="my-workspaces-list" class="workspaces-grid">
+        <!-- Populated by JS -->
+        <div class="empty-state grid-full-span">Loading...</div>
+      </div>
+
+      <!-- Shared Workspaces -->
+      <div class="section-header mt-12">
+        <h2>Shared Workspaces</h2>
+      </div>
+      <div id="shared-workspaces-list" class="workspaces-grid">
+        <!-- Populated by JS -->
+        <div class="empty-state grid-full-span">No shared workspaces found.</div>
+      </div>
+    </div>
+
+    <!-- Manage Members Modal -->
+    <div id="manage-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Manage Workspace: <span id="modal-workspace-name"></span></h3>
+          <span id="close-manage-modal" class="close-modal">&times;</span>
+        </div>
+
+        <div class="modal-body">
+          <!-- Invite Section -->
+          <div class="invite-section">
+            <h4 class="text-muted text-sm mb-2">Invite New Member</h4>
+            <div id="inviteMessageContainer"></div>
+            <form id="invite-form">
+              <input type="hidden" id="manage-workspace-id" />
+              <div class="position-relative">
+                <input
+                  type="email"
+                  id="invite-email"
+                  required
+                  placeholder="User email"
+                  class="form-input"
+                  autocomplete="off"
+                />
+                <div id="email-suggestions" class="suggestions-dropdown hidden"></div>
+              </div>
+
+              <select id="invite-role-select" class="form-input">
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              <button type="submit" class="btn-primary whitespace-nowrap px-4">Invite</button>
+            </form>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs-container">
+            <button class="tab-btn active" id="tab-members">Members</button>
+            <button class="tab-btn" id="tab-invites">Pending Invitations</button>
+          </div>
+
+          <!-- Webkit scrollbar styling could be added in css, for now just max-height -->
+          <div class="scrollable-list">
+            <ul id="members-list" class="list-group">
+              <!-- Members List -->
+            </ul>
+
+            <ul id="invitations-list" class="list-group hidden">
+              <!-- Invitations List -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Workspace Modal -->
+    <div id="create-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create New Workspace</h3>
+          <span id="close-create-modal" class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="create-workspace-form">
+            <div class="mb-1">
+              <label class="form-label">Workspace Name</label>
+              <input
+                type="text"
+                id="new-workspace-name"
+                required
+                class="form-input"
+                placeholder="e.g. Finance Projects"
+              />
             </div>
-
-            <select id="invite-role-select" class="form-input">
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-              <option value="admin">Admin</option>
-            </select>
-
-            <button type="submit" class="btn-primary whitespace-nowrap px-4">
-              Invite
-            </button>
+            <div class="flex-end-gap">
+              <button type="button" id="cancel-create-btn" class="btn-secondary">Cancel</button>
+              <button type="submit" class="btn-primary">Create</button>
+            </div>
           </form>
         </div>
-
-        <!-- Tabs -->
-        <div class="tabs-container">
-          <button class="tab-btn active" id="tab-members">
-            Members
-          </button>
-          <button class="tab-btn" id="tab-invites">
-            Pending Invitations
-          </button>
-        </div>
-
-        <!-- Webkit scrollbar styling could be added in css, for now just max-height -->
-        <div class="scrollable-list">
-          <ul id="members-list" class="list-group">
-            <!-- Members List -->
-          </ul>
-
-
-          <ul id="invitations-list" class="list-group hidden">
-            <!-- Invitations List -->
-          </ul>
-        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Create Workspace Modal -->
-  <div id="create-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Create New Workspace</h3>
-        <span id="close-create-modal" class="close-modal">&times;</span>
-      </div>
-      <div class="modal-body">
-        <form id="create-workspace-form">
-          <div class="mb-1">
-            <label class="form-label">Workspace Name</label>
-            <input type="text" id="new-workspace-name" required class="form-input"
-              placeholder="e.g. Finance Projects" />
-          </div>
-          <div class="flex-end-gap">
-            <button type="button" id="cancel-create-btn" class="btn-secondary">Cancel</button>
-            <button type="submit" class="btn-primary">Create</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="js/api-client.js"></script>
-  <script src="js/modal-utils.js"></script>
-  <script src="js/header.js"></script>
-  <script src="js/workspace-settings.js"></script>
-</body>
-
+    <!-- Scripts -->
+    <script src="js/api-client.js"></script>
+    <script src="js/modal-utils.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/workspace-settings.js"></script>
+  </body>
 </html>

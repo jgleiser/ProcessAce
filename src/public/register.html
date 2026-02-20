@@ -1,96 +1,105 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - ProcessAce</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/modal-utils.js"></script>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register - ProcessAce</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-  <script src="js/modal-utils.js"></script>
-</head>
-
-<body>
-  <div class="auth-container">
-    <div class="auth-box">
-      <div class="auth-header">
-        <h1><img src="images/ProcessAce-b-100x100.png" alt="ProcessAce Logo" width="32" height="32"> ProcessAce</h1>
-        <p>Create your account</p>
-      </div>
-
-      <div id="errorMsg" class="error-message"></div>
-
-      <form id="registerForm">
-        <div class="form-group">
-          <label for="name">Name</label>
-          <input type="text" id="name" required placeholder="John Doe" />
+  <body>
+    <div class="auth-container">
+      <div class="auth-box">
+        <div class="auth-header">
+          <h1>
+            <img
+              src="images/ProcessAce-b-100x100.png"
+              alt="ProcessAce Logo"
+              width="32"
+              height="32"
+            />
+            ProcessAce
+          </h1>
+          <p>Create your account</p>
         </div>
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" required placeholder="name@company.com" />
-        </div>
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" required placeholder="••••••••" minlength="8" />
-          <small class="text-muted mt-1 block account-help-text">
-            Must be at least 8 characters, with lowercase, uppercase, and numbers.
-          </small>
-        </div>
-        <button type="submit" class="btn-primary w-full">Create Account</button>
-      </form>
 
-      <div class="auth-footer">
-        <p>Already have an account? <a href="login.html">Sign in</a></p>
+        <div id="errorMsg" class="error-message"></div>
+
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" required placeholder="John Doe" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required placeholder="name@company.com" />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" required placeholder="••••••••" minlength="8" />
+            <small class="text-muted mt-1 block account-help-text">
+              Must be at least 8 characters, with lowercase, uppercase, and numbers.
+            </small>
+          </div>
+          <button type="submit" class="btn-primary w-full">Create Account</button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a href="login.html">Sign in</a></p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    const registerForm = document.getElementById('registerForm');
-    const errorMsg = document.getElementById('errorMsg');
+    <script>
+      const registerForm = document.getElementById('registerForm');
+      const errorMsg = document.getElementById('errorMsg');
 
-    registerForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.style.display = 'none';
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorMsg.style.display = 'none';
 
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-      if (!passwordRegex.test(password)) {
-        errorMsg.textContent =
-          'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
-        errorMsg.style.display = 'block';
-        return;
-      }
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        if (!passwordRegex.test(password)) {
+          errorMsg.textContent =
+            'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+          errorMsg.style.display = 'block';
+          return;
+        }
 
-      try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
-        });
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password }),
+          });
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (response.ok) {
-          await window.showAlertModal(
-            'Registration successful! Please login.',
-            'Success',
-            'Accept',
-          );
-          window.location.href = '/login.html';
-        } else {
-          errorMsg.textContent = data.error || 'Registration failed';
+          if (response.ok) {
+            await window.showAlertModal(
+              'Registration successful! Please login.',
+              'Success',
+              'Accept',
+            );
+            window.location.href = '/login.html';
+          } else {
+            errorMsg.textContent = data.error || 'Registration failed';
+            errorMsg.style.display = 'block';
+          }
+        } catch (err) {
+          errorMsg.textContent = 'An error occurred. Please try again.';
           errorMsg.style.display = 'block';
         }
-      } catch (err) {
-        errorMsg.textContent = 'An error occurred. Please try again.';
-        errorMsg.style.display = 'block';
-      }
-    });
-  </script>
-</body>
-
+      });
+    </script>
+  </body>
 </html>

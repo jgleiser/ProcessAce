@@ -3,105 +3,105 @@
    ========================================= */
 
 .hidden {
-    display: none !important;
+  display: none !important;
 }
 
 .w-full {
-    width: 100%;
+  width: 100%;
 }
 
 .text-right {
-    text-align: right;
+  text-align: right;
 }
 
 .text-center {
-    text-align: center;
+  text-align: center;
 }
 
 .text-muted {
-    color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 .text-error {
-    color: var(--error);
+  color: var(--error);
 }
 
 .mt-1 {
-    margin-top: 0.25rem;
+  margin-top: 0.25rem;
 }
 
 .mb-1 {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .mb-4 {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .flex-col {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .items-start {
-    align-items: flex-start;
+  align-items: flex-start;
 }
 
 .items-end {
-    align-items: flex-end;
+  align-items: flex-end;
 }
 
 .gap-2 {
-    gap: 0.5rem;
+  gap: 0.5rem;
 }
 
 .position-relative {
-    position: relative;
+  position: relative;
 }
 
 .list-item-padded {
-    padding: 1rem;
+  padding: 1rem;
 }
 
 /* ── Layout Helpers ── */
 .flex-end-gap {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .header-row-stacked {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .subtitle-banner {
-    text-align: center;
-    margin-bottom: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .grid-full-span {
-    grid-column: 1 / -1;
+  grid-column: 1 / -1;
 }
 
 /* ── Icon Sizing ── */
 .icon-sm {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .icon-xs {
-    width: 14px;
-    height: 14px;
+  width: 14px;
+  height: 14px;
 }
 
 /* ── API Key Input ── */
 .api-key-input-row {
-    display: flex;
-    gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .btn-delete-key {
-    color: var(--error);
+  color: var(--error);
 }

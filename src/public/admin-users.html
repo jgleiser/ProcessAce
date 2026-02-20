@@ -1,97 +1,107 @@
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>User Management - ProcessAce</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-</head>
-
-<body>
+  <body>
     <div class="app-container">
-        <div id="app-header"></div>
+      <div id="app-header"></div>
 
-        <div class="header-stacked">
-            <h1>👥 User Management</h1>
-            <a href="/" class="back-link">← Back to Dashboard</a>
+      <div class="header-stacked">
+        <h1>👥 User Management</h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+      </div>
+
+      <div id="errorContainer"></div>
+
+      <div class="users-table-container">
+        <!-- Filter Bar -->
+        <div class="filters-container">
+          <div class="filter-group">
+            <label for="filterName">Name</label>
+            <input
+              type="text"
+              id="filterName"
+              placeholder="Search by name..."
+              class="filter-input"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filterEmail">Email</label>
+            <input
+              type="text"
+              id="filterEmail"
+              placeholder="Search by email..."
+              class="filter-input"
+            />
+          </div>
+          <div class="filter-group">
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus" class="filter-select">
+              <option value="All">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filterRole">Role</label>
+            <select id="filterRole" class="filter-select">
+              <option value="All">All</option>
+              <option value="admin">Admin</option>
+              <option value="editor">Editor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <div class="filter-actions">
+            <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
+          </div>
         </div>
 
-        <div id="errorContainer"></div>
+        <div id="loadingState" class="loading">Loading users...</div>
+        <table class="users-table hidden" id="usersTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Role</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
 
-        <div class="users-table-container">
-            <!-- Filter Bar -->
-            <div class="filters-container">
-                <div class="filter-group">
-                    <label for="filterName">Name</label>
-                    <input type="text" id="filterName" placeholder="Search by name..." class="filter-input">
-                </div>
-                <div class="filter-group">
-                    <label for="filterEmail">Email</label>
-                    <input type="text" id="filterEmail" placeholder="Search by email..." class="filter-input">
-                </div>
-                <div class="filter-group">
-                    <label for="filterStatus">Status</label>
-                    <select id="filterStatus" class="filter-select">
-                        <option value="All">All</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="filterRole">Role</label>
-                    <select id="filterRole" class="filter-select">
-                        <option value="All">All</option>
-                        <option value="admin">Admin</option>
-                        <option value="editor">Editor</option>
-                        <option value="viewer">Viewer</option>
-                    </select>
-                </div>
-                <div class="filter-actions">
-                    <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
-                </div>
-            </div>
-
-            <div id="loadingState" class="loading">Loading users...</div>
-            <table class="users-table hidden" id="usersTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Role</th>
-                        <th>Created</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody"></tbody>
-            </table>
-
-            <div class="pagination-container hidden" id="paginationContainer">
-                <div class="pagination-info" id="paginationInfo">Showing 0 of 0 users</div>
-                <div class="pagination-controls" id="paginationControls"></div>
-                <div class="limit-selector">
-                    <label for="limitSelect">Show:</label>
-                    <select id="limitSelect" class="limit-select">
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                </div>
-            </div>
-            <div class="save-actions">
-                <span id="changesCount" class="changes-count"></span>
-                <button id="saveAllBtn" class="save-all-btn" disabled>Save Changes</button>
-            </div>
+        <div class="pagination-container hidden" id="paginationContainer">
+          <div class="pagination-info" id="paginationInfo">Showing 0 of 0 users</div>
+          <div class="pagination-controls" id="paginationControls"></div>
+          <div class="limit-selector">
+            <label for="limitSelect">Show:</label>
+            <select id="limitSelect" class="limit-select">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
         </div>
+        <div class="save-actions">
+          <span id="changesCount" class="changes-count"></span>
+          <button id="saveAllBtn" class="save-all-btn" disabled>Save Changes</button>
+        </div>
+      </div>
     </div>
 
     <script src="js/api-client.js"></script>
     <script src="js/header.js"></script>
     <script src="js/admin-users.js"></script>
-</body>
-
+  </body>
 </html>

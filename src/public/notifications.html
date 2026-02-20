@@ -1,41 +1,42 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications - ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notifications - ProcessAce</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-</head>
+  <body>
+    <div class="app-container">
+      <div id="app-header"></div>
 
-<body>
-  <div class="app-container">
-    <div id="app-header"></div>
+      <div class="header-stacked">
+        <h1>🔔 Notifications</h1>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+      </div>
 
-    <div class="header-stacked">
-      <h1>🔔 Notifications</h1>
-      <a href="/" class="back-link">← Back to Dashboard</a>
+      <div id="messageContainer"></div>
+
+      <div class="text-right mb-4">
+        <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
+      </div>
+
+      <div id="notificationsContainer" class="notifications-list">
+        <div class="loading">Loading notifications...</div>
+      </div>
     </div>
 
-    <div id="messageContainer"></div>
-
-    <div class="text-right mb-4">
-      <button id="markAllReadBtn" class="btn-secondary">Mark all as read</button>
-    </div>
-
-    <div id="notificationsContainer" class="notifications-list">
-      <div class="loading">Loading notifications...</div>
-    </div>
-  </div>
-
-  <script src="js/api-client.js"></script>
-  <script src="js/header.js"></script>
-  <script src="js/toast.js"></script>
-  <script src="js/modal-utils.js"></script>
-  <script src="js/notifications.js"></script>
-</body>
-
+    <script src="js/api-client.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/modal-utils.js"></script>
+    <script src="js/notifications.js"></script>
+  </body>
 </html>

@@ -230,12 +230,12 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Notifications (`/api/notifications`)
 
-| Method   | Path                           | Auth | Description                |
-| -------- | ------------------------------ | ---- | -------------------------- |
-| `GET`    | `/api/notifications`           | Yes  | List user's notifications  |
-| `PUT`    | `/api/notifications/:id/read`  | Yes  | Mark a notification as read|
-| `PUT`    | `/api/notifications/read-all`  | Yes  | Mark all as read           |
-| `DELETE` | `/api/notifications/:id`       | Yes  | Delete a notification      |
+| Method   | Path                          | Auth | Description                 |
+| -------- | ----------------------------- | ---- | --------------------------- |
+| `GET`    | `/api/notifications`          | Yes  | List user's notifications   |
+| `PUT`    | `/api/notifications/:id/read` | Yes  | Mark a notification as read |
+| `PUT`    | `/api/notifications/read-all` | Yes  | Mark all as read            |
+| `DELETE` | `/api/notifications/:id`      | Yes  | Delete a notification       |
 
 ### `GET /api/notifications`
 
@@ -246,12 +246,12 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Invitations (`/api/invitations`)
 
-| Method | Path                                | Auth | Description                     |
-| ------ | ----------------------------------- | ---- | ------------------------------- |
-| `GET`  | `/api/invitations`                  | Yes  | List user's pending invitations |
-| `GET`  | `/api/invitations/:token`           | No   | Get invitation details by token |
-| `POST` | `/api/invitations/:token/accept`    | Yes  | Accept an invitation            |
-| `POST` | `/api/invitations/:token/decline`   | Yes  | Decline an invitation           |
+| Method | Path                              | Auth | Description                     |
+| ------ | --------------------------------- | ---- | ------------------------------- |
+| `GET`  | `/api/invitations`                | Yes  | List user's pending invitations |
+| `GET`  | `/api/invitations/:token`         | No   | Get invitation details by token |
+| `POST` | `/api/invitations/:token/accept`  | Yes  | Accept an invitation            |
+| `POST` | `/api/invitations/:token/decline` | Yes  | Decline an invitation           |
 
 ### `POST /api/invitations/:token/accept`
 
