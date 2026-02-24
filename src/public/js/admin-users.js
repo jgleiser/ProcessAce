@@ -8,6 +8,7 @@ let currentLimit = 10;
 let totalPages = 1;
 let currentUserId = null;
 let originalUserData = {}; // Track original values to detect changes
+const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
 
 // DOM Elements
 const paginationContainer = document.getElementById('paginationContainer');
@@ -36,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Check if user is admin
     if (user.role !== 'admin') {
-      showError('Access denied. Admin privileges required.');
+      showError(t('common.accessDenied'));
       document.getElementById('loadingState').classList.add('hidden');
       return;
     }
@@ -99,7 +100,7 @@ async function loadUsers(page = 1, limit = 10) {
     const response = await fetch(`/api/admin/users?${queryParams.toString()}`);
     if (!response.ok) {
       if (response.status === 403) {
-        showError('Access denied. Admin privileges required.');
+        showError(t('common.accessDenied'));
         return;
       }
       throw new Error('Failed to fetch users');
@@ -151,20 +152,20 @@ function renderUsersTable(users) {
             <tr data-user-id="${user.id}">
                 <td>
                     <span class="user-name">${escapeHtml(user.name || 'N/A')}</span>
-                    ${isCurrentUser ? '<span class="you-badge">YOU</span>' : ''}
+                    ${isCurrentUser ? '<span class="you-badge">' + t('adminUsers.youBadge') + '</span>' : ''}
                 </td>
                 <td class="user-email">${escapeHtml(user.email)}</td>
                 <td>
                     <select class="status-select" data-field="status" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
-                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>${t('common.active')}</option>
+                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
                     </select>
                 </td>
                 <td>
                     <select class="role-select" data-field="role" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>Editor</option>
-                        <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>${t('common.admin')}</option>
+                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>${t('common.editor')}</option>
+                        <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>${t('common.viewer')}</option>
                     </select>
                 </td>
                 <td class="user-date">${createdDate}</td>
@@ -220,7 +221,7 @@ function updateSaveButton() {
 
   if (changes.length > 0) {
     saveBtn.disabled = false;
-    countSpan.textContent = `${changes.length} user${changes.length > 1 ? 's' : ''} modified`;
+    countSpan.textContent = t('adminUsers.unsavedChanges', { count: changes.length });
   } else {
     saveBtn.disabled = true;
     countSpan.textContent = '';
@@ -236,7 +237,7 @@ async function saveAllChanges() {
 
   const saveBtn = document.getElementById('saveAllBtn');
   saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
+  saveBtn.textContent = t('adminUsers.savingChanges');
 
   let successCount = 0;
   let errorMessages = [];
@@ -263,7 +264,7 @@ async function saveAllChanges() {
     }
   }
 
-  saveBtn.textContent = 'Save Changes';
+  saveBtn.textContent = t('adminUsers.saveChanges');
   updateSaveButton();
 
   if (errorMessages.length > 0) {
@@ -272,7 +273,7 @@ async function saveAllChanges() {
       'error',
     );
   } else {
-    showToast(`${successCount} user${successCount > 1 ? 's' : ''} updated successfully`, 'success');
+    showToast(t('adminUsers.changesSaved'), 'success');
   }
 }
 
@@ -319,7 +320,7 @@ function renderPagination(pagination) {
   // Show container
   paginationContainer.classList.remove('hidden');
 
-  paginationInfo.textContent = `Showing ${start}-${end} of ${total} users`;
+  paginationInfo.textContent = t('adminUsers.paginationInfo', { start, end, total });
 
   // Build page buttons
   let buttonsHtml = '';
@@ -327,7 +328,7 @@ function renderPagination(pagination) {
   // Previous button
   buttonsHtml += `
         <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
-            ← Prev
+            ${t('common.prev')}
         </button>
     `;
 
@@ -365,7 +366,7 @@ function renderPagination(pagination) {
   // Next button
   buttonsHtml += `
         <button class="page-btn" ${page >= pages ? 'disabled' : ''} data-page="${page + 1}">
-            Next →
+            ${t('common.next')}
         </button>
     `;
 

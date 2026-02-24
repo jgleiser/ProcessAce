@@ -1,107 +1,99 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Management - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
 
-  <body>
-    <div class="app-container">
-      <div id="app-header"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Management - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-      <div class="header-stacked">
-        <h1>👥 User Management</h1>
-        <a href="/" class="back-link">← Back to Dashboard</a>
-      </div>
+<body>
+  <div class="app-container">
+    <div id="app-header"></div>
 
-      <div id="errorContainer"></div>
-
-      <div class="users-table-container">
-        <!-- Filter Bar -->
-        <div class="filters-container">
-          <div class="filter-group">
-            <label for="filterName">Name</label>
-            <input
-              type="text"
-              id="filterName"
-              placeholder="Search by name..."
-              class="filter-input"
-            />
-          </div>
-          <div class="filter-group">
-            <label for="filterEmail">Email</label>
-            <input
-              type="text"
-              id="filterEmail"
-              placeholder="Search by email..."
-              class="filter-input"
-            />
-          </div>
-          <div class="filter-group">
-            <label for="filterStatus">Status</label>
-            <select id="filterStatus" class="filter-select">
-              <option value="All">All</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label for="filterRole">Role</label>
-            <select id="filterRole" class="filter-select">
-              <option value="All">All</option>
-              <option value="admin">Admin</option>
-              <option value="editor">Editor</option>
-              <option value="viewer">Viewer</option>
-            </select>
-          </div>
-          <div class="filter-actions">
-            <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
-          </div>
-        </div>
-
-        <div id="loadingState" class="loading">Loading users...</div>
-        <table class="users-table hidden" id="usersTable">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Role</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody"></tbody>
-        </table>
-
-        <div class="pagination-container hidden" id="paginationContainer">
-          <div class="pagination-info" id="paginationInfo">Showing 0 of 0 users</div>
-          <div class="pagination-controls" id="paginationControls"></div>
-          <div class="limit-selector">
-            <label for="limitSelect">Show:</label>
-            <select id="limitSelect" class="limit-select">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-          </div>
-        </div>
-        <div class="save-actions">
-          <span id="changesCount" class="changes-count"></span>
-          <button id="saveAllBtn" class="save-all-btn" disabled>Save Changes</button>
-        </div>
-      </div>
+    <div class="header-stacked">
+      <h1 data-i18n="adminUsers.pageTitle">👥 User Management</h1>
+      <a href="/" class="back-link" data-i18n="common.back">← Back to Dashboard</a>
     </div>
 
-    <script src="js/api-client.js"></script>
-    <script src="js/header.js"></script>
-    <script src="js/admin-users.js"></script>
-  </body>
+    <div id="errorContainer"></div>
+
+    <div class="users-table-container">
+      <!-- Filter Bar -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="filterName" data-i18n="adminUsers.filterName">Name</label>
+          <input type="text" id="filterName" data-i18n-placeholder="adminUsers.filterNamePlaceholder"
+            placeholder="Search by name..." class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label for="filterEmail" data-i18n="adminUsers.filterEmail">Email</label>
+          <input type="text" id="filterEmail" data-i18n-placeholder="adminUsers.filterEmailPlaceholder"
+            placeholder="Search by email..." class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label for="filterStatus" data-i18n="adminUsers.filterStatus">Status</label>
+          <select id="filterStatus" class="filter-select">
+            <option value="All" data-i18n="common.all">All</option>
+            <option value="active" data-i18n="common.active">Active</option>
+            <option value="inactive" data-i18n="common.inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterRole" data-i18n="adminUsers.filterRole">Role</label>
+          <select id="filterRole" class="filter-select">
+            <option value="All" data-i18n="common.all">All</option>
+            <option value="admin" data-i18n="common.admin">Admin</option>
+            <option value="editor" data-i18n="common.editor">Editor</option>
+            <option value="viewer" data-i18n="common.viewer">Viewer</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button id="clearFiltersBtn" class="btn-secondary btn-sm" data-i18n="common.clear">Clear</button>
+        </div>
+      </div>
+
+      <div id="loadingState" class="loading" data-i18n="adminUsers.loadingUsers">Loading users...</div>
+      <table class="users-table hidden" id="usersTable">
+        <thead>
+          <tr>
+            <th data-i18n="adminUsers.thName">Name</th>
+            <th data-i18n="adminUsers.thEmail">Email</th>
+            <th data-i18n="adminUsers.thStatus">Status</th>
+            <th data-i18n="adminUsers.thRole">Role</th>
+            <th data-i18n="adminUsers.thCreated">Created</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+
+      <div class="pagination-container hidden" id="paginationContainer">
+        <div class="pagination-info" id="paginationInfo">Showing 0 of 0 users</div>
+        <div class="pagination-controls" id="paginationControls"></div>
+        <div class="limit-selector">
+          <label for="limitSelect" data-i18n="common.show">Show:</label>
+          <select id="limitSelect" class="limit-select">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+      <div class="save-actions">
+        <span id="changesCount" class="changes-count"></span>
+        <button id="saveAllBtn" class="save-all-btn" disabled data-i18n="adminUsers.saveChanges">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api-client.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/admin-users.js"></script>
+</body>
+
 </html>

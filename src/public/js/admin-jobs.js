@@ -7,6 +7,7 @@ let currentPage = 1;
 let currentLimit = 10;
 let totalPages = 1;
 let jobsData = []; // Store jobs for modal access
+const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
 
 /* global marked, BpmnJS */
 
@@ -120,7 +121,7 @@ function renderTable(jobs) {
   if (jobs.length === 0) {
     jobsTableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="empty-state">No jobs found</td>
+                <td colspan="5" class="empty-state">${t('adminJobs.noJobsFound')}</td>
             </tr>
         `;
     return;
@@ -144,7 +145,7 @@ function renderTable(jobs) {
                 <span class="filename" title="${escapeHtml(job.originalName || '')}">${escapeHtml(job.originalName || 'N/A')}</span>
             </td>
             <td>
-                <span class="status-badge status-${job.status}">${job.status}</span>
+                <span class="status-badge status-${job.status}">${t('adminJobs.status' + job.status.charAt(0).toUpperCase() + job.status.slice(1))}</span>
             </td>
         </tr>
     `,
@@ -213,7 +214,7 @@ function renderPagination(pagination) {
   const start = total === 0 ? 0 : (page - 1) * limit + 1;
   const end = Math.min(page * limit, total);
 
-  paginationInfo.textContent = `Showing ${start}-${end} of ${total} jobs`;
+  paginationInfo.textContent = t('adminJobs.paginationInfo', { start, end, total });
 
   // Build page buttons
   let buttonsHtml = '';
@@ -221,7 +222,7 @@ function renderPagination(pagination) {
   // Previous button
   buttonsHtml += `
         <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
-            ← Prev
+            ${t('common.prev')}
         </button>
     `;
 
@@ -259,7 +260,7 @@ function renderPagination(pagination) {
   // Next button
   buttonsHtml += `
         <button class="page-btn" ${page >= totalPages ? 'disabled' : ''} data-page="${page + 1}">
-            Next →
+            ${t('common.next')}
         </button>
     `;
 

@@ -3,6 +3,7 @@
  * Handles polling, rendering the job list, editing job names, and deleting jobs.
  */
 window.JobTracker = (function () {
+  const t = () => (window.i18n ? window.i18n.t : (k) => k);
   let trackedJobs = [];
   const ACTIVE_STATUSES = ['pending', 'processing', 'in_progress', 'queued'];
   let pollTimeout = null;
@@ -25,6 +26,7 @@ window.JobTracker = (function () {
       }
     } catch (err) {
       console.error('Failed to load jobs', err);
+      if (window.showToast) showToast(t()('jobs.updateFailed'), 'error');
     }
   }
 
@@ -46,7 +48,7 @@ window.JobTracker = (function () {
 
   async function deleteJob(jobId) {
     if (typeof window.showConfirmModal === 'function') {
-      if (!(await window.showConfirmModal('Permanently delete this job and file?'))) return;
+      if (!(await window.showConfirmModal(t()('jobs.deleteConfirm')))) return;
     } else {
       if (!confirm('Permanently delete this job and file?')) return;
     }
@@ -57,6 +59,7 @@ window.JobTracker = (function () {
         loadJobsFromServer();
       } else {
         console.error('Delete failed');
+        if (window.showToast) showToast(t()('jobs.deleteFailed'), 'error');
       }
     } catch (err) {
       console.error('Delete failed on server', err);
@@ -68,8 +71,7 @@ window.JobTracker = (function () {
 
     jobCount.textContent = trackedJobs.length;
     if (trackedJobs.length === 0) {
-      jobsList.innerHTML =
-        '<div class="empty-state"><p>No jobs yet. Upload evidence to start.</p></div>';
+      jobsList.innerHTML = `<div class="empty-state"><p>${t()('dashboard.noJobs')}</p></div>`;
       return;
     }
 
@@ -85,15 +87,15 @@ window.JobTracker = (function () {
                             ${job.canEdit ? `<button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name">✏️</button>` : ''}
                         </div>
                          <div id="job-edit-container-${job.id}" class="job-edit-container hidden">
-                            <input type="text" id="job-input-${job.id}" value="${job.processName || ''}" placeholder="Process Name" class="job-edit-input">
-                            <button class="save-job-btn btn-primary" data-id="${job.id}">Save</button>
-                            <button class="cancel-job-btn" data-id="${job.id}">Cancel</button>
+                            <input class="job-name-input" data-id="${job.id}" value="${(job.processName || '').replace(/"/g, '&quot;')}" data-i18n-placeholder="jobs.processNamePlaceholder" placeholder="${t()('jobs.processNamePlaceholder')}" />
+                            <button class="btn-primary btn-sm job-name-save" data-id="${job.id}">${t()('jobs.save')}</button>
+                            <button class="btn-secondary btn-sm job-name-cancel" data-id="${job.id}">${t()('jobs.cancel')}</button>
                         </div>
                         ${job.canDelete ? `<button class="delete-job-btn" data-id="${job.id}">&times;</button>` : ''}
                     </div>
                     <div class="job-meta">ID: ${job.id.substring(0, 8)}...</div>
                     ${renderArtifacts(job.result, job.canEdit)}
-                    ${job.status === 'lost' ? `<div class="job-lost-message">Job lost during server restart</div>` : ''}
+                    ${job.status === 'lost' ? `<div class="job-lost-message">${t()('jobs.jobLost')}</div>` : ''}
                 </div>
                 <div class="job-status status-${job.status}">
                     <span class="status-dot"></span>

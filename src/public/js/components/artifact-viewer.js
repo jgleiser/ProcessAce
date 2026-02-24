@@ -5,6 +5,7 @@
 /* global marked, BpmnJS, EasyMDE */
 
 window.ArtifactViewer = (function () {
+  const t = () => (window.i18n ? window.i18n.t : (k) => k);
   let modal, modalTitle, modalBody, closeModal;
   let bpmnInstance = null;
   let easyMDEInstance = null;
@@ -36,7 +37,7 @@ window.ArtifactViewer = (function () {
 
     openArtifactModal();
     modalBody.innerHTML = '<div class="spinner spinner-centered"></div>';
-    modalTitle.textContent = `Viewing ${type.toUpperCase()}`;
+    modalTitle.textContent = t()('artifacts.viewing', { type: type.toUpperCase() });
 
     try {
       const res = await window.apiClient.request(`/api/artifacts/${id}/content?view=true`);
@@ -59,7 +60,7 @@ window.ArtifactViewer = (function () {
       currentCanEdit = canEdit;
       renderModalContent(type, content, id, canEdit);
     } catch (err) {
-      modalBody.innerHTML = `<p class="text-error">Error loading artifact: ${err.message}</p>`;
+      modalBody.innerHTML = `<p class="text-error">${t()('artifacts.errorLoading')} ${err.message}</p>`;
     }
   }
 
@@ -72,20 +73,20 @@ window.ArtifactViewer = (function () {
       modalBody.innerHTML = `
                 <div class="bpmn-controls">
                     <div id="viewControls" class="bpmn-controls-group">
-                        ${canEdit ? `<button class="bpmn-btn primary" id="editBpmn">Edit Diagram</button>` : ''}
-                        <button class="bpmn-btn primary" id="resetZoom">Fit to View</button>
+                        ${canEdit ? `<button class="bpmn-btn primary" id="editBpmn">${t()('artifacts.editDiagram')}</button>` : ''}
+                        <button class="bpmn-btn primary" id="resetZoom">${t()('artifacts.fitToView')}</button>
                         <div class="dropdown-wrapper">
-                            <button class="bpmn-btn primary" id="exportBpmnBtn">Export ▼</button>
+                            <button class="bpmn-btn primary" id="exportBpmnBtn">${t()('artifacts.export')}</button>
                             <div id="bpmnExportMenu" class="dropdown-menu hidden">
-                                <a href="#" id="exportBpmnXml" class="dropdown-menu-item">BPMN XML</a>
-                                <a href="#" id="exportBpmnPng" class="dropdown-menu-item">PNG Image</a>
-                                <a href="#" id="exportBpmnSvg" class="dropdown-menu-item">SVG Image</a>
+                                <a href="#" id="exportBpmnXml" class="dropdown-menu-item">${t()('artifacts.bpmnXml')}</a>
+                                <a href="#" id="exportBpmnPng" class="dropdown-menu-item">${t()('artifacts.pngImage')}</a>
+                                <a href="#" id="exportBpmnSvg" class="dropdown-menu-item">${t()('artifacts.svgImage')}</a>
                             </div>
                         </div>
                     </div>
                     <div id="editControls" class="bpmn-controls-group hidden">
-                        <button class="bpmn-btn primary" id="saveBpmn">Save Changes</button>
-                        <button class="bpmn-btn" id="cancelEdit">Cancel</button>
+                        <button class="bpmn-btn primary" id="saveBpmn">${t()('common.saveChanges')}</button>
+                        <button class="bpmn-btn" id="cancelEdit">${t()('common.cancel')}</button>
                     </div>
                 </div>
                 <div id="bpmn-canvas"></div>
@@ -126,20 +127,32 @@ window.ArtifactViewer = (function () {
       const isSipoc = type === 'sipoc';
       let html = `
                 <div class="table-controls table-controls-bar">
-                    ${canEdit ? `<button class="bpmn-btn primary" id="btn-edit-table">Edit ${isSipoc ? 'SIPOC' : 'RACI'}</button>` : ''}
-                    <button class="bpmn-btn primary btn-export-csv" id="btn-export-csv">Export CSV</button>
+                    ${canEdit ? `<button class="bpmn-btn primary" id="btn-edit-table">${t()('common.edit')} ${isSipoc ? 'SIPOC' : 'RACI'}</button>` : ''}
+                    <button class="bpmn-btn primary btn-export-csv" id="btn-export-csv">${t()('artifacts.exportCsv')}</button>
                     <div id="editTableControls" class="bpmn-controls-group hidden">
-                         <button class="bpmn-btn primary" id="btn-add-row">+ Add Row</button>
-                         <button class="bpmn-btn primary" id="btn-save-table">Save Changes</button>
-                         <button class="bpmn-btn" id="btn-cancel-table">Cancel</button>
+                         <button class="bpmn-btn primary" id="btn-add-row">${t()('artifacts.addRow')}</button>
+                         <button class="bpmn-btn primary" id="btn-save-table">${t()('common.saveChanges')}</button>
+                         <button class="bpmn-btn" id="btn-cancel-table">${t()('common.cancel')}</button>
                     </div>
                 </div>
                 <div id="table-container">
             `;
 
       const headers = isSipoc
-        ? ['Supplier', 'Input', 'Process', 'Output', 'Customer']
-        : ['Activity', 'Responsible', 'Accountable', 'Consulted', 'Informed'];
+        ? [
+            t()('artifacts.sipocHeaders.supplier'),
+            t()('artifacts.sipocHeaders.input'),
+            t()('artifacts.sipocHeaders.process'),
+            t()('artifacts.sipocHeaders.output'),
+            t()('artifacts.sipocHeaders.customer'),
+          ]
+        : [
+            t()('artifacts.raciHeaders.activity'),
+            t()('artifacts.raciHeaders.responsible'),
+            t()('artifacts.raciHeaders.accountable'),
+            t()('artifacts.raciHeaders.consulted'),
+            t()('artifacts.raciHeaders.informed'),
+          ];
 
       const keys = isSipoc
         ? ['supplier', 'input', 'process_step', 'output', 'customer']
@@ -171,18 +184,18 @@ window.ArtifactViewer = (function () {
       if (cancelBtn) cancelBtn.addEventListener('click', cancelTableEdit);
     } else if (type === 'doc') {
       if (typeof marked === 'undefined') {
-        modalBody.innerHTML = '<p class="text-error">Error: Marked library not loaded.</p>';
+        modalBody.innerHTML = `<p class="text-error">${t()('artifacts.markedNotLoaded')}</p>`;
         return;
       }
       modalBody.innerHTML = `
                 <div class="doc-controls doc-controls-bar">
-                    ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">Edit Document</button>` : ''}
-                    <button class="bpmn-btn primary btn-download-md" id="btn-export-md">Download MD</button>
-                    <button class="bpmn-btn primary btn-print-doc" id="btn-print-doc">Print / PDF</button>
+                    ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">${t()('artifacts.editDocument')}</button>` : ''}
+                    <button class="bpmn-btn primary btn-download-md" id="btn-export-md">${t()('artifacts.downloadMd')}</button>
+                    <button class="bpmn-btn primary btn-print-doc" id="btn-print-doc">${t()('artifacts.printPdf')}</button>
 
                     <div id="editDocControls" class="bpmn-controls-group hidden">
-                         <button class="bpmn-btn primary" id="saveDoc">Save Changes</button>
-                         <button class="bpmn-btn" id="cancelDocEdit">Cancel</button>
+                         <button class="bpmn-btn primary" id="saveDoc">${t()('common.saveChanges')}</button>
+                         <button class="bpmn-btn" id="cancelDocEdit">${t()('common.cancel')}</button>
                     </div>
                 </div>
                 <div id="markdown-content" class="markdown-content">${marked.parse(content)}</div>
@@ -258,7 +271,7 @@ window.ArtifactViewer = (function () {
       })
       .catch(async (err) => {
         console.error('Modeler Error', err);
-        if (window.showAlertModal) await window.showAlertModal('Error entering edit mode');
+        if (window.showAlertModal) await window.showAlertModal(t()('artifacts.errorEditMode'));
       });
   }
 
@@ -282,7 +295,7 @@ window.ArtifactViewer = (function () {
       cancelEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal('Failed to save changes');
+      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.getElementById('saveBpmn');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -356,7 +369,7 @@ window.ArtifactViewer = (function () {
       cancelDocEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal('Failed to save changes');
+      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.getElementById('saveDoc');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -506,16 +519,28 @@ window.ArtifactViewer = (function () {
     let keys = [];
 
     if (type === 'sipoc') {
-      headers = ['Supplier', 'Input', 'Process', 'Output', 'Customer'];
+      headers = [
+        t()('artifacts.sipocHeaders.supplier'),
+        t()('artifacts.sipocHeaders.input'),
+        t()('artifacts.sipocHeaders.process'),
+        t()('artifacts.sipocHeaders.output'),
+        t()('artifacts.sipocHeaders.customer'),
+      ];
       keys = ['supplier', 'input', 'process_step', 'output', 'customer'];
     } else {
-      headers = ['Activity', 'Responsible', 'Accountable', 'Consulted', 'Informed'];
+      headers = [
+        t()('artifacts.raciHeaders.activity'),
+        t()('artifacts.raciHeaders.responsible'),
+        t()('artifacts.raciHeaders.accountable'),
+        t()('artifacts.raciHeaders.consulted'),
+        t()('artifacts.raciHeaders.informed'),
+      ];
       keys = ['activity', 'responsible', 'accountable', 'consulted', 'informed'];
     }
 
     let html = `<table class="data-table" id="editTable"><thead><tr>`;
     headers.forEach((h) => (html += `<th>${h}</th>`));
-    html += `<th>Action</th></tr></thead><tbody>`;
+    html += `<th>${t()('artifacts.action')}</th></tr></thead><tbody>`;
 
     data.forEach((row) => {
       html += `<tr>`;
@@ -576,7 +601,7 @@ window.ArtifactViewer = (function () {
       cancelTableEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal('Failed to save changes');
+      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.querySelector('#btn-save-table');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';

@@ -1,105 +1,154 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register - ProcessAce</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-    <script src="js/modal-utils.js"></script>
-  </head>
 
-  <body>
-    <div class="auth-container">
-      <div class="auth-box">
-        <div class="auth-header">
-          <h1>
-            <img
-              src="images/ProcessAce-b-100x100.png"
-              alt="ProcessAce Logo"
-              width="32"
-              height="32"
-            />
-            ProcessAce
-          </h1>
-          <p>Create your account</p>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register - ProcessAce</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-        <div id="errorMsg" class="error-message"></div>
-
-        <form id="registerForm">
-          <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" id="name" required placeholder="John Doe" />
-          </div>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" required placeholder="name@company.com" />
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" required placeholder="••••••••" minlength="8" />
-            <small class="text-muted mt-1 block account-help-text">
-              Must be at least 8 characters, with lowercase, uppercase, and numbers.
-            </small>
-          </div>
-          <button type="submit" class="btn-primary w-full">Create Account</button>
-        </form>
-
-        <div class="auth-footer">
-          <p>Already have an account? <a href="login.html">Sign in</a></p>
-        </div>
+<body>
+  <div class="auth-container">
+    <!-- Language Switcher -->
+    <div class="auth-lang-switcher" id="authLangSwitcher">
+      <button class="auth-lang-btn" id="authLangBtn" title="Change language">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+          <path d="M2 12h20" />
+        </svg>
+        <span id="authLangLabel">EN</span>
+      </button>
+      <div class="auth-lang-dropdown hidden" id="authLangDropdown">
+        <button class="auth-lang-option" data-lang="en">🇺🇸 English</button>
+        <button class="auth-lang-option" data-lang="es">🇪🇸 Español</button>
       </div>
     </div>
+    <div class="auth-box">
+      <div class="auth-header">
+        <h1>
+          <img src="images/ProcessAce-b-100x100.png" alt="ProcessAce Logo" width="32" height="32" />
+          ProcessAce
+        </h1>
+        <p data-i18n="register.subtitle">Create your account</p>
+      </div>
 
-    <script>
-      const registerForm = document.getElementById('registerForm');
-      const errorMsg = document.getElementById('errorMsg');
+      <div id="errorMsg" class="error-message"></div>
 
-      registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorMsg.style.display = 'none';
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="name" data-i18n="register.nameLabel">Name</label>
+          <input type="text" id="name" required data-i18n-placeholder="register.namePlaceholder"
+            placeholder="John Doe" />
+        </div>
+        <div class="form-group">
+          <label for="email" data-i18n="register.emailLabel">Email</label>
+          <input type="email" id="email" required data-i18n-placeholder="register.emailPlaceholder"
+            placeholder="name@company.com" />
+        </div>
+        <div class="form-group">
+          <label for="password" data-i18n="register.passwordLabel">Password</label>
+          <input type="password" id="password" required placeholder="••••••••" minlength="8" />
+          <small class="text-muted mt-1 block account-help-text" data-i18n="register.passwordHelp">
+            Must be at least 8 characters, with lowercase, uppercase, and numbers.
+          </small>
+        </div>
+        <button type="submit" class="btn-primary w-full" data-i18n="register.createAccount">Create Account</button>
+      </form>
 
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+      <div class="auth-footer">
+        <p><span data-i18n="register.hasAccount">Already have an account?</span> <a href="login.html"
+            data-i18n="register.signIn">Sign in</a></p>
+      </div>
+    </div>
+  </div>
 
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-        if (!passwordRegex.test(password)) {
-          errorMsg.textContent =
-            'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
-          errorMsg.style.display = 'block';
-          return;
-        }
+  <script src="js/i18n.js"></script>
+  <script src="js/modal-utils.js"></script>
+  <script>
+    // Initialize i18n for register page
+    if (window.i18n) window.i18n.init();
 
-        try {
-          const response = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password }),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            await window.showAlertModal(
-              'Registration successful! Please login.',
-              'Success',
-              'Accept',
-            );
-            window.location.href = '/login.html';
-          } else {
-            errorMsg.textContent = data.error || 'Registration failed';
-            errorMsg.style.display = 'block';
-          }
-        } catch (err) {
-          errorMsg.textContent = 'An error occurred. Please try again.';
-          errorMsg.style.display = 'block';
-        }
+    // Auth page language switcher logic
+    (function () {
+      const btn = document.getElementById('authLangBtn');
+      const dropdown = document.getElementById('authLangDropdown');
+      const label = document.getElementById('authLangLabel');
+      if (!btn || !dropdown) return;
+      if (window.i18n) label.textContent = window.i18n.currentLang.toUpperCase();
+      btn.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('hidden'); });
+      dropdown.querySelectorAll('.auth-lang-option').forEach((opt) => {
+        opt.addEventListener('click', async () => {
+          const lang = opt.dataset.lang;
+          if (window.i18n) { await window.i18n.setLanguage(lang); label.textContent = lang.toUpperCase(); }
+          dropdown.classList.add('hidden');
+        });
       });
-    </script>
-  </body>
+      document.addEventListener('click', () => dropdown.classList.add('hidden'));
+    })();
+
+    const registerForm = document.getElementById('registerForm');
+    const errorMsg = document.getElementById('errorMsg');
+    const passwordInput = document.getElementById('password');
+    const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+
+    // Custom HTML5 validation messages
+    passwordInput.addEventListener('invalid', function () {
+      if (this.validity.tooShort) {
+        this.setCustomValidity(t('register.passwordTooShort'));
+      } else {
+        this.setCustomValidity('');
+      }
+    });
+
+    passwordInput.addEventListener('input', function () {
+      this.setCustomValidity('');
+    });
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = 'none';
+
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        errorMsg.textContent = t('register.passwordRequirements');
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          await window.showAlertModal(
+            t('register.registrationSuccess'),
+            t('common.success'),
+            t('common.accept'),
+          );
+          window.location.href = '/login.html';
+        } else {
+          errorMsg.textContent = data.error || t('register.registrationFailed');
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = t('register.errorOccurred');
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+
 </html>

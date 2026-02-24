@@ -3,6 +3,7 @@
  * Handles drag and drop file uploads and form inputs.
  */
 window.EvidenceUpload = (function () {
+  const t = () => (window.i18n ? window.i18n.t : (k) => k);
   let uploadZone, fileInput, browseBtn, processNameInput, providerSelect, modelSelect;
 
   async function handleFiles(files) {
@@ -17,9 +18,13 @@ window.EvidenceUpload = (function () {
     uploadZone.innerHTML = `
             <div class="upload-progress">
                 <div class="spinner"></div>
-                <p>Uploading ${file.name}...</p>
+                <p id="uploadProgressText"></p>
             </div>
         `;
+    const progressText = document.getElementById('uploadProgressText');
+    if (progressText) {
+      progressText.textContent = t()('jobs.uploadingFile', { fileName: file.name });
+    }
 
     const formData = new FormData();
     const workspaceId = window.WorkspaceManager
@@ -47,7 +52,11 @@ window.EvidenceUpload = (function () {
         if (typeof window.showAlertModal === 'function') {
           await window.showAlertModal('Upload failed: ' + (data.error || 'Unknown error'));
         } else {
-          alert('Upload failed: ' + (data.error || 'Unknown error'));
+          if (progressText) {
+            progressText.textContent = t()('jobs.uploadFailed') + (data.error || 'Unknown error');
+          } else {
+            alert('Upload failed: ' + (data.error || 'Unknown error'));
+          }
         }
       }
     } catch (error) {
@@ -55,7 +64,11 @@ window.EvidenceUpload = (function () {
       if (typeof window.showAlertModal === 'function') {
         await window.showAlertModal('Upload error');
       } else {
-        alert('Upload error');
+        if (progressText) {
+          progressText.textContent = t()('jobs.uploadError');
+        } else {
+          alert('Upload error');
+        }
       }
     } finally {
       setTimeout(() => {

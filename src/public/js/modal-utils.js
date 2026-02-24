@@ -22,12 +22,11 @@ function ensureConfirmModalExists() {
 }
 
 // Global function to show confirm modal
-window.showConfirmModal = function (
-  message,
-  title = 'Confirm Action',
-  yesLabel = 'Confirm',
-  noLabel = 'Cancel',
-) {
+window.showConfirmModal = function (message, title, yesLabel, noLabel) {
+  const t = window.i18n ? window.i18n.t : (k) => k;
+  title = title || t('modals.confirmTitle');
+  yesLabel = yesLabel || t('modals.confirmYes');
+  noLabel = noLabel || t('modals.confirmNo');
   ensureConfirmModalExists();
 
   return new Promise((resolve) => {
@@ -107,7 +106,10 @@ function ensureAlertModalExists() {
 }
 
 // Global function to show alert modal
-window.showAlertModal = function (message, title = 'Alert', btnLabel = 'OK') {
+window.showAlertModal = function (message, title, btnLabel) {
+  const t = window.i18n ? window.i18n.t : (k) => k;
+  title = title || t('modals.alertTitle');
+  btnLabel = btnLabel || t('modals.alertOk');
   ensureAlertModalExists();
 
   return new Promise((resolve) => {

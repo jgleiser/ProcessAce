@@ -3,6 +3,7 @@
  * Handles workspace fetching, selection, and UI updates.
  */
 window.WorkspaceManager = (function () {
+  const t = () => (window.i18n ? window.i18n.t : (k) => k);
   let currentWorkspaceId = null;
   let currentWorkspaceName = 'Loading...';
   let workspacesCache = [];
@@ -61,7 +62,7 @@ window.WorkspaceManager = (function () {
     workspaceSelect.innerHTML = '';
 
     if (workspacesCache.length === 0) {
-      workspaceSelect.innerHTML = '<option value="">No workspaces</option>';
+      workspaceSelect.innerHTML = `<option value="">${t()('workspace.noWorkspaces')}</option>`;
     } else {
       workspacesCache.forEach((ws) => {
         const option = document.createElement('option');
@@ -104,7 +105,7 @@ window.WorkspaceManager = (function () {
         msg = document.createElement('div');
         msg.id = viewerMsgId;
         msg.className = 'card viewer-message';
-        msg.textContent = 'You have viewer access. You cannot start new jobs.';
+        msg.textContent = t()('workspace.viewerMessage');
         uploadZone.parentNode.insertBefore(msg, uploadZone);
       } else if (msg) {
         msg.classList.remove('hidden');
@@ -149,7 +150,7 @@ window.WorkspaceManager = (function () {
         if (typeof window.showAlertModal === 'function') {
           await window.showAlertModal('Please enter a workspace name');
         } else {
-          alert('Please enter a workspace name');
+          alert(t()('workspace.enterName'));
         }
         return;
       }
@@ -162,7 +163,7 @@ window.WorkspaceManager = (function () {
         await loadWorkspaces();
         showViewMode();
       } catch (err) {
-        console.error('Error creating workspace', err);
+        console.error(t()('workspace.createError'), err);
         if (typeof window.showAlertModal === 'function') {
           await window.showAlertModal('Error creating workspace');
         }

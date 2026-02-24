@@ -1,5 +1,6 @@
 /* global showConfirmModal */
 document.addEventListener('DOMContentLoaded', async () => {
+  const t = window.i18n ? window.i18n.t : (k) => k;
   const form = document.getElementById('appSettingsForm');
   const providerSelect = document.getElementById('providerSelect');
   const saveBtn = document.getElementById('saveBtn');
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateProviderSelect() {
     const currentValue = providerSelect.value;
-    providerSelect.innerHTML = '<option value="">-- Select a Configured Provider --</option>';
+    providerSelect.innerHTML = `<option value="">${t('appSettings.selectConfiguredProvider')}</option>`;
 
     providers.forEach((p) => {
       if (configuredProviders.has(p)) {
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       deleteBtn.addEventListener('click', async () => {
         if (
           !(await showConfirmModal(
-            `Are you sure you want to delete the ${providerDisplayNames[provider]} API key?`,
+            t('appSettings.deleteKeyConfirm', { provider: providerDisplayNames[provider] }),
           ))
         ) {
           return;
@@ -109,10 +110,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           showApiKeyConfigured(provider, false);
           document.getElementById(`${provider}KeyInput`).value = '';
-          showMessage('success', `${providerDisplayNames[provider]} API key deleted successfully`);
+          showMessage(
+            'success',
+            t('appSettings.keyDeletedSuccess', { provider: providerDisplayNames[provider] }),
+          );
         } catch (err) {
           console.error(err);
-          showMessage('error', `Failed to delete ${providerDisplayNames[provider]} API key`);
+          showMessage(
+            'error',
+            t('appSettings.keyDeleteFailed', { provider: providerDisplayNames[provider] }),
+          );
         }
       });
     }
@@ -127,13 +134,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!apiKey) {
           showMessage(
             'error',
-            `Please enter a valid API key for ${providerDisplayNames[provider]}`,
+            t('appSettings.enterValidKey', { provider: providerDisplayNames[provider] }),
           );
           return;
         }
 
         saveKeyBtn.disabled = true;
-        saveKeyBtn.textContent = 'Saving...';
+        saveKeyBtn.textContent = t('appSettings.saving');
 
         try {
           const res = await fetch('/api/settings', {
@@ -146,13 +153,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           showApiKeyConfigured(provider, true);
           input.value = '';
-          showMessage('success', `${providerDisplayNames[provider]} API key saved successfully`);
+          showMessage(
+            'success',
+            t('appSettings.keySavedSuccess', { provider: providerDisplayNames[provider] }),
+          );
         } catch (err) {
           console.error(err);
-          showMessage('error', `Failed to save ${providerDisplayNames[provider]} API key`);
+          showMessage(
+            'error',
+            t('appSettings.keySaveFailed', { provider: providerDisplayNames[provider] }),
+          );
         } finally {
           saveKeyBtn.disabled = false;
-          saveKeyBtn.textContent = 'Save Key';
+          saveKeyBtn.textContent = t('appSettings.saveKeyBtn');
         }
       });
     }
@@ -171,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderDropdown(filter = '') {
     if (allModels.length === 0) {
       modelDropdown.innerHTML =
-        '<div class="combobox-no-results">No models loaded. Click "Load Models" to fetch models.</div>';
+        '<div class="combobox-no-results">' + t('appSettings.noModelsLoaded') + '</div>';
       modelDropdown.classList.add('open');
       return;
     }
@@ -186,7 +199,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     highlightedIndex = -1;
 
     if (filtered.length === 0) {
-      modelDropdown.innerHTML = '<div class="combobox-no-results">No models found</div>';
+      modelDropdown.innerHTML =
+        '<div class="combobox-no-results">' + t('appSettings.noModelsFound') + '</div>';
     } else {
       filtered.forEach((model, index) => {
         const div = document.createElement('div');
@@ -260,13 +274,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadModels() {
     const provider = providerSelect.value;
     if (!provider) {
-      showMessage('error', 'Please select a configured provider first.');
+      showMessage('error', t('appSettings.selectProviderFirst'));
       return;
     }
 
     loadModelsBtn.disabled = true;
     const originalText = loadModelsBtn.textContent;
-    loadModelsBtn.textContent = 'Loading...';
+    loadModelsBtn.textContent = t('appSettings.loadingModels');
     messageContainer.innerHTML = '';
 
     try {
@@ -288,9 +302,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         modelInput.value = '';
         modelValue.value = '';
         renderDropdown('');
-        showMessage('success', `Successfully loaded ${data.models.length} models.`);
+        showMessage('success', t('appSettings.modelsLoadedSuccess', { count: data.models.length }));
       } else {
-        showMessage('error', 'No models found for this provider.');
+        showMessage('error', t('appSettings.noModelsForProvider'));
       }
     } catch (err) {
       console.error(err);
@@ -338,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const user = await authRes.json();
     if (user.role !== 'admin') {
-      document.body.innerHTML = '<div class="access-denied">Access Denied</div>';
+      document.body.innerHTML = '<div class="access-denied">' + t('common.accessDenied') + '</div>';
       return;
     }
 
@@ -373,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (err) {
     console.error(err);
-    showMessage('error', 'Failed to load settings');
+    showMessage('error', t('appSettings.loadSettingsFailed'));
   }
 
   // Save full defaults
@@ -381,12 +395,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.preventDefault();
 
     if (!providerSelect.value) {
-      showMessage('error', 'Please select a default provider.');
+      showMessage('error', t('appSettings.selectDefaultProvider'));
       return;
     }
 
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
+    saveBtn.textContent = t('appSettings.saving');
 
     try {
       await fetch('/api/settings', {
@@ -408,13 +422,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         body: JSON.stringify({ key: 'llm.baseUrl', value: baseUrlInput.value }),
       });
 
-      showMessage('success', 'Default Model Settings saved successfully');
+      showMessage('success', t('appSettings.settingsSaved'));
     } catch (err) {
       console.error(err);
-      showMessage('error', 'Failed to save default settings');
+      showMessage('error', t('appSettings.settingsSaveFailed'));
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Default Model';
+      saveBtn.textContent = t('appSettings.saveDefaultModel');
     }
   });
 

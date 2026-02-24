@@ -2,6 +2,7 @@
 // workspace-settings.js
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const t = window.i18n ? window.i18n.t : (k) => k;
   lucide.createIcons();
 
   // Elements
@@ -105,16 +106,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // My Workspaces
     if (myWorkspaces.length === 0) {
-      myWorkspacesList.innerHTML =
-        '<div class="empty-state ws-empty-state">You haven\'t created any workspaces yet.</div>';
+      myWorkspacesList.innerHTML = `<div class="empty-state ws-empty-state">${t('workspaceSettings.noMyWorkspaces')}</div>`;
     } else {
       myWorkspacesList.innerHTML = myWorkspaces.map((w) => createWorkspaceCard(w, true)).join('');
     }
 
     // Shared Workspaces
     if (sharedWorkspaces.length === 0) {
-      sharedWorkspacesList.innerHTML =
-        '<div class="empty-state ws-empty-state">No shared workspaces found.</div>';
+      sharedWorkspacesList.innerHTML = `<div class="empty-state ws-empty-state">${t('workspaceSettings.noSharedWorkspaces')}</div>`;
     } else {
       sharedWorkspacesList.innerHTML = sharedWorkspaces
         .map((w) => createWorkspaceCard(w, false))
@@ -130,27 +129,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const artifactCount = workspace.artifact_count || 0;
     const memberCount = workspace.member_count || 0;
 
-    const roleText = isOwner ? 'OWNER' : workspace.role ? workspace.role.toUpperCase() : 'VIEWER';
+    const roleText = isOwner
+      ? t('roles.owner')
+      : workspace.role
+        ? t(`roles.${workspace.role}`)
+        : t('roles.viewer');
 
     let actionsContent = '';
     if (isOwner) {
       if (workspace.name === 'My Workspace') {
         actionsContent = `
-                        <div class="ws-card-info-text">Default Workspace</div>
+                        <div class="ws-card-info-text">${t('workspaceSettings.defaultWorkspace')}</div>
                     `;
       } else {
         actionsContent = `
-                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner">Manage</button>
-                        <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">Delete</button>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner">${t('common.manage')}</button>
+                        <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">${t('common.delete')}</button>
                     `;
       }
     } else if (workspace.role === 'admin') {
       actionsContent = `
-                    <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="admin">Manage</button>
+                    <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="admin">${t('common.manage')}</button>
                 `;
     } else {
       actionsContent = `
-                    <div class="ws-card-info-text">View Only</div>
+                    <div class="ws-card-info-text">${t('common.viewOnly')}</div>
                 `;
     }
 
@@ -165,15 +168,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="workspace-stats">
                     <div class="stat-item">
                         <span class="stat-value">${jobCount}</span>
-                        <span class="stat-label">Processes</span>
+                        <span class="stat-label">${t('workspaceSettings.statProcesses')}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-value">${artifactCount}</span>
-                        <span class="stat-label">Documents</span>
+                        <span class="stat-label">${t('workspaceSettings.statDocuments')}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-value">${memberCount}</span>
-                        <span class="stat-label">Members</span>
+                        <span class="stat-label">${t('workspaceSettings.statMembers')}</span>
                     </div>
                 </div>
                 <div class="workspace-actions">
@@ -198,10 +201,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
         const confirmed = await showConfirmModal(
-          'Are you sure you want to delete this workspace? This defaults ALL jobs, evidence, and artifacts associated with it. This cannot be undone.',
-          'Delete Workspace',
-          'Delete',
-          'Cancel',
+          t('workspaceSettings.deleteConfirm'),
+          t('workspaceSettings.deleteTitle'),
+          t('common.delete'),
+          t('common.cancel'),
         );
         if (confirmed) {
           deleteWorkspace(id);
@@ -218,11 +221,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (res.ok) {
         loadWorkspaces();
       } else {
-        await showAlertModal('Failed to delete workspace');
+        await showAlertModal(t('workspaceSettings.deleteFailed'));
       }
     } catch (e) {
       console.error(e);
-      await showAlertModal('Error deleting workspace');
+      await showAlertModal(t('workspaceSettings.deleteError'));
     }
   }
 
@@ -364,7 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <option value="editor" ${currentRole === 'editor' ? 'selected' : ''}>Editor</option>
                                 <option value="admin" ${currentRole === 'admin' ? 'selected' : ''}>Admin</option>
                             </select>
-                            <button class="action-btn primary save-role-btn role-edit-save">Save</button>
+                             <button class="action-btn primary save-role-btn role-edit-save">${t('common.save')}</button>
                             <button class="btn-icon cancel-role-btn" title="Cancel">
                                 <i data-lucide="x" class="icon-xs"></i>
                             </button>
@@ -384,15 +387,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
 
                 if (res.ok) {
-                  showInviteMessage('success', 'Member role updated successfully');
+                  showInviteMessage('success', t('workspaceSettings.roleUpdated'));
                   loadMembers(wid, ownerId, myRole);
                 } else {
                   const err = await res.json();
-                  showInviteMessage('error', err.error || 'Failed to update role');
+                  showInviteMessage('error', err.error || t('workspaceSettings.roleUpdateFailed'));
                 }
               } catch (err) {
                 console.error(err);
-                showInviteMessage('error', 'Error updating role');
+                showInviteMessage('error', t('workspaceSettings.roleUpdateError'));
               }
             });
 
@@ -407,8 +410,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.remove-member').forEach((btn) => {
           btn.addEventListener('click', async () => {
             const confirmed = await showConfirmModal(
-              'Are you sure you want to remove this member?',
-              'Remove Member',
+              t('workspaceSettings.removeConfirm'),
+              t('workspaceSettings.removeTitle'),
             );
             if (confirmed) {
               removeMember(btn.dataset.wid, btn.dataset.uid);
@@ -419,8 +422,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       console.error(e);
       if (membersList)
-        membersList.innerHTML =
-          '<li class="list-item-padded text-error">Failed to load members</li>';
+        membersList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadMembersFailed')}</li>`;
     }
   }
 
@@ -430,8 +432,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const invites = await res.json();
       if (invitationsList) {
         if (invites.length === 0) {
-          invitationsList.innerHTML =
-            '<li class="list-item-padded text-center text-muted">No pending invitations</li>';
+          invitationsList.innerHTML = `<li class="list-item-padded text-center text-muted">${t('workspaceSettings.noPendingInvitations')}</li>`;
           return;
         }
         invitationsList.innerHTML = invites
@@ -440,7 +441,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <li class="list-group-item">
                         <div>
                             <div>${i.recipient_email}</div>
-                            <div class="invite-info-line">Invited by ${i.inviter_email}</div>
+                            <div class="invite-info-line">${t('workspaceSettings.invitedBy')} ${i.inviter_email}</div>
                         </div>
                         <div class="member-row">
                             <span class="role-badge role-viewer">Pending</span>
@@ -457,8 +458,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.revoke-invite').forEach((btn) => {
           btn.addEventListener('click', async () => {
             const confirmed = await showConfirmModal(
-              'Are you sure you want to revoke this invitation?',
-              'Revoke Invitation',
+              t('workspaceSettings.revokeConfirm'),
+              t('workspaceSettings.revokeTitle'),
             );
             if (confirmed) {
               revokeInvitation(btn.dataset.wid, btn.dataset.id);
@@ -469,8 +470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
       console.error(e);
       if (invitationsList)
-        invitationsList.innerHTML =
-          '<li class="list-item-padded text-error">Failed to load invitations</li>';
+        invitationsList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadInvitationsFailed')}</li>`;
     }
   }
 
@@ -582,16 +582,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         if (res.ok) {
           document.getElementById('invite-email').value = '';
-          showInviteMessage('success', 'Invitation sent / generated!');
+          showInviteMessage('success', t('workspaceSettings.inviteSent'));
           await loadInvitations(wid);
           switchTab('invites');
         } else {
           const err = await res.json();
-          showInviteMessage('error', err.error || 'Failed to invite');
+          showInviteMessage('error', err.error || t('workspaceSettings.inviteFailed'));
         }
       } catch (e) {
         console.error(e);
-        showInviteMessage('error', 'An error occurred while sending the invitation');
+        showInviteMessage('error', t('workspaceSettings.inviteError'));
       }
     });
   }

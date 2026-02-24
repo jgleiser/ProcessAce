@@ -1,156 +1,146 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jobs Dashboard - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <!-- BPMN-JS -->
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css"
-    />
-    <!-- EasyMDE -->
-    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
 
-  <body>
-    <div class="app-container">
-      <div id="app-header"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jobs Dashboard - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <!-- BPMN-JS -->
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.12.0/dist/assets/bpmn-font/css/bpmn.css" />
+  <!-- EasyMDE -->
+  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-      <div class="header-stacked">
-        <h1>📋 Jobs Dashboard</h1>
-        <a href="/" class="back-link">← Back to Dashboard</a>
+<body>
+  <div class="app-container">
+    <div id="app-header"></div>
+
+    <div class="header-stacked">
+      <h1 data-i18n="adminJobs.pageTitle">📋 Jobs Dashboard</h1>
+      <a href="/" class="back-link" data-i18n="common.back">← Back to Dashboard</a>
+    </div>
+
+    <div id="errorContainer"></div>
+
+    <div class="jobs-table-container">
+      <!-- Filter Bar -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="filterUser" data-i18n="adminJobs.filterUser">User</label>
+          <input type="text" id="filterUser" data-i18n-placeholder="adminJobs.filterUserPlaceholder"
+            placeholder="Name or email..." class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label for="filterWorkspace" data-i18n="adminJobs.filterWorkspace">Workspace</label>
+          <input type="text" id="filterWorkspace" data-i18n-placeholder="adminJobs.filterWorkspacePlaceholder"
+            placeholder="Workspace name..." class="filter-input" />
+        </div>
+        <div class="filter-group">
+          <label for="filterStatus" data-i18n="adminJobs.filterStatus">Status</label>
+          <select id="filterStatus" class="filter-select">
+            <option value="All" data-i18n="common.all">All</option>
+            <option value="pending" data-i18n="adminJobs.statusPending">Pending</option>
+            <option value="processing" data-i18n="adminJobs.statusProcessing">Processing</option>
+            <option value="completed" data-i18n="adminJobs.statusCompleted">Completed</option>
+            <option value="failed" data-i18n="adminJobs.statusFailed">Failed</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterProvider" data-i18n="adminJobs.filterProvider">Provider</label>
+          <select id="filterProvider" class="filter-select">
+            <option value="All" data-i18n="common.all">All</option>
+            <option value="openai">OpenAI</option>
+            <option value="google">Google</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filterModel" data-i18n="adminJobs.filterModel">Model</label>
+          <input type="text" id="filterModel" data-i18n-placeholder="adminJobs.filterModelPlaceholder"
+            placeholder="e.g. gpt-4..." class="filter-input" />
+        </div>
+        <div class="filter-actions">
+          <button id="clearFiltersBtn" class="btn-secondary btn-sm" data-i18n="common.clear">Clear</button>
+        </div>
       </div>
 
-      <div id="errorContainer"></div>
-
-      <div class="jobs-table-container">
-        <!-- Filter Bar -->
-        <div class="filters-container">
-          <div class="filter-group">
-            <label for="filterUser">User</label>
-            <input
-              type="text"
-              id="filterUser"
-              placeholder="Name or email..."
-              class="filter-input"
-            />
-          </div>
-          <div class="filter-group">
-            <label for="filterWorkspace">Workspace</label>
-            <input
-              type="text"
-              id="filterWorkspace"
-              placeholder="Workspace name..."
-              class="filter-input"
-            />
-          </div>
-          <div class="filter-group">
-            <label for="filterStatus">Status</label>
-            <select id="filterStatus" class="filter-select">
-              <option value="All">All</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label for="filterProvider">Provider</label>
-            <select id="filterProvider" class="filter-select">
-              <option value="All">All</option>
-              <option value="openai">OpenAI</option>
-              <option value="google">Google</option>
-              <option value="anthropic">Anthropic</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label for="filterModel">Model</label>
-            <input type="text" id="filterModel" placeholder="e.g. gpt-4..." class="filter-input" />
-          </div>
-          <div class="filter-actions">
-            <button id="clearFiltersBtn" class="btn-secondary btn-sm">Clear</button>
-          </div>
-        </div>
-
-        <div id="loadingState" class="loading">Loading jobs...</div>
-        <table class="jobs-table hidden" id="jobsTable">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Workspace</th>
-              <th>Process</th>
-              <th>File</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="jobsTableBody"></tbody>
-        </table>
-        <div class="pagination-container hidden" id="paginationContainer">
-          <div class="pagination-info" id="paginationInfo">Showing 0 of 0 jobs</div>
-          <div class="pagination-controls" id="paginationControls"></div>
-          <div class="limit-selector">
-            <label for="limitSelect">Show:</label>
-            <select id="limitSelect" class="limit-select">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
-          </div>
+      <div id="loadingState" class="loading" data-i18n="adminJobs.loadingJobs">Loading jobs...</div>
+      <table class="jobs-table hidden" id="jobsTable">
+        <thead>
+          <tr>
+            <th data-i18n="adminJobs.thUser">User</th>
+            <th data-i18n="adminJobs.thWorkspace">Workspace</th>
+            <th data-i18n="adminJobs.thProcess">Process</th>
+            <th data-i18n="adminJobs.thFile">File</th>
+            <th data-i18n="adminJobs.thStatus">Status</th>
+          </tr>
+        </thead>
+        <tbody id="jobsTableBody"></tbody>
+      </table>
+      <div class="pagination-container hidden" id="paginationContainer">
+        <div class="pagination-info" id="paginationInfo">Showing 0 of 0 jobs</div>
+        <div class="pagination-controls" id="paginationControls"></div>
+        <div class="limit-selector">
+          <label for="limitSelect" data-i18n="common.show">Show:</label>
+          <select id="limitSelect" class="limit-select">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Job Details Modal -->
-    <div class="modal-overlay" id="jobModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Job Details</h2>
-          <span class="close-modal" id="modalClose">&times;</span>
-        </div>
-        <div class="modal-section">
-          <div class="modal-label">LLM Provider</div>
-          <div class="modal-value llm-provider" id="modalProvider">N/A</div>
-        </div>
-        <div class="modal-section">
-          <div class="modal-label">LLM Model</div>
-          <div class="modal-value" id="modalModel">N/A</div>
-        </div>
-        <div class="modal-section">
-          <div class="modal-label">Artifacts</div>
-          <div class="modal-artifacts" id="modalArtifacts">
-            <span class="modal-no-artifacts">No artifacts available</span>
-          </div>
+  <!-- Job Details Modal -->
+  <div class="modal-overlay" id="jobModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-i18n="adminJobs.jobDetails">Job Details</h2>
+        <span class="close-modal" id="modalClose">&times;</span>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label" data-i18n="adminJobs.llmProvider">LLM Provider</div>
+        <div class="modal-value llm-provider" id="modalProvider">N/A</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label" data-i18n="adminJobs.llmModel">LLM Model</div>
+        <div class="modal-value" id="modalModel">N/A</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-label" data-i18n="adminJobs.artifacts">Artifacts</div>
+        <div class="modal-artifacts" id="modalArtifacts">
+          <span class="modal-no-artifacts" data-i18n="adminJobs.noArtifacts">No artifacts available</span>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Artifact View Modal -->
-    <div id="artifactModal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="artifactModalTitle">Artifact View</h3>
-          <span class="close-modal" id="closeArtifactModal">&times;</span>
-        </div>
-        <div id="artifactModalBody" class="modal-body"></div>
+  <!-- Artifact View Modal -->
+  <div id="artifactModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="artifactModalTitle" data-i18n="adminJobs.artifactView">Artifact View</h3>
+        <span class="close-modal" id="closeArtifactModal">&times;</span>
       </div>
+      <div id="artifactModalBody" class="modal-body"></div>
     </div>
+  </div>
 
-    <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
-    <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
-    <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
+  <script src="https://unpkg.com/bpmn-js@18.12.0/dist/bpmn-modeler.production.min.js"></script>
+  <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
+  <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
 
-    <script src="js/api-client.js"></script>
-    <script src="js/header.js"></script>
-    <script src="js/admin-jobs.js"></script>
-  </body>
+  <script src="js/api-client.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/admin-jobs.js"></script>
+</body>
+
 </html>

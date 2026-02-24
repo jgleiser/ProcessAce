@@ -2,7 +2,7 @@
 
 /**
  * Shared Header Logic & Template
- * Handles HTML injection, User Menu Dropdown, and Auth Display
+ * Handles HTML injection, User Menu Dropdown, Auth Display, and Language Switcher
  */
 
 const HeaderTemplate = `
@@ -16,21 +16,42 @@ const HeaderTemplate = `
     <div class="workspace-selector hidden" id="workspaceSelector">
       <!-- View Mode (default) -->
       <div id="workspaceViewMode" class="workspace-view-mode">
-        <span class="ws-label">Workspace:</span>
+        <span class="ws-label" data-i18n="header.workspace">Workspace:</span>
         <span id="currentWorkspaceName" class="ws-name">Loading...</span>
-        <a href="#" id="changeWorkspaceLink" class="ws-change-link">Change</a>
+        <a href="#" id="changeWorkspaceLink" class="ws-change-link" data-i18n="header.changeWorkspace">Change</a>
       </div>
       <!-- Edit Mode (hidden by default) -->
       <div id="workspaceEditMode" class="workspace-edit-mode hidden">
-        <span class="ws-label">Workspace:</span>
+        <span class="ws-label" data-i18n="header.workspace">Workspace:</span>
         <select id="workspaceSelect" class="ws-select">
           <option value="">Loading...</option>
         </select>
         <input type="text" id="newWorkspaceInput" placeholder="New workspace name..." class="ws-new-input hidden" />
-        <button id="workspaceActionBtn" class="btn-primary ws-action-btn">
+        <button id="workspaceActionBtn" class="btn-primary ws-action-btn" data-i18n="workspace.selectBtn">
           Select
         </button>
-        <a href="#" id="cancelWorkspaceLink" class="ws-cancel-link">Cancel</a>
+        <a href="#" id="cancelWorkspaceLink" class="ws-cancel-link" data-i18n="header.cancelChange">Cancel</a>
+      </div>
+    </div>
+
+    <!-- Language Switcher -->
+    <div class="lang-switcher-container" id="langSwitcher">
+      <button id="langSwitcherBtn" class="lang-switcher-btn" title="Change Language">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M2 12h20M12 2c2.5 2.5 4 5.5 4 10s-1.5 7.5-4 10c-2.5-2.5-4-5.5-4-10s1.5-7.5 4-10z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span id="currentLangLabel">EN</span>
+      </button>
+      <div id="langDropdown" class="lang-dropdown hidden">
+        <button class="lang-option" data-lang="en">
+          <span>English</span>
+          <span class="lang-check hidden" id="langCheckEn">✓</span>
+        </button>
+        <button class="lang-option" data-lang="es">
+          <span>Español</span>
+          <span class="lang-check hidden" id="langCheckEs">✓</span>
+        </button>
       </div>
     </div>
 
@@ -40,13 +61,13 @@ const HeaderTemplate = `
         <span>▼</span>
       </button>
       <div id="userDropdown" class="user-dropdown hidden">
-        <a href="/user-settings.html">User Settings</a>
-        <a href="/workspace-settings.html" id="workspaceSettingsLink">Workspace Settings</a>
-        <div id="adminOptionsHeader" class="admin-options-header hidden">Admin options</div>
-        <a href="/admin-users.html" id="adminLink" class="hidden">Users</a>
-        <a href="/admin-jobs.html" id="adminJobsLink" class="hidden">Jobs Dashboard</a>
-        <a href="/app-settings.html" id="appSettingsLink" class="hidden">App Settings</a>
-        <button id="logoutBtn">Logout</button>
+        <a href="/user-settings.html" data-i18n="header.userSettings">User Settings</a>
+        <a href="/workspace-settings.html" id="workspaceSettingsLink" data-i18n="header.workspaceSettings">Workspace Settings</a>
+        <div id="adminOptionsHeader" class="admin-options-header hidden" data-i18n="header.adminOptions">Admin options</div>
+        <a href="/admin-users.html" id="adminLink" class="hidden" data-i18n="header.users">Users</a>
+        <a href="/admin-jobs.html" id="adminJobsLink" class="hidden" data-i18n="header.jobsDashboard">Jobs Dashboard</a>
+        <a href="/app-settings.html" id="appSettingsLink" class="hidden" data-i18n="header.appSettings">App Settings</a>
+        <button id="logoutBtn" data-i18n="header.logout">Logout</button>
       </div>
     </div>
   </div>
@@ -55,30 +76,77 @@ const HeaderTemplate = `
 
 function injectHeader() {
   const customHeader = document.getElementById('app-header');
-  // Also check for existing static headers to replace (migration support)
-  const existingHeader = document.querySelector('.page-header');
 
   if (customHeader) {
     customHeader.innerHTML = HeaderTemplate;
-    // Unwrap the header from the container to avoid double nesting?
-    // Actually, keeping it in the container is fine if we style it right, or we can replace outer HTML.
-    // For simplicity, let's just replace the innerHTML of existing container or replace the container itself.
-    // The template has <header class="page-header">.
-    // If we put that inside <div id="app-header">, we get div > header.
-    // That's acceptable.
-  } else if (existingHeader && !document.getElementById('workspaceSelector')) {
-    // If we found a static header but NOT one that seems to be the dashboard one (check for workspace selector existence before injection to avoid nuking active stuff if script runs late)
-    // Actually, for migration, we want to replace *all* static headers.
-    // But we must be careful not to replace it if strictly handled by something else?
-    // Let's rely on explicit <div id="app-header"></div> in HTML files for safety.
   }
+}
+
+/**
+ * Sets up the language switcher dropdown toggle, option clicks, and checkmark updates.
+ */
+function setupLanguageSwitcher() {
+  const langBtn = document.getElementById('langSwitcherBtn');
+  const langDropdown = document.getElementById('langDropdown');
+  const currentLangLabel = document.getElementById('currentLangLabel');
+
+  if (!langBtn || !langDropdown) return;
+
+  // Toggle dropdown
+  langBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    langDropdown.classList.toggle('hidden');
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!langBtn.contains(e.target) && !langDropdown.contains(e.target)) {
+      langDropdown.classList.add('hidden');
+    }
+  });
+
+  // Handle option clicks
+  langDropdown.querySelectorAll('.lang-option').forEach((option) => {
+    option.addEventListener('click', () => {
+      const lang = option.dataset.lang;
+      if (window.i18n) {
+        window.i18n.setLanguage(lang);
+      }
+      langDropdown.classList.add('hidden');
+    });
+  });
+
+  // Update active state
+  function updateLangDisplay() {
+    const lang = window.i18n ? window.i18n.currentLang : 'en';
+    if (currentLangLabel) currentLangLabel.textContent = lang.toUpperCase();
+
+    // Update checkmarks
+    const checkEn = document.getElementById('langCheckEn');
+    const checkEs = document.getElementById('langCheckEs');
+    if (checkEn) checkEn.classList.toggle('hidden', lang !== 'en');
+    if (checkEs) checkEs.classList.toggle('hidden', lang !== 'es');
+  }
+
+  updateLangDisplay();
+
+  // Listen for language changes
+  document.addEventListener('languageChanged', updateLangDisplay);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Inject Header HTML
   injectHeader();
 
-  // 2. Select Elements (now that they exist)
+  // 2. Initialize i18n (loads translations, detects language, translates page)
+  if (window.i18n) {
+    await window.i18n.init();
+  }
+
+  // 3. Setup Language Switcher
+  setupLanguageSwitcher();
+
+  // 4. Select Elements (now that they exist)
   const userDisplay = document.getElementById('userDisplay');
   const userMenuBtn = document.getElementById('userMenuBtn');
   const userDropdown = document.getElementById('userDropdown');
@@ -128,7 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const notifBtn = document.createElement('button');
     notifBtn.className = 'notification-btn';
-    notifBtn.title = 'View Notifications';
+    notifBtn.title = window.i18n ? window.i18n.t('header.viewNotifications') : 'View Notifications';
     notifBtn.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="currentColor"/>
@@ -141,9 +209,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     notifContainer.appendChild(notifBtn);
 
-    // Insert before user menu
+    // Insert before lang switcher or user menu
+    const langSwitcher = document.getElementById('langSwitcher');
     const userMenuContainer = document.querySelector('.user-menu-container');
-    if (headerControls && userMenuContainer) {
+    if (headerControls && langSwitcher) {
+      headerControls.insertBefore(notifContainer, langSwitcher);
+    } else if (headerControls && userMenuContainer) {
       headerControls.insertBefore(notifContainer, userMenuContainer);
     } else if (headerControls) {
       headerControls.appendChild(notifContainer);

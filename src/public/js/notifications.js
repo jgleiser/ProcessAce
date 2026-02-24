@@ -1,4 +1,5 @@
 /* global showToast */
+const t = window.i18n ? window.i18n.t : (k) => k;
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('notificationsContainer');
   const markAllReadBtn = document.getElementById('markAllReadBtn');
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (error) {
       console.error(error);
-      container.innerHTML = '<div class="error-message">Failed to load notifications</div>';
+      container.innerHTML = `<div class="text-center text-muted">${t('notifications.loadFailed')}</div>`;
     }
   };
 
@@ -43,11 +44,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (filteredNotifications.length === 0) {
       container.innerHTML = `
-                <div class="empty-notifications">
-                    <h3>No notifications yet</h3>
-                    <p>When you subscribe to updates or get invited to workspaces, they'll show up here.</p>
-                </div>
-            `;
+        <div class="empty-state">
+          <p>${t('notifications.noNotifications')}</p>
+          <small>${t('notifications.noNotificationsDesc')}</small>
+        </div>
+      `;
       return;
     }
 
@@ -100,10 +101,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const id = e.target.dataset.id;
 
         const confirmed = await window.showConfirmModal(
-          'Are you sure you want to decline this invitation?',
-          'Decline Invitation',
-          'Yes, Decline',
-          'Cancel',
+          t('notifications.declineConfirm'),
+          t('notifications.declineConfirmTitle'),
+          t('notifications.declineYes'),
+          t('common.cancel'),
         );
 
         if (confirmed) {
@@ -122,10 +123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // If accepted, redirect to dashboard
         if (url.includes('accept')) {
-          showToast('Invitation accepted! Redirecting...', 'success');
+          showToast(t('notifications.acceptedRedirect'), 'success');
           setTimeout(() => (window.location.href = '/'), 1000);
         } else {
-          showToast('Invitation declined', 'info');
+          showToast(t('notifications.declinedMsg'), 'info');
 
           if (removeId) {
             const el = document.getElementById(removeId);

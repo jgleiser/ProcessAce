@@ -255,12 +255,13 @@
   padding: 0.4rem 0.6rem;
   border-radius: 6px;
   font-size: 0.875rem;
-  min-width: 120px;
+  width: 135px;
 }
 
 #filterStatus,
-#filterProvider {
-  min-width: 90px;
+#filterProvider,
+#filterRole {
+  width: 100px;
 }
 
 .filter-input:focus,

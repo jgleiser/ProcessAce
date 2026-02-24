@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const t = window.i18n ? window.i18n.t : (k) => k;
   const form = document.getElementById('userSettingsForm');
   const nameInput = document.getElementById('nameInput');
   const currentPasswordInput = document.getElementById('currentPasswordInput');
@@ -35,21 +36,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Validation
     if (password) {
       if (!currentPassword) {
-        showMessage('error', 'Current password is required to set a new password');
+        showMessage('error', t('userSettings.currentPasswordRequired'));
         currentPasswordInput.focus();
         return;
       }
       if (password !== confirmPassword) {
-        showMessage('error', 'New passwords do not match');
+        showMessage('error', t('userSettings.passwordMismatch'));
         return;
       }
 
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
       if (!passwordRegex.test(password)) {
-        showMessage(
-          'error',
-          'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.',
-        );
+        showMessage('error', t('userSettings.passwordRequirements'));
         return;
       }
     }
@@ -72,13 +70,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (res.ok) {
-        showMessage('success', 'Profile updated successfully');
+        showMessage('success', t('userSettings.profileUpdated'));
         passwordInput.value = '';
         confirmPasswordInput.value = '';
         currentPasswordInput.value = '';
       } else {
-        const data = await res.json();
-        showMessage('error', data.error || 'Failed to update profile');
+        const errorData = await res.json();
+        showMessage('error', errorData.error || t('userSettings.updateFailed'));
       }
     } catch {
       showMessage('error', 'An error occurred');

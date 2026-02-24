@@ -1,77 +1,68 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Settings - ProcessAce</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-  </head>
 
-  <body>
-    <div class="app-container">
-      <div id="app-header"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Settings - ProcessAce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
 
-      <div class="header-stacked">
-        <h1>User Settings</h1>
-        <a href="/" class="back-link">← Back to Dashboard</a>
-      </div>
+<body>
+  <div class="app-container">
+    <div id="app-header"></div>
 
-      <div id="messageContainer"></div>
-
-      <div class="card">
-        <form id="userSettingsForm">
-          <div class="form-group">
-            <label class="form-label">Name</label>
-            <input type="text" id="nameInput" class="form-input" placeholder="Your Name" />
-          </div>
-
-          <hr class="divider" />
-          <h3 class="section-title">Change Password</h3>
-
-          <div class="form-group">
-            <label class="form-label">Current Password (Required to change password)</label>
-            <input
-              type="password"
-              id="currentPasswordInput"
-              class="form-input"
-              placeholder="Current Password"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label">New Password</label>
-            <input
-              type="password"
-              id="passwordInput"
-              class="form-input"
-              placeholder="New Password"
-            />
-            <small class="text-muted mt-1 block">
-              Must be at least 8 characters, with lowercase, uppercase, and numbers.
-            </small>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Confirm New Password</label>
-            <input
-              type="password"
-              id="confirmPasswordInput"
-              class="form-input"
-              placeholder="Confirm New Password"
-            />
-          </div>
-          <div class="text-right">
-            <button type="submit" class="btn-primary" id="saveBtn">Save Changes</button>
-          </div>
-        </form>
-      </div>
+    <div class="header-stacked">
+      <h1 data-i18n="userSettings.pageTitle">User Settings</h1>
+      <a href="/" class="back-link" data-i18n="common.back">← Back to Dashboard</a>
     </div>
-    <script src="js/api-client.js"></script>
-    <script src="js/header.js"></script>
-    <script src="js/user-settings.js"></script>
-  </body>
+
+    <div id="messageContainer"></div>
+
+    <div class="card">
+      <form id="userSettingsForm">
+        <div class="form-group">
+          <label class="form-label" data-i18n="userSettings.nameLabel">Name</label>
+          <input type="text" id="nameInput" class="form-input" data-i18n-placeholder="userSettings.namePlaceholder"
+            placeholder="Your Name" />
+        </div>
+
+        <hr class="divider" />
+        <h3 class="section-title" data-i18n="userSettings.changePassword">Change Password</h3>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="userSettings.currentPasswordLabel">Current Password (Required to change
+            password)</label>
+          <input type="password" id="currentPasswordInput" class="form-input"
+            data-i18n-placeholder="userSettings.currentPasswordPlaceholder" placeholder="Current Password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="userSettings.newPasswordLabel">New Password</label>
+          <input type="password" id="passwordInput" class="form-input"
+            data-i18n-placeholder="userSettings.newPasswordPlaceholder" placeholder="New Password" />
+          <small class="text-muted mt-1 block" data-i18n="userSettings.passwordHelp">
+            Must be at least 8 characters, with lowercase, uppercase, and numbers.
+          </small>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="userSettings.confirmPasswordLabel">Confirm New Password</label>
+          <input type="password" id="confirmPasswordInput" class="form-input"
+            data-i18n-placeholder="userSettings.confirmPasswordPlaceholder" placeholder="Confirm New Password" />
+        </div>
+        <div class="text-right">
+          <button type="submit" class="btn-primary" id="saveBtn" data-i18n="userSettings.saveChanges">Save
+            Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="js/api-client.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/header.js"></script>
+  <script src="js/user-settings.js"></script>
+</body>
+
 </html>
