@@ -170,4 +170,4 @@ If you wish to:
 
 you must obtain a separate **commercial/enterprise license** from Licensor.
 
-For commercial licensing inquiries, contact: `jose.gleiser@gmail.com`.
+For commercial licensing inquiries, contact: `hello@processace.com`.
