@@ -5,6 +5,14 @@ const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
 const settingsService = require('../services/settingsService');
 
+// Appended to every system prompt so artifacts match the source language
+const LANGUAGE_INSTRUCTION =
+  '\n\n### LANGUAGE RULE (MANDATORY)\n' +
+  'Detect the language of the input process description. ' +
+  'ALL text content you generate (labels, descriptions, role names, headings, etc.) ' +
+  'MUST be written in that same language. ' +
+  'Do NOT translate to English unless the source is already in English.';
+
 const processEvidence = async (job) => {
   const { evidenceId, filename, processName, provider, model } = job.data;
   logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
@@ -88,7 +96,7 @@ CORRECT EDGE SYNTAX:
 - Event (Height 36): y="282" (300-18)
 
 ### 5. OUTPUT FORMAT
-Return *only* the XML string. No markdown code blocks.`;
+Return *only* the XML string. No markdown code blocks.${LANGUAGE_INSTRUCTION}`;
 
     const sipocPrompt = `You are a Six Sigma Process Expert.
 Generate a structured SIPOC table (Suppliers, Inputs, Process, Outputs, Customers) for the given process description.
@@ -97,7 +105,7 @@ Example:
 [
   { "supplier": "Sales", "input": "Order Form", "process_step": "Validate Order", "output": "Validated Order", "customer": "Warehouse" }
 ]
-Return ONLY Valid JSON.`;
+Return ONLY Valid JSON.${LANGUAGE_INSTRUCTION}`;
 
     const raciPrompt = `You are a Project Management Pro.
 Generate a RACI Matrix (Responsible, Accountable, Consulted, Informed) for the activities in the process.
@@ -106,7 +114,7 @@ Example:
 [
   { "activity": "Validate Order", "responsible": "Sales Rep", "accountable": "Sales Manager", "consulted": "IT", "informed": "Customer" }
 ]
-Return ONLY Valid JSON.`;
+Return ONLY Valid JSON.${LANGUAGE_INSTRUCTION}`;
 
     const docPrompt = `You are a Technical Writer.
 Create a Professional Narrative Process Document in Markdown format.
@@ -116,7 +124,7 @@ Include:
 - **Step-by-Step Procedure**: Detailed flow.
 - **Exceptions**: How to handle errors.
 - **Business Rules**: Critical constraints.
-Return ONLY Markdown content.`;
+Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
     // Determine provider name for traceability
     const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
     const modelName = llm.config?.model || model || llmConfig.model;
