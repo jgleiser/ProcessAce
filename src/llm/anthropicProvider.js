@@ -32,7 +32,15 @@ class AnthropicProvider extends LlmProvider {
 
       const response = await this.client.messages.create(params);
 
-      const text = response.content[0].text;
+      let text = response.content[0].text;
+
+      // Anthropic has no native JSON mode; strip markdown fences if JSON was requested
+      if (options.responseFormat === 'json') {
+        text = text
+          .replace(/^```[a-z]*\s*/i, '')
+          .replace(/\s*```$/i, '')
+          .trim();
+      }
 
       logger.info(
         {

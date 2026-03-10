@@ -7,14 +7,19 @@ const getLlmProvider = (options = {}) => {
   if (process.env.MOCK_LLM === 'true') {
     return {
       complete: async (_prompt, _system) => {
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Mock">
-  <bpmn:process id="Process_Mock" isExecutable="false">
-    <bpmn:startEvent id="StartEvent_1"/>
-    <bpmn:task id="Task_1" name="Mock Task"/>
-    <bpmn:endEvent id="EndEvent_1"/>
-  </bpmn:process>
-</bpmn:definitions>`;
+        return JSON.stringify({
+          processId: 'Process_Mock',
+          processName: 'Mock Process',
+          nodes: [
+            { id: 'StartEvent_1', name: 'Start', type: 'startEvent' },
+            { id: 'Task_1', name: 'Mock Task', type: 'task' },
+            { id: 'EndEvent_1', name: 'End', type: 'endEvent' },
+          ],
+          edges: [
+            { id: 'Flow_1', sourceId: 'StartEvent_1', targetId: 'Task_1' },
+            { id: 'Flow_2', sourceId: 'Task_1', targetId: 'EndEvent_1' },
+          ],
+        });
       },
     };
   }

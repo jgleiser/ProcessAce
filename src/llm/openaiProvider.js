@@ -25,10 +25,17 @@ class OpenAIProvider extends LlmProvider {
       }
       messages.push({ role: 'user', content: prompt });
 
-      const completion = await this.client.chat.completions.create({
+      const requestParams = {
         model: this.model,
         messages: messages,
-      });
+      };
+
+      // Enforce structured JSON output when requested
+      if (options.responseFormat === 'json') {
+        requestParams.response_format = { type: 'json_object' };
+      }
+
+      const completion = await this.client.chat.completions.create(requestParams);
 
       const responseText = completion.choices[0].message.content;
 

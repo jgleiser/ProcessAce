@@ -4,6 +4,7 @@ const { getLlmProvider } = require('../llm');
 const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
 const settingsService = require('../services/settingsService');
+const { buildBpmnWithLayout } = require('../utils/bpmnBuilder');
 
 // Appended to every system prompt so artifacts match the source language
 const LANGUAGE_INSTRUCTION =
@@ -50,53 +51,37 @@ const processEvidence = async (job) => {
       baseURL: llmConfig.baseUrl,
     });
 
-    const bpmnPrompt = `You are an expert BPMN 2.0 Architect.
-Convert the process description into valid BPMN 2.0 XML with a PROFESSIONAL VISUAL LAYOUT.
+    const bpmnPrompt = `You are an expert business process analyst.
+Analyze the provided evidence and generate a process flow as a structured JSON graph.
+You MUST output ONLY valid JSON matching the following schema. Do NOT include markdown formatting, XML, or any wrapper text.
 
-### 1. NAMESPACE & SYNTAX (STRICT)
-You must use EXACTLY these prefixes. Do NOT use "omgdi".
-- xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-- xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-- xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-- xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+### JSON SCHEMA
+{
+  "processId": "Process_1",
+  "processName": "Descriptive Process Name",
+  "nodes": [
+    {
+      "id": "String (Unique, e.g., 'StartEvent_1', 'Task_2', 'Gateway_1')",
+      "name": "String (Human-readable label)",
+      "type": "startEvent | task | userTask | serviceTask | exclusiveGateway | parallelGateway | endEvent"
+    }
+  ],
+  "edges": [
+    {
+      "id": "String (Unique, e.g., 'Flow_1')",
+      "sourceId": "String (ID of source node)",
+      "targetId": "String (ID of target node)"
+    }
+  ]
+}
 
-### 2. ID RULES (CRITICAL - NO DUPLICATES)
-- Every ID in the file must be GLOBALLY UNIQUE.
-- **SequenceFlow ID**: e.g., "Flow_1"
-- **BPMNEdge ID**: MUST be different! Use prefix "Edge_". e.g., "Edge_Flow_1"
-- **Shape ID**: Use prefix "Shape_". e.g., "Shape_Task_1"
-
-CORRECT EDGE SYNTAX:
-<bpmndi:BPMNEdge id="Edge_Flow_1" bpmnElement="Flow_1">
-  <di:waypoint x="100" y="300"/>
-  <di:waypoint x="200" y="300"/>
-</bpmndi:BPMNEdge>
-
-### 3. VISUAL LAYOUT ALGORITHM
-- **Grid System**: 
-  - Standard Width: ~180px per step.
-  - "Happy Path" (Main Flow): Y = 300 (Center).
-  - "Exception/Alternative Path": Y = 120 (Upper) OR Y = 480 (Lower).
-  
-- **Gateway Branching**:
-  - IF Gateway splits:
-    - Path A (End/Error): Move UP to Y=120.
-    - Path B (Success): Continue STRAIGHT at Y=300.
-  
-- **Edges (Manhattan Routing)**:
-  - Straight: (x1, 300) -> (x2, 300)
-  - Branch UP:
-    1. (x_gate, 300)
-    2. (x_gate, 120)  [Vertical]
-    3. (x_target, 120) [Horizontal]
-
-### 4. ELEMENT CALCULATIONS (Center Y=300)
-- Task (Height 80): y="260" (300-40)
-- Gateway (Height 50): y="275" (300-25)
-- Event (Height 36): y="282" (300-18)
-
-### 5. OUTPUT FORMAT
-Return *only* the XML string. No markdown code blocks.${LANGUAGE_INSTRUCTION}`;
+### RULES
+1. The graph MUST start with exactly one startEvent and end with at least one endEvent.
+2. Every node must be connected via edges — no orphan nodes.
+3. Every edge must reference existing node IDs in sourceId and targetId.
+4. All IDs must be globally unique across nodes and edges.
+5. Use exclusiveGateway for decision points and parallelGateway for parallel execution.
+6. Return ONLY the JSON object. No extra text.${LANGUAGE_INSTRUCTION}`;
 
     const sipocPrompt = `You are a Six Sigma Process Expert.
 Generate a structured SIPOC table (Suppliers, Inputs, Process, Outputs, Customers) for the given process description.
@@ -129,7 +114,7 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
     const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
     const modelName = llm.config?.model || model || llmConfig.model;
 
-    // Helper to generate and save
+    // Helper to generate and save non-BPMN artifacts (SIPOC, RACI, doc)
     const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
       const response = await llm.complete(prompt, systemPrompt, {
         use_case: `${type}_generation`,
@@ -170,15 +155,70 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
       return artifact;
     };
 
+    // Dedicated BPMN generation: LLM → JSON → validate → XML → auto-layout
+    const generateBpmn = async () => {
+      const rawResponse = await llm.complete(
+        `Analyze this process and generate the JSON process graph:\n\n${fileContent}`,
+        bpmnPrompt,
+        {
+          use_case: 'bpmn_generation',
+          jobId: job.id,
+          responseFormat: 'json',
+        },
+      );
+
+      let processData;
+      try {
+        processData = JSON.parse(rawResponse.trim());
+      } catch {
+        logger.error(
+          {
+            event_type: 'error',
+            error_type: 'json_parse',
+            jobId: job.id,
+            response_preview: rawResponse.substring(0, 500),
+          },
+          'LLM returned invalid JSON for BPMN generation',
+        );
+        throw new Error('LLM failed to produce valid JSON for BPMN graph.');
+      }
+
+      // Deterministic pipeline: validate → build XML → auto-layout
+      const validBpmnXml = await buildBpmnWithLayout(processData);
+
+      const artifactFilename = `${normalizedName}_diagram.bpmn`;
+      const artifact = new Artifact({
+        type: 'bpmn',
+        content: validBpmnXml,
+        filename: artifactFilename,
+        metadata: {
+          sourceEvidenceId: evidenceId,
+          jobId: job.id,
+          extension: 'bpmn',
+          generationMethod: 'json_to_xml',
+        },
+        user_id: job.user_id,
+        workspace_id: job.workspace_id,
+        llm_provider: providerName,
+        llm_model: modelName,
+      });
+      await saveArtifact(artifact);
+      logger.info(
+        {
+          event_type: 'artifact_generated',
+          artifact_id: artifact.id,
+          artifact_type: 'bpmn',
+          jobId: job.id,
+          generation_method: 'json_to_xml',
+        },
+        'Generated BPMN artifact via deterministic JSON-to-XML pipeline',
+      );
+      return artifact;
+    };
+
     // 4. Generate All Artifacts in Parallel
     const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
-      generateAndSave(
-        'bpmn',
-        bpmnPrompt,
-        `Generate BPMN XML:\n\n${fileContent}`,
-        'bpmn',
-        'diagram',
-      ),
+      generateBpmn(),
       generateAndSave(
         'sipoc',
         sipocPrompt,

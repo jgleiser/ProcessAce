@@ -23,6 +23,14 @@ class GoogleProvider extends LlmProvider {
         config.systemInstruction = system;
       }
 
+      // Enforce structured JSON output when requested
+      if (options.responseFormat === 'json') {
+        config.generationConfig = {
+          ...(config.generationConfig || {}),
+          responseMimeType: 'application/json',
+        };
+      }
+
       const response = await this.client.models.generateContent({
         model: this.modelName,
         contents: prompt,
