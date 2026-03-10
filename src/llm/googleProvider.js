@@ -10,7 +10,7 @@ class GoogleProvider extends LlmProvider {
     }
     // Initialize the client
     this.client = new GoogleGenAI({ apiKey: config.apiKey });
-    this.modelName = config.model || 'gemini-2.5-flash-lite';
+    this.modelName = config.model || 'gemini-3.1-flash-lite-preview';
   }
 
   async complete(prompt, system, options = {}) {
@@ -20,21 +20,36 @@ class GoogleProvider extends LlmProvider {
       // Build contents with optional system instruction
       const config = {};
       if (system) {
-        config.systemInstruction = system;
+        config.systemInstruction = [
+          {
+            text: system,
+          },
+        ];
       }
+
+      const structuredContents = [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ];
 
       // Enforce structured JSON output when requested
       if (options.responseFormat === 'json') {
-        config.generationConfig = {
-          ...(config.generationConfig || {}),
-          responseMimeType: 'application/json',
-        };
+        config.responseMimeType = 'application/json';
+        if (options.schema) {
+          config.responseSchema = options.schema;
+        }
       }
 
       const response = await this.client.models.generateContent({
         model: this.modelName,
-        contents: prompt,
-        ...config,
+        contents: structuredContents,
+        config,
       });
 
       const text = response.text;

@@ -162,6 +162,40 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
       let attempt = 0;
       let currentUserPrompt = `Analyze this process and generate the JSON process graph:\n\n${fileContent}`;
 
+      // define the schema so the SDK enforces it
+      const bpmnJsonSchema = {
+        type: 'OBJECT',
+        properties: {
+          processId: { type: 'STRING' },
+          processName: { type: 'STRING' },
+          nodes: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                id: { type: 'STRING' },
+                name: { type: 'STRING' },
+                type: { type: 'STRING' },
+              },
+              required: ['id', 'name', 'type'],
+            },
+          },
+          edges: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                id: { type: 'STRING' },
+                sourceId: { type: 'STRING' },
+                targetId: { type: 'STRING' },
+              },
+              required: ['id', 'sourceId', 'targetId'],
+            },
+          },
+        },
+        required: ['processId', 'processName', 'nodes', 'edges'],
+      };
+
       while (attempt < MAX_RETRIES) {
         attempt++;
         logger.info(
@@ -173,6 +207,7 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
           use_case: 'bpmn_generation',
           jobId: job.id,
           responseFormat: 'json',
+          schema: bpmnJsonSchema,
         });
 
         // Phase 1: JSON syntax check

@@ -29,7 +29,7 @@ const getLlmProvider = (options = {}) => {
   // Default models if not specified
   const defaults = {
     openai: 'gpt-5-nano-2025-08-07',
-    google: 'gemini-2.5-flash-lite',
+    google: 'gemini-3.1-flash-lite-preview',
     anthropic: 'claude-haiku-4-5-20251001',
   };
 
