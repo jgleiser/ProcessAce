@@ -1,6 +1,6 @@
 # ProcessAce Architecture
 
-> Status: **Beta Implementation** – this document describes the current architecture as of Phase 14.
+> Status: **Beta Implementation** – this document describes the current architecture as of Phase 14.5 (BPMN Reliability Refactor).
 
 ProcessAce is a **self-hosted**, **BYO-LLM** process discovery and documentation engine.  
 It ingests heterogeneous "process evidence" (recordings, images, documents), normalizes it, and generates standard process artifacts such as **BPMN 2.0**, **SIPOC**, and **RACI**.
@@ -123,16 +123,32 @@ The processing pipeline is implemented inside the worker process and consists of
 
 2. **LLM analysis (worker)**
    - Content sent to LLM via the abstraction layer (provider selected per-job or from app settings).
-   - Separate system prompts for each artifact type (BPMN, SIPOC, RACI, Narrative Doc).
+   - Separate system prompts for each artifact type.
+   - **BPMN**: LLM outputs a structured JSON graph (nodes + edges) — **not raw XML**.
+   - **SIPOC / RACI**: LLM outputs JSON arrays.
+   - **Narrative Doc**: LLM outputs Markdown.
    - All four LLM calls run in parallel via `Promise.all`.
 
-3. **Artifact generation**
-   - Responses parsed and cleaned (strip markdown code blocks).
-   - Artifacts stored in SQLite with:
+3. **Validation & self-healing (BPMN)**
+   - LLM JSON responses are validated against a **Zod schema** (`src/schemas/bpmnSchema.js`) using `.strict()` mode.
+   - Schema validates field types, enum values (node types), required properties, and rejects hallucinated properties.
+   - Additional cross-reference checks verify unique IDs and valid edge references.
+   - If validation fails, a **self-healing retry loop** (up to 3 attempts) feeds the structured Zod error messages back to the LLM for correction.
+   - Providers are called with `responseFormat: 'json'` to maximize JSON fidelity.
+
+4. **Deterministic BPMN generation**
+   - Validated JSON graph is compiled to BPMN 2.0 XML using `xmlbuilder2` (`src/utils/bpmnBuilder.js`).
+   - XML is guaranteed syntactically valid — all tags are closed by the builder.
+   - Nodes include `<bpmn:incoming>` and `<bpmn:outgoing>` references per BPMN spec.
+   - Raw XML is passed through `bpmn-auto-layout` to generate `<bpmndi:BPMNDiagram>` with X/Y coordinates.
+
+5. **Artifact storage**
+   - All artifacts stored in SQLite with:
      - Normalized filename (e.g. `process_name_diagram.bpmn`).
      - `llm_provider`, `llm_model` for traceability.
      - `user_id`, `workspace_id` for access control.
-   - Emits `artifact_version_created` via structured logging.
+     - BPMN artifacts include `generationMethod: 'json_to_xml'` and `healingAttempts` in metadata.
+   - Emits `artifact_generated` via structured logging.
 
 ### 3.5. LLM abstraction layer
 
@@ -147,8 +163,13 @@ The processing pipeline is implemented inside the worker process and consists of
   - OpenAI: `gpt-5-nano-2025-08-07`
   - Google: `gemini-2.5-flash-lite`
   - Anthropic: `claude-haiku-4-5-20251001`
-- Each provider exposes `complete(prompt, system)` and `listModels()`.
-- Mock provider available via `MOCK_LLM=true` for testing.
+- Each provider exposes `complete(prompt, system, options)` and `listModels()`.
+- **JSON response mode**: Providers support `options.responseFormat = 'json'`:
+  - **OpenAI**: Passes `response_format: { type: "json_object" }`.
+  - **Google**: Passes `generationConfig.responseMimeType: "application/json"`.
+  - **Anthropic**: No native JSON mode; enforced via prompt instructions + markdown fence stripping.
+- **Schema validation**: `src/schemas/bpmnSchema.js` defines a Zod schema (`BpmnProcessSchema`) as the single source of truth for the BPMN process graph structure.
+- Mock provider available via `MOCK_LLM=true` for testing (returns JSON process graph).
 - API keys are stored encrypted in the `app_settings` DB table (not env vars).
 
 ### 3.6. Persistence
@@ -204,12 +225,16 @@ Example: "Text document → BPMN 2.0 + SIPOC + RACI + Doc"
    - Worker picks up the job.
    - Reads file content from disk via the evidence path.
    - Gets LLM configuration from app settings (or uses per-job overrides).
-   - Sends content to the selected LLM with four parallel prompts (BPMN, SIPOC, RACI, Doc).
+   - Sends content to the selected LLM with four parallel prompts:
+     - **BPMN**: JSON graph prompt with `responseFormat: 'json'`.
+     - **SIPOC / RACI**: JSON array prompts.
+     - **Doc**: Markdown prompt.
 
-3. **Artifact generation (worker)**
-   - Responses parsed and cleaned.
-   - Four artifacts saved to SQLite with:
-     - Normalized filename, provider/model traceability, user/workspace IDs.
+3. **Validation & compilation (worker)**
+   - **BPMN**: JSON validated with Zod schema → compiled to XML via `xmlbuilder2` → auto-laid-out via `bpmn-auto-layout`.
+   - **Self-healing**: On validation failure, Zod errors fed back to LLM (up to 3 retries).
+   - **SIPOC/RACI/Doc**: Responses cleaned (strip code fences).
+   - All four artifacts saved to SQLite with provider/model traceability.
    - Job result updated with artifact references.
 
 4. **Completion**

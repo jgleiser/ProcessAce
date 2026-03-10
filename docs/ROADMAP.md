@@ -32,9 +32,10 @@
 ## Phase 5 – BPMN Generation [COMPLETED]
 
 - [x] Evidence processing worker
-- [x] Prompt Engineering for BPMN 2.0 XML
-- [x] **New:** LLM-based Auto-Layout (Manhattan routing, grid system)
-- [x] **New:** Strict Namespace & Syntax validation
+- [x] Prompt Engineering for BPMN 2.0 (JSON graph schema)
+- [x] Deterministic JSON-to-XML compilation (`xmlbuilder2`)
+- [x] Automatic diagram layout (`bpmn-auto-layout`)
+- [x] Strict Namespace & Syntax (guaranteed by builder, not LLM)
 
 ## Phase 6 – Persistence & Reliability [COMPLETED]
 
@@ -107,9 +108,18 @@
 - [x] **Code quality**: Added JSDoc comments to backend services and API routes; fixed all ESLint errors.
 - [x] **Add documentation**: Updated `README.md`, `architecture.md`, `api_reference.md`, `user_guide.md`, and `ROADMAP.md` for public release.
 - [x] **Package readiness**: Updated `package.json` to v1.0.0, added repository metadata, updated `.env.example`.
-- [x] **Add tests**: Added unit tests (settingsService, workspaceService) and integration tests (workspaces, jobs) — 59 tests, 0 failures.
+- [x] **Add tests**: Added unit tests (settingsService, workspaceService, bpmnBuilder) and integration tests (workspaces, jobs) — 59 tests, 0 failures.
 
-## Phase 15 – Audio Transcription [PLANNED]
+## Phase 15 – BPMN Reliability Refactor [COMPLETED]
+
+- [x] **JSON-to-XML Pipeline**: LLM outputs structured JSON graph instead of raw XML; deterministic XML compilation via `xmlbuilder2`.
+- [x] **Auto-Layout**: `bpmn-auto-layout` generates `<bpmndi:BPMNDiagram>` with proper X/Y coordinates.
+- [x] **JSON Response Mode**: Providers enforce JSON output (OpenAI `response_format`, Google `responseMimeType`, Anthropic fence stripping).
+- [x] **Zod Schema Validation**: `src/schemas/bpmnSchema.js` — strict runtime validation with `.strict()` mode, typed enums, JSDoc type inference.
+- [x] **Self-Healing Loop**: Up to 3 retry attempts; feeds structured Zod error messages back to LLM for correction.
+- [x] **Dependencies**: Added `xmlbuilder2`, `bpmn-auto-layout`, `zod`.
+
+## Phase 16 – Audio Transcription [PLANNED]
 
 - [ ] **Audio Ingestion**: Support for uploading audio/video files (mp3, wav, mp4, etc.).
 - [ ] **Transcription Configuration**: Configure a dedicated LLM Provider and Model for transcription (STT) in App Settings involving separate configuration from the main generation model.
