@@ -34,6 +34,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Fix multer/busboy encoding issue for filenames with special characters (UTF-8 parsed as latin1)
+    req.file.originalname = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
     // 1. Create Evidence record
     const evidence = new Evidence({
       filename: req.file.filename,
