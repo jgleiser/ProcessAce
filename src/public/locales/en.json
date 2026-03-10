@@ -364,6 +364,11 @@
     "confirmYes": "Confirm",
     "confirmNo": "Cancel",
     "alertTitle": "Alert",
-    "alertOk": "OK"
+    "alertOk": "OK",
+    "unsavedTitle": "Unsaved Changes",
+    "unsavedMessage": "You have unsaved changes. Do you want to save them before leaving?",
+    "unsavedSave": "Save",
+    "unsavedDiscard": "Discard",
+    "unsavedCancel": "Cancel"
   }
 }

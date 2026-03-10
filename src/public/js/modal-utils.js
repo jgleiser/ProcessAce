@@ -151,3 +151,99 @@ window.showAlertModal = function (message, title, btnLabel) {
     btn.focus();
   });
 };
+
+// Function to inject unsaved changes modal HTML if not present
+function ensureUnsavedChangesModalExists() {
+  if (!document.getElementById('unsavedChangesModal')) {
+    const modalHtml = `
+    <div id="unsavedChangesModal" class="modal hidden">
+        <div class="modal-content modal-dialog">
+            <div class="modal-header modal-dialog-header">
+                <h3 id="unsavedTitle" class="modal-dialog-title">Unsaved Changes</h3>
+            </div>
+            <div class="modal-body modal-dialog-body">
+                <p id="unsavedMessage" class="modal-dialog-message">You have unsaved changes. Do you want to save them before leaving?</p>
+                <div class="modal-dialog-actions">
+                    <button id="unsavedCancel" class="btn-secondary">Cancel</button>
+                    <button id="unsavedDiscard" class="btn-danger">Discard</button>
+                    <button id="unsavedSave" class="btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+  }
+}
+
+// Global function to show unsaved changes modal
+window.showUnsavedChangesModal = function (message, title) {
+  const t = window.i18n ? window.i18n.t : (k) => k;
+  title = title || t('modals.unsavedTitle');
+  message = message || t('modals.unsavedMessage');
+  const saveLabel = t('modals.unsavedSave');
+  const discardLabel = t('modals.unsavedDiscard');
+  const cancelLabel = t('modals.unsavedCancel');
+  ensureUnsavedChangesModalExists();
+
+  return new Promise((resolve) => {
+    const modal = document.getElementById('unsavedChangesModal');
+    const msgEl = document.getElementById('unsavedMessage');
+    const titleEl = document.getElementById('unsavedTitle');
+    const saveBtn = document.getElementById('unsavedSave');
+    const discardBtn = document.getElementById('unsavedDiscard');
+    const cancelBtn = document.getElementById('unsavedCancel');
+
+    if (msgEl) msgEl.textContent = message;
+    if (titleEl) titleEl.textContent = title;
+    if (saveBtn) saveBtn.textContent = saveLabel;
+    if (discardBtn) discardBtn.textContent = discardLabel;
+    if (cancelBtn) cancelBtn.textContent = cancelLabel;
+
+    modal.classList.remove('hidden');
+
+    // Force reflow
+    void modal.offsetWidth;
+
+    const cleanup = () => {
+      modal.classList.add('hidden');
+      saveBtn.removeEventListener('click', onSave);
+      discardBtn.removeEventListener('click', onDiscard);
+      cancelBtn.removeEventListener('click', onCancel);
+      window.removeEventListener('keydown', onKey);
+    };
+
+    const onSave = () => {
+      cleanup();
+      resolve('save');
+    };
+
+    const onDiscard = () => {
+      cleanup();
+      resolve('discard');
+    };
+
+    const onCancel = () => {
+      cleanup();
+      resolve('cancel');
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        onSave();
+      }
+    };
+
+    saveBtn.addEventListener('click', onSave);
+    discardBtn.addEventListener('click', onDiscard);
+    cancelBtn.addEventListener('click', onCancel);
+    window.addEventListener('keydown', onKey);
+
+    saveBtn.focus();
+  });
+};

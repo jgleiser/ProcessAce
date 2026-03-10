@@ -673,6 +673,67 @@ window.ArtifactViewer = (function () {
     }
   }
 
+  function hasUnsavedChanges() {
+    if (currentArtifactType === 'bpmn') {
+      const editControls = document.getElementById('editControls');
+      if (editControls && !editControls.classList.contains('hidden') && bpmnInstance) {
+        try {
+          return bpmnInstance.get('commandStack').canUndo();
+        } catch (err) {
+          console.debug('BPMN commandStack not available', err);
+        }
+        return true;
+      }
+    } else if (currentArtifactType === 'doc') {
+      const editDocControls = document.getElementById('editDocControls');
+      if (editDocControls && !editDocControls.classList.contains('hidden') && easyMDEInstance) {
+        return easyMDEInstance.value() !== currentArtifactContent;
+      }
+    } else if (currentArtifactType === 'sipoc' || currentArtifactType === 'raci') {
+      const editTableControls = document.getElementById('editTableControls');
+      if (editTableControls && !editTableControls.classList.contains('hidden')) {
+        const rows = document.querySelectorAll('#editTable tbody tr');
+        if (!currentArtifactContent || rows.length !== currentArtifactContent.length) return true;
+        let isDifferent = false;
+        rows.forEach((tr, index) => {
+          const rowObj = currentArtifactContent[index];
+          if (!rowObj) {
+            isDifferent = true;
+            return;
+          }
+          const inputs = tr.querySelectorAll('input');
+          inputs.forEach((input) => {
+            if ((rowObj[input.dataset.key] || '') !== input.value) isDifferent = true;
+          });
+        });
+        return isDifferent;
+      }
+    }
+    return false;
+  }
+
+  async function saveCurrentChanges() {
+    if (currentArtifactType === 'bpmn') {
+      await saveBpmnChanges();
+    } else if (currentArtifactType === 'doc') {
+      await saveDocChanges();
+    } else if (currentArtifactType === 'sipoc' || currentArtifactType === 'raci') {
+      await saveTableChanges();
+    }
+  }
+
+  function cancelCurrentEdit() {
+    if (currentArtifactType === 'bpmn') {
+      cancelEdit();
+    } else if (currentArtifactType === 'doc') {
+      cancelDocEdit();
+    } else if (currentArtifactType === 'sipoc' || currentArtifactType === 'raci') {
+      cancelTableEdit();
+    }
+  }
+
+  let isHandlingPopState = false;
+
   function setupEventListeners() {
     closeModal.addEventListener('click', () => history.back());
 
@@ -681,13 +742,64 @@ window.ArtifactViewer = (function () {
     });
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      const unsavedModal = document.getElementById('unsavedChangesModal');
+      const isUnsavedOpen = unsavedModal && !unsavedModal.classList.contains('hidden');
+      const confirmModal = document.getElementById('confirmModal');
+      const isConfirmOpen = confirmModal && !confirmModal.classList.contains('hidden');
+      const alertModal = document.getElementById('alertModal');
+      const isAlertOpen = alertModal && !alertModal.classList.contains('hidden');
+
+      if (
+        e.key === 'Escape' &&
+        !modal.classList.contains('hidden') &&
+        !isUnsavedOpen &&
+        !isConfirmOpen &&
+        !isAlertOpen
+      ) {
         history.back();
       }
     });
 
-    window.addEventListener('popstate', () => {
-      closeArtifactModal();
+    window.addEventListener('popstate', async () => {
+      if (isHandlingPopState) {
+        history.pushState({ modalOpen: true }, '');
+        return;
+      }
+
+      if (!modal.classList.contains('hidden')) {
+        if (hasUnsavedChanges()) {
+          isHandlingPopState = true;
+          history.pushState({ modalOpen: true }, '');
+
+          if (window.showUnsavedChangesModal) {
+            const choice = await window.showUnsavedChangesModal();
+            if (choice === 'save') {
+              await saveCurrentChanges();
+              if (!hasUnsavedChanges()) {
+                isHandlingPopState = false;
+                closeArtifactModal();
+                history.back();
+              } else {
+                isHandlingPopState = false;
+              }
+            } else if (choice === 'discard') {
+              cancelCurrentEdit();
+              isHandlingPopState = false;
+              closeArtifactModal();
+              history.back();
+            } else {
+              isHandlingPopState = false;
+            }
+          } else {
+            isHandlingPopState = false;
+            closeArtifactModal();
+          }
+        } else {
+          closeArtifactModal();
+        }
+      } else {
+        closeArtifactModal();
+      }
     });
 
     modalBody.addEventListener('click', (e) => {
