@@ -186,6 +186,7 @@ window.ArtifactViewer = (function () {
                 <div class="doc-controls doc-controls-bar">
                     ${canEdit ? `<button class="bpmn-btn primary" id="editDoc">${t()('artifacts.editDocument')}</button>` : ''}
                     <button class="bpmn-btn primary btn-download-md" id="btn-export-md">${t()('artifacts.downloadMd')}</button>
+                    <button class="bpmn-btn primary btn-export-docx" id="btn-export-docx">${t()('artifacts.exportDocx')}</button>
                     <button class="bpmn-btn primary btn-print-doc" id="btn-print-doc">${t()('artifacts.printPdf')}</button>
 
                     <div id="editDocControls" class="bpmn-controls-group hidden">
@@ -199,6 +200,7 @@ window.ArtifactViewer = (function () {
 
       if (canEdit) document.getElementById('editDoc').onclick = () => switchToDocEditMode();
       document.getElementById('btn-export-md').onclick = downloadMarkdown;
+      document.getElementById('btn-export-docx').onclick = downloadDocx;
       document.getElementById('btn-print-doc').onclick = printDoc;
     } else {
       modalBody.textContent =
@@ -325,6 +327,7 @@ window.ArtifactViewer = (function () {
   function switchToDocEditMode() {
     document.getElementById('editDoc').style.display = 'none';
     document.getElementById('btn-export-md').style.display = 'none';
+    document.getElementById('btn-export-docx').style.display = 'none';
     document.getElementById('btn-print-doc').style.display = 'none';
 
     const controls = document.getElementById('editDocControls');
@@ -381,6 +384,7 @@ window.ArtifactViewer = (function () {
 
     document.getElementById('editDoc').style.display = 'inline-block';
     document.getElementById('btn-export-md').style.display = 'inline-block';
+    document.getElementById('btn-export-docx').style.display = 'inline-block';
     document.getElementById('btn-print-doc').style.display = 'inline-block';
     document.getElementById('editDocControls').style.display = 'none';
   }
@@ -481,6 +485,10 @@ window.ArtifactViewer = (function () {
       currentArtifactContent,
       'text/markdown;charset=utf-8',
     );
+  }
+
+  function downloadDocx() {
+    window.location.href = `/api/artifacts/${currentArtifactId}/export/docx`;
   }
 
   function printDoc() {

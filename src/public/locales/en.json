@@ -336,6 +336,7 @@
     "action": "Action",
     "editDocument": "Edit Document",
     "downloadMd": "Download MD",
+    "exportDocx": "Export DOCX",
     "printPdf": "Print / PDF",
     "errorLoading": "Error loading artifact:",
     "errorRendering": "Error rendering BPMN:",

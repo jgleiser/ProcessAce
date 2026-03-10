@@ -94,6 +94,7 @@ You can export artifacts in various formats from the interactive view:
   - **Export CSV**: Download the table as a CSV file compatible with Excel and Google Sheets.
 - **Narrative (Doc)**:
   - **Download MD**: Download the raw Markdown file.
+  - **Export DOCX**: Download the document in Microsoft Word format.
   - **Print / PDF**: Open a clean, print-friendly view to save as PDF.
 
 ### 7. Process Name

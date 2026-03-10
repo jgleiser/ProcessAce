@@ -72,7 +72,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `js/app.js` – Main dashboard logic (upload, polling, artifact viewing/editing).
 - Interactive Editing:
   - **BPMN**: `bpmn-js` v18 Modeler for graphical editing, XML/PNG/SVG export.
-  - **Markdown**: `EasyMDE` for rich text editing (WYSIWYG), PDF/MD export.
+  - **Markdown**: `EasyMDE` for rich text editing (WYSIWYG), PDF/MD/DOCX export (`html-to-docx` used for document generation).
   - **Tables**: Custom interactive HTML tables for SIPOC/RACI (add/delete rows, inline editing, CSV export).
 
 ### 3.2. API Backend

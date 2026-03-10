@@ -1,4 +1,7 @@
 const express = require('express');
+const HTMLtoDOCX = require('html-to-docx');
+const sanitizeHtml = require('sanitize-html');
+const { marked } = require('marked');
 const router = express.Router();
 const {
   getArtifact,
@@ -183,6 +186,118 @@ router.get('/:id/versions/:version/content', async (req, res) => {
   }
 
   res.send(artifact.content);
+});
+
+/**
+ * GET /api/artifacts/:id/export/docx
+ * Parses a Markdown doc artifact to HTML, sanitizes it, then compiles a DOCX
+ * buffer and streams it as a file download.
+ */
+router.get('/:id/export/docx', async (req, res) => {
+  const logger = require('../logging/logger');
+  const { id } = req.params;
+
+  const artifact = await getArtifact(id);
+  if (!artifact) {
+    return res.status(404).json({ error: 'Artifact not found' });
+  }
+  if (artifact.type !== 'doc') {
+    return res
+      .status(400)
+      .json({ error: 'Only narrative document artifacts can be exported to DOCX' });
+  }
+
+  // Authorization check — same pattern as other endpoints in this router
+  let canView = false;
+  if (artifact.user_id && artifact.user_id === req.user.id) {
+    canView = true;
+  }
+  if (!canView && artifact.workspace_id) {
+    const workspaceService = require('../services/workspaceService');
+    const role = workspaceService.getMemberRole(artifact.workspace_id, req.user.id);
+    if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+      canView = true;
+    }
+  }
+  if (!canView) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  try {
+    // 1. Markdown → HTML
+    const rawHtml = marked.parse(artifact.content);
+
+    // 2. Sanitize: strip any <script>, <iframe>, or on* handlers before compilation
+    const cleanHtml = sanitizeHtml(rawHtml, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'img',
+      ]),
+      allowedAttributes: {
+        ...sanitizeHtml.defaults.allowedAttributes,
+        img: ['src', 'alt', 'width', 'height'],
+      },
+    });
+
+    // 3. Wrap in a well-formed HTML document so html-to-docx maps styles/fonts correctly
+    // No indentation or newlines are used because html-to-docx parses whitespace between tags as empty paragraphs
+    const htmlDocument = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>body { font-family: "Calibri", sans-serif; font-size: 11pt; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid black; padding: 4px; } h1, h2, h3 { page-break-after: avoid; }</style></head><body>${cleanHtml.trim()}</body></html>`;
+
+    // 4. Compile to DOCX buffer (margins in TWIPs; 1440 TWIPs = 1 inch, 720 = 0.5 inch)
+    // We must provide header, footer, and gutter to avoid html-to-docx
+    // injecting invalid 'undefined' strings into the OpenXML markup.
+    const docxBuffer = await HTMLtoDOCX(htmlDocument, null, {
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+      title: artifact.filename || 'Process Document',
+      margins: {
+        top: 1440,
+        right: 1440,
+        bottom: 1440,
+        left: 1440,
+        header: 720,
+        footer: 720,
+        gutter: 0,
+      },
+    });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="document-${id}.docx"`);
+    res.setHeader('Content-Length', docxBuffer.length);
+    res.send(docxBuffer);
+
+    logger.info(
+      {
+        event_type: 'artifact_exported',
+        export_format: 'docx',
+        artifact_type: artifact.type,
+        artifact_id: id,
+        actor: req.user.id,
+      },
+      'Artifact exported to DOCX',
+    );
+  } catch (error) {
+    logger.error(
+      {
+        event_type: 'error',
+        error_type: 'docx_compilation_error',
+        message: error.message,
+        stack: error.stack,
+        artifact_id: id,
+      },
+      'DOCX compilation failed',
+    );
+    res.status(500).json({ error: 'Internal server error during document generation.' });
+  }
 });
 
 module.exports = router;

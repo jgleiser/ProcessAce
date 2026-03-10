@@ -100,8 +100,9 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 | Method | Path                         | Auth | Description                    |
 | ------ | ---------------------------- | ---- | ------------------------------ |
-| `GET`  | `/api/artifacts/:id/content` | Yes  | Download/view artifact content |
-| `PUT`  | `/api/artifacts/:id/content` | Yes  | Update artifact content        |
+| `GET`  | `/api/artifacts/:id/content`     | Yes  | Download/view artifact content |
+| `PUT`  | `/api/artifacts/:id/content`     | Yes  | Update artifact content        |
+| `GET`  | `/api/artifacts/:id/export/docx` | Yes  | Export narrative to DOCX       |
 
 ### `GET /api/artifacts/:id/content`
 
@@ -114,6 +115,12 @@ All API endpoints are served under `http://localhost:3000` (default).
 **Body**: `{ "content": "string | object" }`
 
 - Objects are JSON-stringified before storage.
+
+### `GET /api/artifacts/:id/export/docx`
+
+- Exports a generated `doc` (narrative) artifact to an OOXML `.docx` file.
+- Generates a file attachment via `Content-Disposition: attachment`.
+- Will return a `400 Bad Request` if the artifact type is not exactly `doc`.
 
 ---
 
