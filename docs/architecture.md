@@ -161,7 +161,7 @@ The processing pipeline is implemented inside the worker process and consists of
   - `AnthropicProvider` (`src/llm/anthropicProvider.js`) – uses `@anthropic-ai/sdk`.
 - Default models:
   - OpenAI: `gpt-5-nano-2025-08-07`
-  - Google: `gemini-2.5-flash-lite`
+  - Google: `gemini-3.1-flash-lite-preview`
   - Anthropic: `claude-haiku-4-5-20251001`
 - Each provider exposes `complete(prompt, system, options)` and `listModels()`.
 - **JSON response mode**: Providers support `options.responseFormat = 'json'`:

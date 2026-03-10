@@ -70,7 +70,7 @@
 - [x] **Google GenAI Integration**: Support for Gemini models via `@google/genai` SDK.
 - [x] **Anthropic Integration**: Support for Claude models via `anthropic-sdk`.
 - [x] **Provider Selection UI**: Allow users to switch providers per-project or per-job.
-- [x] **Model Selection UI**: Allow users to choose specific models (e.g., gpt-5-nano, gemini-2.5-flash-lite).
+- [x] **Model Selection UI**: Allow users to choose specific models (e.g., gpt-5-nano, gemini-3.1-flash-lite-preview).
 
 ## Phase 11 – Collaboration & Security [COMPLETED]
 
