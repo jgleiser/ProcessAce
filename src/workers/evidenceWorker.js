@@ -4,7 +4,8 @@ const { getLlmProvider } = require('../llm');
 const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
 const settingsService = require('../services/settingsService');
-const { buildBpmnWithLayout } = require('../utils/bpmnBuilder');
+const { buildBpmnWithLayout, validateProcessGraph } = require('../utils/bpmnBuilder');
+const { ZodError } = require('zod');
 
 // Appended to every system prompt so artifacts match the source language
 const LANGUAGE_INSTRUCTION =
@@ -155,65 +156,128 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
       return artifact;
     };
 
-    // Dedicated BPMN generation: LLM → JSON → validate → XML → auto-layout
+    // Dedicated BPMN generation with self-healing retry loop
     const generateBpmn = async () => {
-      const rawResponse = await llm.complete(
-        `Analyze this process and generate the JSON process graph:\n\n${fileContent}`,
-        bpmnPrompt,
-        {
+      const MAX_RETRIES = 3;
+      let attempt = 0;
+      let currentUserPrompt = `Analyze this process and generate the JSON process graph:\n\n${fileContent}`;
+
+      while (attempt < MAX_RETRIES) {
+        attempt++;
+        logger.info(
+          { jobId: job.id, attempt, maxRetries: MAX_RETRIES },
+          `BPMN generation attempt ${attempt}/${MAX_RETRIES}`,
+        );
+
+        const rawResponse = await llm.complete(currentUserPrompt, bpmnPrompt, {
           use_case: 'bpmn_generation',
           jobId: job.id,
           responseFormat: 'json',
-        },
-      );
+        });
 
-      let processData;
-      try {
-        processData = JSON.parse(rawResponse.trim());
-      } catch {
-        logger.error(
-          {
-            event_type: 'error',
-            error_type: 'json_parse',
-            jobId: job.id,
-            response_preview: rawResponse.substring(0, 500),
-          },
-          'LLM returned invalid JSON for BPMN generation',
-        );
-        throw new Error('LLM failed to produce valid JSON for BPMN graph.');
+        // Phase 1: JSON syntax check
+        let rawJson;
+        try {
+          rawJson = JSON.parse(rawResponse.trim());
+        } catch {
+          logger.warn(
+            {
+              event_type: 'bpmn_self_heal',
+              jobId: job.id,
+              attempt,
+              error_type: 'json_syntax',
+              response_preview: rawResponse.substring(0, 500),
+            },
+            'LLM returned invalid JSON syntax. Triggering self-healing...',
+          );
+
+          if (attempt === MAX_RETRIES) {
+            throw new Error(`Failed to get valid JSON after ${MAX_RETRIES} attempts.`);
+          }
+
+          currentUserPrompt +=
+            '\n\nSystem Error: Your previous response was not valid JSON. ' +
+            'Ensure there are no trailing commas or missing quotes. ' +
+            'Output ONLY valid JSON matching the schema.';
+          continue;
+        }
+
+        // Phase 2: Zod schema validation + cross-reference checks
+        try {
+          const safeData = validateProcessGraph(rawJson);
+
+          // Phase 3: Deterministic XML + auto-layout
+          const validBpmnXml = await buildBpmnWithLayout(safeData);
+
+          const artifactFilename = `${normalizedName}_diagram.bpmn`;
+          const artifact = new Artifact({
+            type: 'bpmn',
+            content: validBpmnXml,
+            filename: artifactFilename,
+            metadata: {
+              sourceEvidenceId: evidenceId,
+              jobId: job.id,
+              extension: 'bpmn',
+              generationMethod: 'json_to_xml',
+              healingAttempts: attempt,
+            },
+            user_id: job.user_id,
+            workspace_id: job.workspace_id,
+            llm_provider: providerName,
+            llm_model: modelName,
+          });
+          await saveArtifact(artifact);
+          logger.info(
+            {
+              event_type: 'artifact_generated',
+              artifact_id: artifact.id,
+              artifact_type: 'bpmn',
+              jobId: job.id,
+              generation_method: 'json_to_xml',
+              attempts: attempt,
+            },
+            'Generated BPMN artifact via deterministic JSON-to-XML pipeline',
+          );
+          return artifact;
+        } catch (validationError) {
+          // Extract structured error messages for the LLM
+          let errorFeedback;
+
+          if (validationError instanceof ZodError) {
+            const issues = validationError.issues
+              .map((issue) => `Path '${issue.path.join('.')}' - ${issue.message}`)
+              .join('\n');
+            errorFeedback =
+              'Your previous JSON output failed schema validation:\n' +
+              issues +
+              '\n\nPlease correct these specific fields and return the updated JSON.';
+          } else {
+            errorFeedback =
+              `Your previous JSON had a structural error: ${validationError.message}\n` +
+              'Please fix this and return the corrected JSON.';
+          }
+
+          logger.warn(
+            {
+              event_type: 'bpmn_self_heal',
+              jobId: job.id,
+              attempt,
+              error_type: validationError instanceof ZodError ? 'schema' : 'reference',
+              error_message: validationError.message,
+            },
+            'BPMN schema violation. Triggering self-healing...',
+          );
+
+          if (attempt === MAX_RETRIES) {
+            throw new Error(
+              `Failed to generate valid BPMN after ${MAX_RETRIES} attempts. ` +
+                `Last error: ${validationError.message}`,
+            );
+          }
+
+          currentUserPrompt += `\n\nSystem Error: ${errorFeedback}`;
+        }
       }
-
-      // Deterministic pipeline: validate → build XML → auto-layout
-      const validBpmnXml = await buildBpmnWithLayout(processData);
-
-      const artifactFilename = `${normalizedName}_diagram.bpmn`;
-      const artifact = new Artifact({
-        type: 'bpmn',
-        content: validBpmnXml,
-        filename: artifactFilename,
-        metadata: {
-          sourceEvidenceId: evidenceId,
-          jobId: job.id,
-          extension: 'bpmn',
-          generationMethod: 'json_to_xml',
-        },
-        user_id: job.user_id,
-        workspace_id: job.workspace_id,
-        llm_provider: providerName,
-        llm_model: modelName,
-      });
-      await saveArtifact(artifact);
-      logger.info(
-        {
-          event_type: 'artifact_generated',
-          artifact_id: artifact.id,
-          artifact_type: 'bpmn',
-          jobId: job.id,
-          generation_method: 'json_to_xml',
-        },
-        'Generated BPMN artifact via deterministic JSON-to-XML pipeline',
-      );
-      return artifact;
     };
 
     // 4. Generate All Artifacts in Parallel

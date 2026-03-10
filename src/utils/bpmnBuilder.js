@@ -1,52 +1,15 @@
 const { create } = require('xmlbuilder2');
-
-const VALID_NODE_TYPES = new Set([
-  'startEvent',
-  'endEvent',
-  'task',
-  'userTask',
-  'serviceTask',
-  'exclusiveGateway',
-  'parallelGateway',
-  'intermediateCatchEvent',
-  'intermediateThrowEvent',
-]);
+const { BpmnProcessSchema, VALID_NODE_TYPES } = require('../schemas/bpmnSchema');
 
 /**
- * Validates the structural integrity of a process graph from the LLM.
- * Throws descriptive errors when the graph is malformed.
+ * Validates cross-references that Zod cannot express (duplicate IDs, orphan edges).
+ * Called after Zod schema validation.
  *
- * @param {object} data - Parsed JSON process graph.
- * @returns {object} The validated data (pass-through).
+ * @param {import('../schemas/bpmnSchema').BpmnProcessData} data
  */
-function validateProcessGraph(data) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Process graph must be a non-null object.');
-  }
-
-  if (typeof data.processId !== 'string' || data.processId.trim() === '') {
-    throw new Error('Process graph must have a non-empty string "processId".');
-  }
-
-  if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
-    throw new Error('Process graph must have a non-empty "nodes" array.');
-  }
-
-  if (!Array.isArray(data.edges)) {
-    throw new Error('Process graph must have an "edges" array.');
-  }
-
+function validateGraphReferences(data) {
   const nodeIds = new Set();
   for (const node of data.nodes) {
-    if (typeof node.id !== 'string' || node.id.trim() === '') {
-      throw new Error(`Node must have a non-empty string "id". Found: ${JSON.stringify(node)}`);
-    }
-    if (typeof node.type !== 'string' || !VALID_NODE_TYPES.has(node.type)) {
-      throw new Error(
-        `Node "${node.id}" has invalid type "${node.type}". ` +
-          `Valid types: ${[...VALID_NODE_TYPES].join(', ')}`,
-      );
-    }
     if (nodeIds.has(node.id)) {
       throw new Error(`Duplicate node ID: "${node.id}".`);
     }
@@ -55,9 +18,6 @@ function validateProcessGraph(data) {
 
   const edgeIds = new Set();
   for (const edge of data.edges) {
-    if (typeof edge.id !== 'string' || edge.id.trim() === '') {
-      throw new Error(`Edge must have a non-empty string "id". Found: ${JSON.stringify(edge)}`);
-    }
     if (edgeIds.has(edge.id)) {
       throw new Error(`Duplicate edge ID: "${edge.id}".`);
     }
@@ -70,8 +30,19 @@ function validateProcessGraph(data) {
       throw new Error(`Edge "${edge.id}" references non-existent target node "${edge.targetId}".`);
     }
   }
+}
 
-  return data;
+/**
+ * Validates a process graph using Zod schema + cross-reference checks.
+ * Returns the validated (and potentially defaulted) data.
+ *
+ * @param {object} data - Raw parsed JSON.
+ * @returns {import('../schemas/bpmnSchema').BpmnProcessData}
+ */
+function validateProcessGraph(data) {
+  const parsed = BpmnProcessSchema.parse(data);
+  validateGraphReferences(parsed);
+  return parsed;
 }
 
 /**
