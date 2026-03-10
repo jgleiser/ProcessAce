@@ -214,7 +214,7 @@ window.ArtifactViewer = (function () {
 
     bpmnInstance = new BpmnJS({
       container: '#bpmn-canvas',
-      height: 600,
+      height: '100%',
     });
 
     bpmnInstance
@@ -251,7 +251,7 @@ window.ArtifactViewer = (function () {
 
     bpmnInstance = new BpmnJS({
       container: '#bpmn-canvas',
-      height: 600,
+      height: '100%',
     });
 
     bpmnInstance

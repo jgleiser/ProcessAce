@@ -16,9 +16,9 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        'script-src': ["'self'", 'https://unpkg.com', "'unsafe-inline'"],
+        'script-src': ["'self'", 'https://unpkg.com', 'https://esm.sh', "'unsafe-inline'"],
         'img-src': ["'self'", 'data:', 'blob:'], // Allow blob: for SVG download
-        'connect-src': ["'self'", 'https://unpkg.com'], // Allow source maps from unpkg
+        'connect-src': ["'self'", 'https://unpkg.com', 'https://esm.sh'], // Allow source maps from unpkg/esm.sh
       },
     },
   }),

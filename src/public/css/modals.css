@@ -46,8 +46,10 @@
 
 .modal-content-expanded .modal-body {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
   max-height: none !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -217,7 +219,8 @@
 /* ── BPMN/Table Controls (inside modal) ── */
 #bpmn-canvas {
   width: 100%;
-  height: 600px;
+  flex: 1;
+  min-height: 400px;
   background-color: #ffffff;
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -385,7 +388,7 @@
 
 /* ── Print Styles ── */
 @media print {
-  body > *:not(.modal) {
+  body>*:not(.modal) {
     display: none !important;
   }
 
