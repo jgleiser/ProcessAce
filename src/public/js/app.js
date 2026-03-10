@@ -1,5 +1,3 @@
-/* global marked, BpmnJS, EasyMDE, showConfirmModal, showAlertModal */
-
 document.addEventListener('DOMContentLoaded', async () => {
   // Auth Check and UI updates are now handled by header.js
 

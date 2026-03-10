@@ -3,6 +3,7 @@
  * @param {string} message
  * @param {string} type 'success' | 'error' | 'info'
  */
+/* eslint-disable no-unused-vars */
 function showToast(message, type = 'success') {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
