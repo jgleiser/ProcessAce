@@ -484,7 +484,67 @@ window.ArtifactViewer = (function () {
   }
 
   function printDoc() {
-    window.print();
+    // 1. Grab only the rendered markdown HTML
+    const printContent = document.getElementById('markdown-content').innerHTML;
+
+    // 2. Open a temporary hidden window/tab
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+
+    // 3. Inject the content and essential print styles
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${t()('artifacts.printPdf') || 'Document Print'}</title>
+          <style>
+            /* Reset styles for clean printing */
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              padding: 20px;
+              max-width: 1000px;
+              margin: 0 auto;
+            }
+            
+            /* Ensure images don't break pages or overflow */
+            img {
+              max-width: 100%;
+              height: auto;
+              page-break-inside: avoid;
+            }
+            
+            /* Standardize markdown elements */
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            blockquote { border-left: 4px solid #ccc; margin-left: 0; padding-left: 16px; color: #666; }
+            
+            /* Print-specific media queries for pagination */
+            @media print {
+              body { padding: 0; margin: 0; }
+              h1, h2, h3 { page-break-after: avoid; }
+              p, blockquote { page-break-inside: avoid; }
+              /* Hide URL prints on links */
+              a { text-decoration: none; color: #000; }
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+        </body>
+      </html>
+    `);
+
+    // 4. Close the document stream to signal the browser it is ready
+    printWindow.document.close();
+    printWindow.focus();
+
+    // 5. Trigger print after a brief timeout to allow CSS/images to render
+    setTimeout(() => {
+      printWindow.print();
+      // Optionally close the window immediately after print dialog closes
+      printWindow.close();
+    }, 250);
   }
 
   // Editable Table Methods
