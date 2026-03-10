@@ -40,16 +40,11 @@ window.ArtifactViewer = (function () {
     modalTitle.textContent = t()('artifacts.viewing', { type: type.toUpperCase() });
 
     try {
-      const res = await window.apiClient.request(`/api/artifacts/${id}/content?view=true`);
-
-      // apiClient.request returns JSON if application/json, else text/blob. It uses `.json()` auto parsing.
-      // Wait, we used `fetch` originally and checked headers.
-      // Let's use direct pull since we don't know what apiClient returned exactly
       const response = await fetch(`/api/artifacts/${id}/content?view=true`);
       if (!response.ok) throw new Error('Failed to load content');
 
       let content;
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get('content-type') || '';
 
       if (contentType.includes('application/json')) {
         content = await response.json();
@@ -138,21 +133,21 @@ window.ArtifactViewer = (function () {
                 <div id="table-container">
             `;
 
-      const headers = isSipoc
-        ? [
-            t()('artifacts.sipocHeaders.supplier'),
-            t()('artifacts.sipocHeaders.input'),
-            t()('artifacts.sipocHeaders.process'),
-            t()('artifacts.sipocHeaders.output'),
-            t()('artifacts.sipocHeaders.customer'),
-          ]
-        : [
-            t()('artifacts.raciHeaders.activity'),
-            t()('artifacts.raciHeaders.responsible'),
-            t()('artifacts.raciHeaders.accountable'),
-            t()('artifacts.raciHeaders.consulted'),
-            t()('artifacts.raciHeaders.informed'),
-          ];
+      const sipocHeaders = [
+        t()('artifacts.sipocHeaders.supplier'),
+        t()('artifacts.sipocHeaders.input'),
+        t()('artifacts.sipocHeaders.process'),
+        t()('artifacts.sipocHeaders.output'),
+        t()('artifacts.sipocHeaders.customer'),
+      ];
+      const raciHeaders = [
+        t()('artifacts.raciHeaders.activity'),
+        t()('artifacts.raciHeaders.responsible'),
+        t()('artifacts.raciHeaders.accountable'),
+        t()('artifacts.raciHeaders.consulted'),
+        t()('artifacts.raciHeaders.informed'),
+      ];
+      const headers = isSipoc ? sipocHeaders : raciHeaders;
 
       const keys = isSipoc
         ? ['supplier', 'input', 'process_step', 'output', 'customer']
@@ -357,13 +352,13 @@ window.ArtifactViewer = (function () {
       saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
 
-      const res = await fetch(`/api/artifacts/${currentArtifactId}/content`, {
+      const response = await fetch(`/api/artifacts/${currentArtifactId}/content`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newContent }),
       });
 
-      if (!res.ok) throw new Error('Save failed');
+      if (!response.ok) throw new Error('Save failed');
 
       currentArtifactContent = newContent;
       cancelDocEdit();
@@ -571,7 +566,7 @@ window.ArtifactViewer = (function () {
     tbody.appendChild(tr);
   }
 
-  async function saveTableChanges(_type) {
+  async function saveTableChanges() {
     try {
       const rows = document.querySelectorAll('#editTable tbody tr');
       const newData = [];
@@ -589,13 +584,13 @@ window.ArtifactViewer = (function () {
       saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
 
-      const res = await fetch(`/api/artifacts/${currentArtifactId}/content`, {
+      const response = await fetch(`/api/artifacts/${currentArtifactId}/content`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newData }),
       });
 
-      if (!res.ok) throw new Error('Save failed');
+      if (!response.ok) throw new Error('Save failed');
 
       currentArtifactContent = newData;
       cancelTableEdit();

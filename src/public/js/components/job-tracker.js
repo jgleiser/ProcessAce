@@ -26,7 +26,7 @@ window.JobTracker = (function () {
       }
     } catch (err) {
       console.error('Failed to load jobs', err);
-      if (window.showToast) showToast(t()('jobs.updateFailed'), 'error');
+      if (window.showToast) window.showToast(t()('jobs.updateFailed'), 'error');
     }
   }
 
@@ -59,7 +59,7 @@ window.JobTracker = (function () {
         loadJobsFromServer();
       } else {
         console.error('Delete failed');
-        if (window.showToast) showToast(t()('jobs.deleteFailed'), 'error');
+        if (window.showToast) window.showToast(t()('jobs.deleteFailed'), 'error');
       }
     } catch (err) {
       console.error('Delete failed on server', err);
@@ -87,7 +87,7 @@ window.JobTracker = (function () {
                             ${job.canEdit ? `<button class="edit-job-btn" data-id="${job.id}" data-current-name="${job.processName || ''}" title="Edit Name">✏️</button>` : ''}
                         </div>
                          <div id="job-edit-container-${job.id}" class="job-edit-container hidden">
-                            <input class="job-name-input" data-id="${job.id}" value="${(job.processName || '').replace(/"/g, '&quot;')}" data-i18n-placeholder="jobs.processNamePlaceholder" placeholder="${t()('jobs.processNamePlaceholder')}" />
+                             <input id="job-input-${job.id}" class="job-name-input" data-id="${job.id}" value="${(job.processName || '').replace(/"/g, '&quot;')}" data-i18n-placeholder="jobs.processNamePlaceholder" placeholder="${t()('jobs.processNamePlaceholder')}" />
                             <button class="btn-primary btn-sm job-name-save" data-id="${job.id}">${t()('jobs.save')}</button>
                             <button class="btn-secondary btn-sm job-name-cancel" data-id="${job.id}">${t()('jobs.cancel')}</button>
                         </div>
@@ -151,7 +151,7 @@ window.JobTracker = (function () {
         return;
       }
 
-      const saveBtn = e.target.closest('.save-job-btn');
+      const saveBtn = e.target.closest('.job-name-save');
       if (saveBtn) {
         const jobId = saveBtn.dataset.id;
         const input = document.getElementById(`job-input-${jobId}`);
@@ -175,7 +175,7 @@ window.JobTracker = (function () {
         return;
       }
 
-      const cancelBtn = e.target.closest('.cancel-job-btn');
+      const cancelBtn = e.target.closest('.job-name-cancel');
       if (cancelBtn) {
         const jobId = cancelBtn.dataset.id;
         const container = document.getElementById(`job-title-container-${jobId}`);
