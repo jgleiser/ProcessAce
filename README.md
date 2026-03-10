@@ -61,21 +61,25 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 ### Quick Start (Docker)
 
 1.  **Clone the repository**:
+
     ```bash
     git clone [https://github.com/jgleiser/ProcessAce.git](https://github.com/jgleiser/ProcessAce.git)
     cd ProcessAce
     ```
 
 2.  **Configure Environment**:
+
     ```bash
     cp .env.example .env
     # Edit .env and set ENCRYPTION_KEY (required for secure API key storage)
     ```
 
 3.  **Run with Docker Compose**:
+
     ```bash
     docker compose up -d --build
     ```
+
     > **Note (Windows/Mac/WSL2):** If you encounter `SQLITE_IOERR_SHMOPEN` errors, ensure the environment variable `DISABLE_SQLITE_WAL=true` is set in `docker-compose.yml` (it is by default).
 
 4.  **Open the Web UI**: Navigate to `http://localhost:3000`.
@@ -101,11 +105,12 @@ ProcessAce does **not** bundle or resell any LLM. You configure your own provide
 ## 🧱 Architecture & Auditability
 
 ProcessAce is built for reliability and process mining readiness:
+
 - **Frontend**: Vanilla HTML5/JS/CSS Single Page Application.
 - **Backend**: Node.js Express API.
 - **Database**: SQLite (`better-sqlite3`).
 - **Queue & Workers**: Redis (BullMQ) for background job processing.
-- **Audit Trails**: Structured, event-style logging (Pino) for events like `job_queued`, `llm_call`, and `artifact_version_created`. 
+- **Audit Trails**: Structured, event-style logging (Pino) for events like `job_queued`, `llm_call`, and `artifact_version_created`.
 
 See [`docs/architecture.md`](./docs/architecture.md) for a deep dive.
 
