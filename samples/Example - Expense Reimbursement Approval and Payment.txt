@@ -1,0 +1,9 @@
+Look, let me tell you how we do it here, it can be a bit of a mess sometimes. Everything starts when an employee uploads their expense report to the platform along with photos of the receipts. Then, the very first thing that happens is the direct manager gets an email to review if the expense makes sense or not.
+
+Oh, I forgot to mention something important before we move on: if the employee makes a mistake entering the amount or the photo is blurry, the system automatically bounces it back before it even reaches the manager. But anyway, assuming everything is fine, the manager looks at the expense. If the manager doesn't approve it, the employee gets a notification and the process just dies right there.
+
+Now, if the manager gives it the green light, the whole thing moves over to the Finance team. They check that the receipts comply with Chilean tax rules. Here’s a key point: if the expense is over 500,000 pesos, just the manager isn't enough; the Area Manager has to review it too. I completely skipped that part earlier, but that happens right after the direct manager's approval.
+
+If Finance finds a tax issue, they send the task back to the employee to fix it. If everything is okay with Finance, only then is the payment scheduled. But wait, before actually paying, Treasury has to confirm that there's cash flow for that week. If there's no money that day, they kick it down the road to the following week.
+
+In the end, when Treasury makes the transfer, the system marks the item as 'Paid' and emails the payment voucher to the worker. Oh! And one more thing I just remembered: if the expense is in a foreign currency, Finance has to do a manual conversion to that day's exchange rate before validating anything, which takes them some extra time.

@@ -1,0 +1,9 @@
+Todo parte cuando un empleado sube la rendición a la plataforma con las fotos de las boletas. Ahí, lo primero que pasa es que el jefe directo recibe un correo para que revise si el gasto tiene sentido o no.
+
+Ah, se me olvidaba comentarte algo importante antes de seguir: si el empleado se equivoca al subir el monto o la foto sale borrosa, el sistema lo rebota automáticamente antes de que le llegue al jefe, pero bueno, asumiendo que está todo bien, el jefe mira el gasto. Si el jefe no lo aprueba, le llega una notificación al empleado y ahí muere el proceso.
+
+Ahora, si el jefe le da el visto bueno, la cosa pasa al equipo de Finanzas. Ellos revisan que las boletas cumplan con las reglas tributarias de Chile. Aquí hay un punto clave: si el gasto es de más de 500 lucas, no basta con el jefe, tiene que revisarlo también el Gerente de Área. Eso se me pasó decirte antes, pero ocurre justo después de la aprobación del jefe directo.
+
+Si Finanzas encuentra un error tributario, le devuelven la tarea al empleado para que la corrija. Si todo está ok en Finanzas, recién ahí se programa el pago. Pero espera, antes de pagar, Tesorería tiene que confirmar que hay flujo de caja para esa semana. Si no hay plata ese día, lo patean para la semana siguiente.
+
+Al final, cuando Tesorería hace la transferencia, el sistema marca el ítem como 'Pagado' y le manda el comprobante al trabajador por mail. ¡Ah! Y una cosa más que me acordé: si el gasto es en moneda extranjera, Finanzas tiene que hacer la conversión manual al valor del dólar del día antes de validar cualquier cosa, eso les toma un tiempo extra.
