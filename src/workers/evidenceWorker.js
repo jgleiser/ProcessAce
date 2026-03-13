@@ -307,6 +307,7 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
             throw new Error(
               `Failed to generate valid BPMN after ${MAX_RETRIES} attempts. ` +
                 `Last error: ${validationError.message}`,
+              { cause: validationError },
             );
           }
 

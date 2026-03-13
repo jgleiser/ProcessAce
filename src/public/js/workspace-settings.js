@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? t(`roles.${workspace.role}`)
         : t('roles.viewer');
 
-    let actionsContent = '';
+    let actionsContent;
     if (isOwner) {
       if (workspace.name === 'My Workspace') {
         actionsContent = `

@@ -578,8 +578,8 @@ window.ArtifactViewer = (function () {
   }
 
   function generateEditableTable(type, data) {
-    let headers = [];
-    let keys = [];
+    let headers;
+    let keys;
 
     if (type === 'sipoc') {
       headers = [
