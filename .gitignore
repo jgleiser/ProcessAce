@@ -154,4 +154,5 @@ samples/
 logo/
 data/
 debug/
+local/
 lint_output.txt
