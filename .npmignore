@@ -21,6 +21,7 @@ yarn-error.log*
 *.sw*
 
 .editorconfig
+.editorconfig-checker.json
 eslint.config.js
 tsconfig.json
 
