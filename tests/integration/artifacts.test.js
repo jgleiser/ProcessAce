@@ -33,10 +33,7 @@ describe('Artifacts API Integration Tests', () => {
     const reg = await agent.post('/api/auth/register').send(testUser).expect(201);
     testUserId = reg.body.id;
 
-    await agent
-      .post('/api/auth/login')
-      .send({ email: testUser.email, password: testUser.password })
-      .expect(200);
+    await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
 
     // Seed a doc artifact owned by the test user
     const docArtifact = new Artifact({
@@ -70,19 +67,11 @@ describe('Artifacts API Integration Tests', () => {
     const res = await agent.get(`/api/artifacts/${docArtifactId}/export/docx`).expect(200);
 
     assert.ok(
-      res.headers['content-type'].includes(
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      ),
+      res.headers['content-type'].includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
       'Content-Type should be DOCX MIME type',
     );
-    assert.ok(
-      res.headers['content-disposition'].includes('attachment'),
-      'Content-Disposition should trigger download',
-    );
-    assert.ok(
-      res.headers['content-disposition'].includes('.docx'),
-      'Filename should have .docx extension',
-    );
+    assert.ok(res.headers['content-disposition'].includes('attachment'), 'Content-Disposition should trigger download');
+    assert.ok(res.headers['content-disposition'].includes('.docx'), 'Filename should have .docx extension');
     // Verify a non-trivially-sized payload was generated
     const contentLength = parseInt(res.headers['content-length'], 10);
     assert.ok(contentLength > 1000, `Expected a non-empty DOCX (got ${contentLength} bytes)`);

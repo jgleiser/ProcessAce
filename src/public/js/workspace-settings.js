@@ -115,9 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (sharedWorkspaces.length === 0) {
       sharedWorkspacesList.innerHTML = `<div class="empty-state ws-empty-state">${t('workspaceSettings.noSharedWorkspaces')}</div>`;
     } else {
-      sharedWorkspacesList.innerHTML = sharedWorkspaces
-        .map((w) => createWorkspaceCard(w, false))
-        .join('');
+      sharedWorkspacesList.innerHTML = sharedWorkspaces.map((w) => createWorkspaceCard(w, false)).join('');
     }
 
     lucide.createIcons();
@@ -129,11 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const artifactCount = workspace.artifact_count || 0;
     const memberCount = workspace.member_count || 0;
 
-    const roleText = isOwner
-      ? t('roles.owner')
-      : workspace.role
-        ? t(`roles.${workspace.role}`)
-        : t('roles.viewer');
+    const roleText = isOwner ? t('roles.owner') : workspace.role ? t(`roles.${workspace.role}`) : t('roles.viewer');
 
     let actionsContent;
     if (isOwner) {

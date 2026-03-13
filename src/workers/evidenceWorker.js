@@ -319,21 +319,9 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
     // 4. Generate All Artifacts in Parallel
     const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
       generateBpmn(),
-      generateAndSave(
-        'sipoc',
-        sipocPrompt,
-        `Generate SIPOC JSON:\n\n${fileContent}`,
-        'json',
-        'sipoc',
-      ),
+      generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json', 'sipoc'),
       generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json', 'raci'),
-      generateAndSave(
-        'doc',
-        docPrompt,
-        `Generate Process Documentation:\n\n${fileContent}`,
-        'md',
-        'document',
-      ),
+      generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md', 'document'),
     ]);
 
     logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');

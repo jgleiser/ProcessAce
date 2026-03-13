@@ -557,8 +557,7 @@ function renderArtifactContent(type, content, _artifactId) {
         `;
   } else {
     setModalClasses(false);
-    artifactModalBody.textContent =
-      typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+    artifactModalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
   }
   // BPMN Helper Functions
   function loadBpmnViewer(xml) {
@@ -577,9 +576,7 @@ function renderArtifactContent(type, content, _artifactId) {
         const palette = document.querySelector('.djs-palette');
         if (palette) palette.style.display = 'none';
 
-        document
-          .getElementById('resetZoom')
-          ?.addEventListener('click', () => canvas.zoom('fit-viewport'));
+        document.getElementById('resetZoom')?.addEventListener('click', () => canvas.zoom('fit-viewport'));
         document.getElementById('downloadSvg')?.addEventListener('click', downloadSvg);
       })
       .catch((err) => {

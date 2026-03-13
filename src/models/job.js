@@ -85,9 +85,7 @@ const deleteJob = (id) => {
   return res.changes > 0;
 };
 
-const listJobsByUserStmt = db.prepare(
-  'SELECT * FROM jobs WHERE user_id = ? ORDER BY createdAt DESC LIMIT 20',
-);
+const listJobsByUserStmt = db.prepare('SELECT * FROM jobs WHERE user_id = ? ORDER BY createdAt DESC LIMIT 20');
 
 const getJobsByUserId = (userId) => {
   const rows = listJobsByUserStmt.all(userId);

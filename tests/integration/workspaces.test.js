@@ -33,10 +33,7 @@ describe('Workspace API Integration Tests', () => {
 
     // Register and login the owner user
     await agent.post('/api/auth/register').send(testUser).expect(201);
-    await agent
-      .post('/api/auth/login')
-      .send({ email: testUser.email, password: testUser.password })
-      .expect(200);
+    await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
 
     // Register second user (we'll use a fresh agent for their actions)
     const secondAgent = request.agent(server);
@@ -110,10 +107,7 @@ describe('Workspace API Integration Tests', () => {
   // --- DELETE /api/workspaces/:id ---
   it('should delete a workspace owned by user', async () => {
     // Create a throwaway workspace
-    const createRes = await agent
-      .post('/api/workspaces')
-      .send({ name: 'Throwaway WS' })
-      .expect(201);
+    const createRes = await agent.post('/api/workspaces').send({ name: 'Throwaway WS' }).expect(201);
 
     await agent.delete(`/api/workspaces/${createRes.body.id}`).expect(200);
   });

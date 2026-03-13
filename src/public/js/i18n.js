@@ -35,9 +35,7 @@ window.i18n = (function () {
     if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
 
     // 2. Browser locale
-    const browserLang = (navigator.language || navigator.userLanguage || '')
-      .split('-')[0]
-      .toLowerCase();
+    const browserLang = (navigator.language || navigator.userLanguage || '').split('-')[0].toLowerCase();
     if (SUPPORTED_LANGS.includes(browserLang)) return browserLang;
 
     // 3. Fallback
@@ -61,9 +59,7 @@ window.i18n = (function () {
 
     // Simple placeholder replacement: {{name}} → replacements.name
     if (replacements && typeof replacements === 'object') {
-      return value.replace(/\{\{(\w+)\}\}/g, (_, k) =>
-        k in replacements ? replacements[k] : `{{${k}}}`,
-      );
+      return value.replace(/\{\{(\w+)\}\}/g, (_, k) => (k in replacements ? replacements[k] : `{{${k}}}`));
     }
     return value;
   }

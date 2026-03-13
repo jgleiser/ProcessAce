@@ -12,13 +12,9 @@ window.JobTracker = (function () {
   let jobsList, jobCount;
 
   async function loadJobsFromServer() {
-    const workspaceId = window.WorkspaceManager
-      ? window.WorkspaceManager.getCurrentWorkspaceId()
-      : null;
+    const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
     try {
-      const url = workspaceId
-        ? `/api/jobs?workspaceId=${encodeURIComponent(workspaceId)}`
-        : '/api/jobs';
+      const url = workspaceId ? `/api/jobs?workspaceId=${encodeURIComponent(workspaceId)}` : '/api/jobs';
       const res = await fetch(url);
       if (res.ok) {
         trackedJobs = await res.json();
@@ -166,8 +162,7 @@ window.JobTracker = (function () {
           if (res.ok) {
             loadJobsFromServer();
           } else if (newName) {
-            if (typeof window.showAlertModal === 'function')
-              await window.showAlertModal('Failed to update name');
+            if (typeof window.showAlertModal === 'function') await window.showAlertModal('Failed to update name');
           }
         } catch (err) {
           console.error('Error updating job name', err);

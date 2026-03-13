@@ -97,8 +97,7 @@ window.ArtifactViewer = (function () {
           exportMenu.classList.toggle('hidden');
         };
         window.addEventListener('click', () => {
-          if (exportMenu && !exportMenu.classList.contains('hidden'))
-            exportMenu.classList.add('hidden');
+          if (exportMenu && !exportMenu.classList.contains('hidden')) exportMenu.classList.add('hidden');
         });
       }
 
@@ -203,8 +202,7 @@ window.ArtifactViewer = (function () {
       document.getElementById('btn-export-docx').onclick = downloadDocx;
       document.getElementById('btn-print-doc').onclick = printDoc;
     } else {
-      modalBody.textContent =
-        typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
+      modalBody.textContent = typeof content === 'object' ? JSON.stringify(content, null, 2) : content;
     }
   }
 
@@ -238,8 +236,7 @@ window.ArtifactViewer = (function () {
       .catch((err) => {
         console.error('BPMN Import Error', err);
         const canvas = document.getElementById('bpmn-canvas');
-        if (canvas)
-          canvas.innerHTML = `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
+        if (canvas) canvas.innerHTML = `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
       });
   }
 
@@ -480,11 +477,7 @@ window.ArtifactViewer = (function () {
   }
 
   function downloadMarkdown() {
-    downloadFile(
-      `doc-${currentArtifactId}.md`,
-      currentArtifactContent,
-      'text/markdown;charset=utf-8',
-    );
+    downloadFile(`doc-${currentArtifactId}.md`, currentArtifactContent, 'text/markdown;charset=utf-8');
   }
 
   function downloadDocx() {
@@ -569,12 +562,7 @@ window.ArtifactViewer = (function () {
   }
 
   function cancelTableEdit() {
-    renderModalContent(
-      currentArtifactType,
-      currentArtifactContent,
-      currentArtifactId,
-      currentCanEdit,
-    );
+    renderModalContent(currentArtifactType, currentArtifactContent, currentArtifactId, currentCanEdit);
   }
 
   function generateEditableTable(type, data) {

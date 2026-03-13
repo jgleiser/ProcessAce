@@ -268,10 +268,7 @@ async function saveAllChanges() {
   updateSaveButton();
 
   if (errorMessages.length > 0) {
-    showToast(
-      `${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`,
-      'error',
-    );
+    showToast(`${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`, 'error');
   } else {
     showToast(t('adminUsers.changesSaved'), 'success');
   }

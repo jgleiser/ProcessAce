@@ -4,10 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register - ProcessAce</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
 
@@ -41,12 +38,7 @@
       <div class="auth-box">
         <div class="auth-header">
           <h1>
-            <img
-              src="images/ProcessAce-b-100x100.png"
-              alt="ProcessAce Logo"
-              width="32"
-              height="32"
-            />
+            <img src="images/ProcessAce-b-100x100.png" alt="ProcessAce Logo" width="32" height="32" />
             ProcessAce
           </h1>
           <p data-i18n="register.subtitle">Create your account</p>
@@ -78,16 +70,11 @@
           <div class="form-group">
             <label for="password" data-i18n="register.passwordLabel">Password</label>
             <input type="password" id="password" required placeholder="••••••••" minlength="8" />
-            <small
-              class="text-muted mt-1 block account-help-text"
-              data-i18n="register.passwordHelp"
-            >
+            <small class="text-muted mt-1 block account-help-text" data-i18n="register.passwordHelp">
               Must be at least 8 characters, with lowercase, uppercase, and numbers.
             </small>
           </div>
-          <button type="submit" class="btn-primary w-full" data-i18n="register.createAccount">
-            Create Account
-          </button>
+          <button type="submit" class="btn-primary w-full" data-i18n="register.createAccount">Create Account</button>
         </form>
 
         <div class="auth-footer">
@@ -172,11 +159,7 @@
           const data = await response.json();
 
           if (response.ok) {
-            await window.showAlertModal(
-              t('register.registrationSuccess'),
-              t('common.success'),
-              t('common.accept'),
-            );
+            await window.showAlertModal(t('register.registrationSuccess'), t('common.success'), t('common.accept'));
             window.location.href = '/login.html';
           } else {
             errorMsg.textContent = data.error || t('register.registrationFailed');

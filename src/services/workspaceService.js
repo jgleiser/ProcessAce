@@ -14,9 +14,7 @@ class WorkspaceService {
     const now = new Date().toISOString();
 
     try {
-      const stmt = db.prepare(
-        'INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)',
-      );
+      const stmt = db.prepare('INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)');
       stmt.run(id, name, ownerId, now);
 
       // Add owner as admin
@@ -36,9 +34,7 @@ class WorkspaceService {
    * @param {string} role
    */
   addMember(workspaceId, userId, role = 'viewer') {
-    const stmt = db.prepare(
-      'INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)',
-    );
+    const stmt = db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)');
     stmt.run(workspaceId, userId, role);
   }
 
@@ -109,9 +105,7 @@ class WorkspaceService {
    * @param {string} userId
    */
   isMember(workspaceId, userId) {
-    const stmt = db.prepare(
-      'SELECT 1 FROM workspace_members WHERE workspace_id = ? AND user_id = ?',
-    );
+    const stmt = db.prepare('SELECT 1 FROM workspace_members WHERE workspace_id = ? AND user_id = ?');
     return !!stmt.get(workspaceId, userId);
   }
 
@@ -125,9 +119,7 @@ class WorkspaceService {
     const workspace = this.getWorkspace(workspaceId);
     if (workspace && workspace.owner_id === userId) return 'owner';
 
-    const stmt = db.prepare(
-      'SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?',
-    );
+    const stmt = db.prepare('SELECT role FROM workspace_members WHERE workspace_id = ? AND user_id = ?');
     const member = stmt.get(workspaceId, userId);
     return member ? member.role : null;
   }
@@ -150,9 +142,7 @@ class WorkspaceService {
       throw new Error('Cannot change role of workspace owner');
     }
 
-    const stmt = db.prepare(
-      'UPDATE workspace_members SET role = ? WHERE workspace_id = ? AND user_id = ?',
-    );
+    const stmt = db.prepare('UPDATE workspace_members SET role = ? WHERE workspace_id = ? AND user_id = ?');
     const info = stmt.run(newRole, workspaceId, userId);
 
     if (info.changes === 0) {
@@ -180,9 +170,7 @@ class WorkspaceService {
     // Fixed syntax error
     try {
       // 1. Check if user exists (ENFORCED)
-      const recipientUser = db
-        .prepare('SELECT id, email, name FROM users WHERE email = ?')
-        .get(email);
+      const recipientUser = db.prepare('SELECT id, email, name FROM users WHERE email = ?').get(email);
       if (!recipientUser) {
         throw new Error('User must be registered to be invited');
       }
@@ -198,9 +186,7 @@ class WorkspaceService {
 
       // Check if invite already exists, update it if so
       const existingInvite = db
-        .prepare(
-          'SELECT id FROM workspace_invitations WHERE workspace_id = ? AND recipient_email = ?',
-        )
+        .prepare('SELECT id FROM workspace_invitations WHERE workspace_id = ? AND recipient_email = ?')
         .get(workspaceId, email);
 
       if (existingInvite) {
@@ -333,9 +319,7 @@ class WorkspaceService {
       this.addMember(invite.workspace_id, userId, invite.role);
 
       // Mark invite as accepted
-      db.prepare("UPDATE workspace_invitations SET status = 'accepted' WHERE id = ?").run(
-        invite.id,
-      );
+      db.prepare("UPDATE workspace_invitations SET status = 'accepted' WHERE id = ?").run(invite.id);
     });
 
     dbTx();

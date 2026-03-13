@@ -6,10 +6,7 @@
     <title>Workspace Settings - ProcessAce</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/style.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
   </head>
@@ -30,10 +27,7 @@
       <!-- My Workspaces -->
       <div class="section-header">
         <h2 data-i18n="workspaceSettings.myWorkspaces">My Workspaces</h2>
-        <button
-          id="create-workspace-btn"
-          class="btn-primary flex items-center gap-2 text-sm px-4 py-2"
-        >
+        <button id="create-workspace-btn" class="btn-primary flex items-center gap-2 text-sm px-4 py-2">
           <i data-lucide="plus" class="icon-sm"></i>
           <span data-i18n="workspaceSettings.newWorkspace">New Workspace</span>
         </button>
@@ -69,9 +63,7 @@
         <div class="modal-body">
           <!-- Invite Section -->
           <div class="invite-section">
-            <h4 class="text-muted text-sm mb-2" data-i18n="workspaceSettings.inviteNewMember">
-              Invite New Member
-            </h4>
+            <h4 class="text-muted text-sm mb-2" data-i18n="workspaceSettings.inviteNewMember">Invite New Member</h4>
             <div id="inviteMessageContainer"></div>
             <form id="invite-form">
               <input type="hidden" id="manage-workspace-id" />
@@ -94,30 +86,14 @@
                 <option value="admin" data-i18n="roles.admin">Admin</option>
               </select>
 
-              <button
-                type="submit"
-                class="btn-primary whitespace-nowrap px-4"
-                data-i18n="common.invite"
-              >
-                Invite
-              </button>
+              <button type="submit" class="btn-primary whitespace-nowrap px-4" data-i18n="common.invite">Invite</button>
             </form>
           </div>
 
           <!-- Tabs -->
           <div class="tabs-container">
-            <button
-              class="tab-btn active"
-              id="tab-members"
-              data-i18n="workspaceSettings.membersTab"
-            >
-              Members
-            </button>
-            <button
-              class="tab-btn"
-              id="tab-invites"
-              data-i18n="workspaceSettings.pendingInvitations"
-            >
+            <button class="tab-btn active" id="tab-members" data-i18n="workspaceSettings.membersTab">Members</button>
+            <button class="tab-btn" id="tab-invites" data-i18n="workspaceSettings.pendingInvitations">
               Pending Invitations
             </button>
           </div>
@@ -146,9 +122,7 @@
         <div class="modal-body">
           <form id="create-workspace-form">
             <div class="mb-1">
-              <label class="form-label" data-i18n="workspaceSettings.workspaceNameLabel"
-                >Workspace Name</label
-              >
+              <label class="form-label" data-i18n="workspaceSettings.workspaceNameLabel">Workspace Name</label>
               <input
                 type="text"
                 id="new-workspace-name"
@@ -158,12 +132,7 @@
               />
             </div>
             <div class="flex-end-gap">
-              <button
-                type="button"
-                id="cancel-create-btn"
-                class="btn-secondary"
-                data-i18n="common.cancel"
-              >
+              <button type="button" id="cancel-create-btn" class="btn-secondary" data-i18n="common.cancel">
                 Cancel
               </button>
               <button type="submit" class="btn-primary" data-i18n="common.create">Create</button>

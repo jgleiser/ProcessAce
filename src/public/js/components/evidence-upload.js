@@ -27,9 +27,7 @@ window.EvidenceUpload = (function () {
     }
 
     const formData = new FormData();
-    const workspaceId = window.WorkspaceManager
-      ? window.WorkspaceManager.getCurrentWorkspaceId()
-      : null;
+    const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
     formData.append('workspaceId', workspaceId);
 
     if (processName) formData.append('processName', processName);

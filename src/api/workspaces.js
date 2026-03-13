@@ -140,10 +140,7 @@ router.put('/:id/members/:userId', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     logger.error({ err: error }, 'Error updating member role');
-    if (
-      error.message === 'Invalid role' ||
-      error.message === 'Cannot change role of workspace owner'
-    ) {
+    if (error.message === 'Invalid role' || error.message === 'Cannot change role of workspace owner') {
       return res.status(400).json({ error: error.message });
     }
     res.status(500).json({ error: 'Failed to update member role' });
@@ -189,9 +186,7 @@ router.get('/:id/invitations', async (req, res) => {
     // Check permissions
     const currentUserRole = workspaceService.getMemberRole(workspaceId, currentUserId);
     if (currentUserRole !== 'owner' && currentUserRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Only workspace admins and owners can view invitations' });
+      return res.status(403).json({ error: 'Only workspace admins and owners can view invitations' });
     }
 
     const invitations = workspaceService.getPendingInvitations(workspaceId);
@@ -214,9 +209,7 @@ router.delete('/:id/invitations/:inviteId', async (req, res) => {
     // Check permissions
     const currentUserRole = workspaceService.getMemberRole(workspaceId, currentUserId);
     if (currentUserRole !== 'owner' && currentUserRole !== 'admin') {
-      return res
-        .status(403)
-        .json({ error: 'Only workspace admins and owners can revoke invitations' });
+      return res.status(403).json({ error: 'Only workspace admins and owners can revoke invitations' });
     }
 
     // Ideally we should verify the invite belongs to the workspace, but the service handles deletion by ID.

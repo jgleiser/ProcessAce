@@ -27,10 +27,7 @@ describe('Jobs API Integration Tests', () => {
 
     // Register and login
     await agent.post('/api/auth/register').send(testUser).expect(201);
-    await agent
-      .post('/api/auth/login')
-      .send({ email: testUser.email, password: testUser.password })
-      .expect(200);
+    await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
   });
 
   after(() => {

@@ -53,9 +53,7 @@ class NotificationService {
       // If it's a workspace invite, check the status
       if (notif.type === 'workspace_invite' && notif.data && notif.data.token) {
         try {
-          const invite = db
-            .prepare('SELECT status FROM workspace_invitations WHERE token = ?')
-            .get(notif.data.token);
+          const invite = db.prepare('SELECT status FROM workspace_invitations WHERE token = ?').get(notif.data.token);
           notif.data.inviteStatus = invite ? invite.status : 'deleted';
         } catch (err) {
           logger.error({ err }, 'Error checking invitation status for notification');
@@ -100,11 +98,7 @@ class NotificationService {
     const notifications = this.getUserNotifications(userId);
 
     notifications.forEach((notif) => {
-      if (
-        notif.type === 'workspace_invite' &&
-        notif.data &&
-        notif.data.workspaceId === workspaceId
-      ) {
+      if (notif.type === 'workspace_invite' && notif.data && notif.data.workspaceId === workspaceId) {
         this.deleteNotification(notif.id);
       }
     });

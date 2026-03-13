@@ -3,11 +3,7 @@ const HTMLtoDOCX = require('html-to-docx');
 const sanitizeHtml = require('sanitize-html');
 const { marked } = require('marked');
 const router = express.Router();
-const {
-  getArtifact,
-  getArtifactVersionHistory,
-  getArtifactVersion,
-} = require('../models/artifact');
+const { getArtifact, getArtifactVersionHistory, getArtifactVersion } = require('../models/artifact');
 
 /**
  * GET /api/artifacts/:id/content
@@ -30,8 +26,7 @@ router.get('/:id/content', async (req, res) => {
 
   res.setHeader('Content-Type', mimeType);
 
-  const downloadName =
-    artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
+  const downloadName = artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
 
   // If ?view=true is present, do NOT set Content-Disposition attachment
   // This allows the browser/fetch to read it inline
@@ -178,8 +173,7 @@ router.get('/:id/versions/:version/content', async (req, res) => {
   res.setHeader('Content-Type', mimeType);
 
   const downloadName =
-    artifact.filename ||
-    `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
+    artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
 
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
@@ -202,9 +196,7 @@ router.get('/:id/export/docx', async (req, res) => {
     return res.status(404).json({ error: 'Artifact not found' });
   }
   if (artifact.type !== 'doc') {
-    return res
-      .status(400)
-      .json({ error: 'Only narrative document artifacts can be exported to DOCX' });
+    return res.status(400).json({ error: 'Only narrative document artifacts can be exported to DOCX' });
   }
 
   // Authorization check — same pattern as other endpoints in this router
@@ -229,15 +221,7 @@ router.get('/:id/export/docx', async (req, res) => {
 
     // 2. Sanitize: strip any <script>, <iframe>, or on* handlers before compilation
     const cleanHtml = sanitizeHtml(rawHtml, {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat([
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'img',
-      ]),
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
         img: ['src', 'alt', 'width', 'height'],
@@ -267,10 +251,7 @@ router.get('/:id/export/docx', async (req, res) => {
       },
     });
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    );
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="document-${id}.docx"`);
     res.setHeader('Content-Length', docxBuffer.length);
     res.send(docxBuffer);

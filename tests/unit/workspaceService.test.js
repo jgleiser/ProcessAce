@@ -165,12 +165,7 @@ describe('WorkspaceService', () => {
   // --- inviteUser ---
   describe('inviteUser', () => {
     it('should create an invitation for a registered user', () => {
-      const result = workspaceService.inviteUser(
-        adminWorkspaceId,
-        adminUser.id,
-        editorUser.email,
-        'editor',
-      );
+      const result = workspaceService.inviteUser(adminWorkspaceId, adminUser.id, editorUser.email, 'editor');
       assert.ok(result.token);
       assert.strictEqual(result.email, editorUser.email);
       assert.strictEqual(result.status, 'created');
@@ -178,22 +173,12 @@ describe('WorkspaceService', () => {
 
     it('should throw when inviting non-registered user', () => {
       assert.throws(() => {
-        workspaceService.inviteUser(
-          adminWorkspaceId,
-          adminUser.id,
-          'nonexistent@test.com',
-          'viewer',
-        );
+        workspaceService.inviteUser(adminWorkspaceId, adminUser.id, 'nonexistent@test.com', 'viewer');
       }, /User must be registered/);
     });
 
     it('should update existing invitation on re-invite', () => {
-      const result = workspaceService.inviteUser(
-        adminWorkspaceId,
-        adminUser.id,
-        editorUser.email,
-        'viewer',
-      );
+      const result = workspaceService.inviteUser(adminWorkspaceId, adminUser.id, editorUser.email, 'viewer');
       assert.strictEqual(result.status, 'updated');
     });
   });
@@ -257,9 +242,7 @@ describe('WorkspaceService', () => {
       assert.strictEqual(ws, undefined);
 
       // Members should also be deleted
-      const members = db
-        .prepare('SELECT * FROM workspace_members WHERE workspace_id = ?')
-        .all(wsId);
+      const members = db.prepare('SELECT * FROM workspace_members WHERE workspace_id = ?').all(wsId);
       assert.strictEqual(members.length, 0);
     });
   });

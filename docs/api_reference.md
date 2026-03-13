@@ -98,8 +98,8 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Artifacts (`/api/artifacts`)
 
-| Method | Path                         | Auth | Description                    |
-| ------ | ---------------------------- | ---- | ------------------------------ |
+| Method | Path                             | Auth | Description                    |
+| ------ | -------------------------------- | ---- | ------------------------------ |
 | `GET`  | `/api/artifacts/:id/content`     | Yes  | Download/view artifact content |
 | `PUT`  | `/api/artifacts/:id/content`     | Yes  | Update artifact content        |
 | `GET`  | `/api/artifacts/:id/export/docx` | Yes  | Export narrative to DOCX       |

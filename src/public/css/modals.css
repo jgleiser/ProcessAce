@@ -388,7 +388,7 @@
 
 /* ── Print Styles ── */
 @media print {
-  body>*:not(.modal) {
+  body > *:not(.modal) {
     display: none !important;
   }
 

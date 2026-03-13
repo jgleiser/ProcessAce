@@ -61,9 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle Change/Delete/Save actions for each provider
   providers.forEach((provider) => {
     // Change
-    const changeBtn = document.querySelector(
-      `button[data-action="change"][data-provider="${provider}"]`,
-    );
+    const changeBtn = document.querySelector(`button[data-action="change"][data-provider="${provider}"]`);
     if (changeBtn) {
       changeBtn.addEventListener('click', () => {
         showApiKeyConfigured(provider, false);
@@ -85,15 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Delete
-    const deleteBtn = document.querySelector(
-      `button[data-action="delete"][data-provider="${provider}"]`,
-    );
+    const deleteBtn = document.querySelector(`button[data-action="delete"][data-provider="${provider}"]`);
     if (deleteBtn) {
       deleteBtn.addEventListener('click', async () => {
         if (
-          !(await showConfirmModal(
-            t('appSettings.deleteKeyConfirm', { provider: providerDisplayNames[provider] }),
-          ))
+          !(await showConfirmModal(t('appSettings.deleteKeyConfirm', { provider: providerDisplayNames[provider] })))
         ) {
           return;
         }
@@ -105,21 +99,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             body: JSON.stringify({ key: `${provider}.apiKey` }),
           });
 
-          if (!res.ok)
-            throw new Error(`Failed to delete ${providerDisplayNames[provider]} API key`);
+          if (!res.ok) throw new Error(`Failed to delete ${providerDisplayNames[provider]} API key`);
 
           showApiKeyConfigured(provider, false);
           document.getElementById(`${provider}KeyInput`).value = '';
-          showMessage(
-            'success',
-            t('appSettings.keyDeletedSuccess', { provider: providerDisplayNames[provider] }),
-          );
+          showMessage('success', t('appSettings.keyDeletedSuccess', { provider: providerDisplayNames[provider] }));
         } catch (err) {
           console.error(err);
-          showMessage(
-            'error',
-            t('appSettings.keyDeleteFailed', { provider: providerDisplayNames[provider] }),
-          );
+          showMessage('error', t('appSettings.keyDeleteFailed', { provider: providerDisplayNames[provider] }));
         }
       });
     }
@@ -132,10 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const apiKey = input.value.trim();
 
         if (!apiKey) {
-          showMessage(
-            'error',
-            t('appSettings.enterValidKey', { provider: providerDisplayNames[provider] }),
-          );
+          showMessage('error', t('appSettings.enterValidKey', { provider: providerDisplayNames[provider] }));
           return;
         }
 
@@ -153,16 +137,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           showApiKeyConfigured(provider, true);
           input.value = '';
-          showMessage(
-            'success',
-            t('appSettings.keySavedSuccess', { provider: providerDisplayNames[provider] }),
-          );
+          showMessage('success', t('appSettings.keySavedSuccess', { provider: providerDisplayNames[provider] }));
         } catch (err) {
           console.error(err);
-          showMessage(
-            'error',
-            t('appSettings.keySaveFailed', { provider: providerDisplayNames[provider] }),
-          );
+          showMessage('error', t('appSettings.keySaveFailed', { provider: providerDisplayNames[provider] }));
         } finally {
           saveKeyBtn.disabled = false;
           saveKeyBtn.textContent = t('appSettings.saveKeyBtn');
@@ -183,24 +161,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderDropdown(filter = '') {
     if (allModels.length === 0) {
-      modelDropdown.innerHTML =
-        '<div class="combobox-no-results">' + t('appSettings.noModelsLoaded') + '</div>';
+      modelDropdown.innerHTML = '<div class="combobox-no-results">' + t('appSettings.noModelsLoaded') + '</div>';
       modelDropdown.classList.add('open');
       return;
     }
 
     const filtered = allModels.filter(
-      (m) =>
-        m.id.toLowerCase().includes(filter.toLowerCase()) ||
-        m.name.toLowerCase().includes(filter.toLowerCase()),
+      (m) => m.id.toLowerCase().includes(filter.toLowerCase()) || m.name.toLowerCase().includes(filter.toLowerCase()),
     );
 
     modelDropdown.innerHTML = '';
     highlightedIndex = -1;
 
     if (filtered.length === 0) {
-      modelDropdown.innerHTML =
-        '<div class="combobox-no-results">' + t('appSettings.noModelsFound') + '</div>';
+      modelDropdown.innerHTML = '<div class="combobox-no-results">' + t('appSettings.noModelsFound') + '</div>';
     } else {
       filtered.forEach((model, index) => {
         const div = document.createElement('div');

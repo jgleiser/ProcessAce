@@ -36,9 +36,7 @@ window.WorkspaceManager = (function () {
       populateWorkspaceSelect();
 
       const savedWorkspaceId = getCookie('processAce_workspaceId');
-      const validSavedWorkspace = savedWorkspaceId
-        ? workspacesCache.find((w) => w.id === savedWorkspaceId)
-        : null;
+      const validSavedWorkspace = savedWorkspaceId ? workspacesCache.find((w) => w.id === savedWorkspaceId) : null;
 
       if (!currentWorkspaceId) {
         if (validSavedWorkspace) {
@@ -89,8 +87,7 @@ window.WorkspaceManager = (function () {
 
     const uploadZone = document.getElementById('uploadZone');
     const uploadContainer =
-      document.querySelector('.card:has(#uploadZone)') ||
-      (uploadZone ? uploadZone.closest('.card') : null);
+      document.querySelector('.card:has(#uploadZone)') || (uploadZone ? uploadZone.closest('.card') : null);
 
     const viewerMsgId = 'viewer-msg';
     let msg = document.getElementById(viewerMsgId);

@@ -28,9 +28,7 @@ describe('Auth API Integration Tests', () => {
         const workspaces = db.prepare('SELECT id FROM workspaces WHERE owner_id = ?').all(user.id);
 
         // 2. Delete all members of those workspaces (clears FK to workspaces)
-        const deleteMembersStmt = db.prepare(
-          'DELETE FROM workspace_members WHERE workspace_id = ?',
-        );
+        const deleteMembersStmt = db.prepare('DELETE FROM workspace_members WHERE workspace_id = ?');
         for (const ws of workspaces) {
           deleteMembersStmt.run(ws.id);
         }
@@ -67,11 +65,7 @@ describe('Auth API Integration Tests', () => {
   });
 
   it('should register a new user', async () => {
-    const res = await agent
-      .post('/api/auth/register')
-      .send(testUser)
-      .expect('Content-Type', /json/)
-      .expect(201);
+    const res = await agent.post('/api/auth/register').send(testUser).expect('Content-Type', /json/).expect(201);
 
     assert.ok(res.body.id, 'Response should contain user id');
     assert.strictEqual(res.body.email, testUser.email);

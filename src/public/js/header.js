@@ -272,10 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       setupNotifications();
     } else {
       // Not authenticated - redirect to login unless on public page
-      if (
-        window.location.pathname !== '/login.html' &&
-        window.location.pathname !== '/register.html'
-      ) {
+      if (window.location.pathname !== '/login.html' && window.location.pathname !== '/register.html') {
         window.location.href = '/login.html';
       }
     }

@@ -8,8 +8,7 @@ const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
 const JWT_EXPIRES_IN = '24h';
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-const PASSWORD_ERROR_MSG =
-  'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+const PASSWORD_ERROR_MSG = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
 
 class AuthService {
   /**
@@ -58,9 +57,11 @@ class AuthService {
         userId,
         now,
       );
-      db.prepare(
-        'INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)',
-      ).run(workspaceId, userId, 'admin');
+      db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)').run(
+        workspaceId,
+        userId,
+        'admin',
+      );
 
       return { id: userId, name, email, role, status, createdAt: now };
     } catch (error) {
@@ -98,9 +99,7 @@ class AuthService {
       });
 
       // Get user's default workspace
-      const workspace = db
-        .prepare('SELECT workspace_id FROM workspace_members WHERE user_id = ? LIMIT 1')
-        .get(user.id);
+      const workspace = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id = ? LIMIT 1').get(user.id);
       const workspaceId = workspace ? workspace.workspace_id : null;
 
       return {
@@ -131,9 +130,7 @@ class AuthService {
    * @param {string} id
    */
   getUserById(id) {
-    return db
-      .prepare('SELECT id, name, email, role, status, created_at FROM users WHERE id = ?')
-      .get(id);
+    return db.prepare('SELECT id, name, email, role, status, created_at FROM users WHERE id = ?').get(id);
   }
 
   /**
@@ -141,11 +138,7 @@ class AuthService {
    * @returns {Array} List of all users
    */
   getAllUsers() {
-    return db
-      .prepare(
-        'SELECT id, name, email, role, status, created_at FROM users ORDER BY created_at ASC',
-      )
-      .all();
+    return db.prepare('SELECT id, name, email, role, status, created_at FROM users ORDER BY created_at ASC').all();
   }
 
   /**
@@ -279,9 +272,7 @@ class AuthService {
 
     const likeQuery = `%${query}%`;
     return db
-      .prepare(
-        'SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10',
-      )
+      .prepare('SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10')
       .all(likeQuery, likeQuery);
   }
 }
