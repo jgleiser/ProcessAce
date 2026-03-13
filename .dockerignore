@@ -19,8 +19,11 @@ docs
 samples
 local
 .editorconfig
+.editorconfig-checker.json
 *.md
-data
+data/*
 debug
 lint_output.txt
 logo
+.agent
+.vscode
