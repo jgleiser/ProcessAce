@@ -119,6 +119,8 @@ window.JobTracker = (function () {
 
         if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
           html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
+        } else if (art.type === 'transcript') {
+          html += `<button class="btn-primary review-transcript-btn" data-artifact-id="${art.id}" data-evidence-id="${result.evidenceId}">${t()('dashboard.reviewTranscript') || 'REVIEW'}</button>`;
         } else {
           html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
         }
@@ -134,6 +136,14 @@ window.JobTracker = (function () {
     if (!jobsList) return;
 
     jobsList.addEventListener('click', async (e) => {
+      const reviewBtn = e.target.closest('.review-transcript-btn');
+      if (reviewBtn) {
+        e.preventDefault();
+        const { artifactId, evidenceId } = reviewBtn.dataset;
+        openTranscriptReview(artifactId, evidenceId);
+        return;
+      }
+
       const editBtn = e.target.closest('.edit-job-btn');
       if (editBtn) {
         const jobId = editBtn.dataset.id;
@@ -206,11 +216,78 @@ window.JobTracker = (function () {
     });
   }
 
+  async function openTranscriptReview(artifactId, evidenceId) {
+    const modal = document.getElementById('transcriptReviewModal');
+    const textarea = document.getElementById('transcriptEditTextarea');
+    const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
+
+    if (!modal || !textarea || !confirmBtn) return;
+
+    try {
+      const res = await fetch(`/api/artifacts/${artifactId}/content?view=true`);
+      if (!res.ok) throw new Error('Failed to load transcript');
+      const text = await res.text();
+      textarea.value = text;
+
+      confirmBtn.dataset.evidenceId = evidenceId;
+      modal.classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+      if (window.showToast) window.showToast('Failed to load transcript', 'error');
+    }
+  }
+
+  function setupTranscriptModal() {
+    const reviewModal = document.getElementById('transcriptReviewModal');
+    if (!reviewModal) return;
+
+    const closeBtn = reviewModal.querySelector('.close-transcript-modal');
+    const cancelBtn = document.getElementById('cancelTranscriptBtn');
+    const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
+
+    const closeReview = () => reviewModal.classList.add('hidden');
+    if (closeBtn) closeBtn.addEventListener('click', closeReview);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeReview);
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        const evidenceId = confirmBtn.dataset.evidenceId;
+        const text = document.getElementById('transcriptEditTextarea').value;
+        const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
+
+        const originalText = confirmBtn.textContent;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = t()('dashboard.processing') || 'Processing...';
+
+        try {
+          const res = await fetch(`/api/evidence/${evidenceId}/process-text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, workspaceId }),
+          });
+
+          if (!res.ok) throw new Error('Failed to start processing');
+
+          closeReview();
+          if (window.showToast) window.showToast('Processing started', 'success');
+          loadJobsFromServer();
+        } catch (err) {
+          console.error(err);
+          if (window.showToast) window.showToast('Error starting process', 'error');
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = originalText;
+        }
+      });
+    }
+  }
+
   function init() {
     jobsList = document.getElementById('jobsList');
     jobCount = document.getElementById('jobCount');
 
     setupEventListeners();
+    setupTranscriptModal();
 
     // Initial load happens after workspace manager loads and fires event,
     // but if it's already fired before we init, or we just load it anyway:

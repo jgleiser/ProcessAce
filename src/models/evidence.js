@@ -47,6 +47,14 @@ const updateStmt = db.prepare(`
     WHERE id = @id
 `);
 
+const updatePathStmt = db.prepare(`
+    UPDATE evidence SET
+        path = @path,
+        filename = @filename,
+        updatedAt = @updatedAt
+    WHERE id = @id
+`);
+
 const getStmt = db.prepare('SELECT * FROM evidence WHERE id = ?');
 
 const deleteStmt = db.prepare('DELETE FROM evidence WHERE id = ?');
@@ -105,9 +113,20 @@ const deleteEvidence = async (id) => {
   return false;
 };
 
+const updateEvidencePath = async (id, newPath, newFilename) => {
+  const result = updatePathStmt.run({
+    id,
+    path: newPath,
+    filename: newFilename,
+    updatedAt: new Date().toISOString(),
+  });
+  return result.changes > 0;
+};
+
 module.exports = {
   Evidence,
   saveEvidence,
   getEvidence,
   deleteEvidence,
+  updateEvidencePath,
 };

@@ -110,14 +110,28 @@
   "dashboard": {
     "title": "ProcessAce",
     "subtitle": "Descubrimiento y documentación de procesos con IA",
+    "tabDocument": "📝 Documento / Texto",
+    "tabAudio": "🎙️ Audio",
     "dropEvidence": "Arrastra tu evidencia aquí",
     "supportedFormats": "Soporte para Audio (futuro), Video (futuro) y Documentos (¡disponible!)",
+    "supportedFormatsDoc": "Soportados: PDF, DOCX, TXT",
+    "supportedFormatsAudio": "Soportados: MP3, M4A, WAV, MP4, WEBM (Solo Audio - Se aplica límite de tamaño)",
+    "audioLanguage": "Lenguaje del audio",
+    "langAutoDetect": "Detectar lenguaje automáticamente",
+    "langEnglish": "Inglés",
+    "langSpanish": "Español",
+    "langPortuguese": "Portugués",
+    "langFrench": "Francés",
+    "langGerman": "Alemán",
     "processNamePlaceholder": "Nombre del proceso (Opcional)",
     "browseFiles": "Buscar archivos",
     "uploading": "Subiendo...",
     "recentActivity": "Actividad reciente",
     "noJobs": "Aún no hay trabajos. Sube evidencia para comenzar.",
     "artifactView": "Vista de artefacto",
+    "reviewTranscript": "Revisar Transcripción",
+    "transcriptHelp": "Revisa la transcripción generada automáticamente a continuación. Puedes realizar correcciones manuales antes de procesarla en artefactos de proceso.",
+    "confirmProcess": "Confirmar y Procesar",
     "createWorkspace": "Crear espacio de trabajo",
     "workspaceName": "Nombre del espacio"
   },
@@ -132,7 +146,9 @@
     "updateFailed": "Error al actualizar el nombre",
     "uploadingFile": "Subiendo {{fileName}}...",
     "uploadFailed": "Error en la subida: ",
-    "uploadError": "Error al subir"
+    "uploadError": "Error al subir",
+    "reviewTranscript": "REVISAR",
+    "processing": "Procesando..."
   },
   "workspace": {
     "label": "Espacio de trabajo:",
@@ -320,7 +336,12 @@
     "noModelsFound": "No se encontraron modelos",
     "modelsLoadedSuccess": "{{count}} modelos cargados exitosamente.",
     "noModelsForProvider": "No se encontraron modelos para este proveedor.",
-    "toggleSection": "Alternar sección"
+    "toggleSection": "Alternar sección",
+    "section4Title": "4. Configuración de Transcripción",
+    "transcriptionProvider": "Proveedor de Transcripción",
+    "transcriptionModel": "Modelo STT",
+    "transcriptionMaxFileSize": "Tamaño máximo de archivo (MB) antes de dividir",
+    "saveTranscriptionSettings": "Guardar Configuración de Transcripción"
   },
   "artifacts": {
     "viewing": "Viendo {{type}}",

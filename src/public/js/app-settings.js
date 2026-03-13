@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('saveBtn');
   const messageContainer = document.getElementById('messageContainer');
 
+  const transcriptionForm = document.getElementById('transcriptionSettingsForm');
+  const transcriptionProviderSelect = document.getElementById('transcriptionProviderSelect');
+  const transcriptionModelInput = document.getElementById('transcriptionModelInput');
+  const transcriptionMaxFileSizeInput = document.getElementById('transcriptionMaxFileSizeInput');
+  const saveTranscriptionBtn = document.getElementById('saveTranscriptionBtn');
+
   const providers = ['openai', 'google', 'anthropic'];
   const providerDisplayNames = {
     openai: 'OpenAI',
@@ -356,6 +362,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (settings['llm.baseUrl']) {
         baseUrlInput.value = settings['llm.baseUrl'];
       }
+
+      // Transcription settings
+      if (settings['transcription.provider']) {
+        transcriptionProviderSelect.value = settings['transcription.provider'];
+      }
+      if (settings['transcription.model']) {
+        transcriptionModelInput.value = settings['transcription.model'];
+      }
+      if (settings['transcription.maxFileSizeMB']) {
+        transcriptionMaxFileSizeInput.value = settings['transcription.maxFileSizeMB'];
+      }
     }
   } catch (err) {
     console.error(err);
@@ -403,6 +420,45 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveBtn.textContent = t('appSettings.saveDefaultModel');
     }
   });
+
+  // Save transcription settings
+  if (transcriptionForm) {
+    transcriptionForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      saveTranscriptionBtn.disabled = true;
+      const originalText = saveTranscriptionBtn.textContent;
+      saveTranscriptionBtn.textContent = t('appSettings.saving');
+
+      try {
+        await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'transcription.provider', value: transcriptionProviderSelect.value }),
+        });
+
+        await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'transcription.model', value: transcriptionModelInput.value.trim() }),
+        });
+
+        await fetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'transcription.maxFileSizeMB', value: transcriptionMaxFileSizeInput.value.trim() }),
+        });
+
+        showMessage('success', t('appSettings.settingsSaved'));
+      } catch (err) {
+        console.error(err);
+        showMessage('error', t('appSettings.settingsSaveFailed'));
+      } finally {
+        saveTranscriptionBtn.disabled = false;
+        saveTranscriptionBtn.textContent = originalText;
+      }
+    });
+  }
 
   // Collapsible cards feature
   const collapsibleHeaders = document.querySelectorAll('.card-header-collapsible');

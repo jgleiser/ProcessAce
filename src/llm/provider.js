@@ -23,6 +23,16 @@ class LlmProvider {
   async listModels() {
     throw new Error('Method "listModels" must be implemented');
   }
+
+  /**
+   * Transcribes an audio file into text.
+   * @param {string} filePath - The path to the audio file.
+   * @param {string} [language] - Optional ISO language code (e.g., 'es').
+   * @returns {Promise<string>} - The transcribed text.
+   */
+  async transcribe(_filePath, _language = null) {
+    throw new Error(`Method "transcribe" is not supported by ${this.constructor.name}`);
+  }
 }
 
 module.exports = LlmProvider;

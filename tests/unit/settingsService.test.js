@@ -128,4 +128,22 @@ describe('SettingsService', () => {
       assert.strictEqual(config.baseUrl, 'https://api.custom.com');
     });
   });
+
+  // --- getTranscriptionConfig ---
+  describe('getTranscriptionConfig', () => {
+    before(() => {
+      settingsService.updateSetting('transcription.provider', 'openai');
+      settingsService.updateSetting('transcription.model', 'whisper-1');
+      settingsService.updateSetting('transcription.maxFileSizeMB', '15');
+      settingsService.updateSetting('openai.apiKey', 'sk-transcription-test');
+    });
+
+    it('should return complete transcription config with decrypted API key', () => {
+      const config = settingsService.getTranscriptionConfig();
+      assert.strictEqual(config.provider, 'openai');
+      assert.strictEqual(config.model, 'whisper-1');
+      assert.strictEqual(config.maxFileSizeMB, 15);
+      assert.strictEqual(config.apiKey, 'sk-transcription-test');
+    });
+  });
 });

@@ -101,14 +101,19 @@ Instead, it:
 
 To handle long-running tasks (LLM analysis, artifact generation), ProcessAce uses:
 
-- **Job Queue**: **BullMQ** (Redis-backed) for reliable job processing and retries (`src/services/jobQueue.js`).
-- **Worker Process** (`src/workers/evidenceWorker.js`):
-  - Listens for `process_evidence` jobs.
-  - Reads evidence file content.
-  - Sends content to the selected LLM provider via the abstraction layer.
-  - Generates all four artifact types in parallel (BPMN, SIPOC, RACI, Doc).
-  - Saves artifacts to SQLite with provider/model traceability.
-  - Emits structured log events and updates job status.
+- **Job Queue**: **BullMQ** (Redis-backed) for reliable job processing and retries. Utilizes a single dispatcher pattern (`src/services/jobQueue.js`) to determine and route jobs deterministically.
+- **Worker Processes**:
+  - **Process Evidence Handler** (`src/workers/evidenceWorker.js`):
+    - Listens for `process_evidence` jobs.
+    - Reads text evidence file content.
+    - Sends content to the selected LLM provider via the abstraction layer.
+    - Generates all four artifact types in parallel (BPMN, SIPOC, RACI, Doc).
+    - Saves artifacts to SQLite with provider/model traceability.
+  - **Transcribe Evidence Handler** (`src/workers/transcriptionWorker.js`):
+    - Listens for `transcribe_evidence` jobs.
+    - Unconditionally transcodes incoming containers to pristine 128kbps `.mp3` format utilizing ffmpeg (`src/utils/audioChunker.js`).
+    - Feeds standardized audio to dedicated STT models (e.g., OpenAI Whisper).
+    - Generates an intermediate `transcript` artifact for Human-in-the-Loop review.
 
 This architecture keeps HTTP requests short and allows horizontal scaling of workers (future).
 
@@ -118,7 +123,7 @@ The processing pipeline is implemented inside the worker process and consists of
 
 1. **Ingestion & parsing**
    - Text documents → reading file content (`fs.readFile`).
-   - (Future) Audio/video → transcription.
+   - Audio files → routed to STT abstraction layer (e.g. OpenAI Whisper) for text transcription.
    - Evidence record retrieved from SQLite.
 
 2. **LLM analysis (worker)**
@@ -288,8 +293,7 @@ Recommended practices for production:
 Some planned/future enhancements:
 
 - Artifact versioning and visual comparison of process models.
-- Advanced media ingestion (audio/video transcription, image OCR).
-- Deeper UI and screen understanding (UI element detection in screenshots/recordings).
+- Image OCR and deeper UI/screen understanding (UI element detection in screenshots/recordings).
 - Connectors to common systems (ticketing, CRM, ERP) for event log ingestion.
 - Optional sync with external BPM suites.
 

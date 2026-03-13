@@ -110,14 +110,28 @@
   "dashboard": {
     "title": "ProcessAce",
     "subtitle": "AI-Powered Process Discovery & Documentation",
+    "tabDocument": "📝 Document / Text",
+    "tabAudio": "🎙️ Audio",
     "dropEvidence": "Drop your evidence here",
     "supportedFormats": "Support for Audio (future), Video (future), and Documents (available!)",
+    "supportedFormatsDoc": "Supported: PDF, DOCX, TXT",
+    "supportedFormatsAudio": "Supported: MP3, M4A, WAV, MP4, WEBM (Audio Only - Max size limit applies)",
+    "audioLanguage": "Audio Language",
+    "langAutoDetect": "Auto-Detect Language",
+    "langEnglish": "English",
+    "langSpanish": "Spanish",
+    "langPortuguese": "Portuguese",
+    "langFrench": "French",
+    "langGerman": "German",
     "processNamePlaceholder": "Process Name (Optional)",
     "browseFiles": "Browse Files",
     "uploading": "Uploading...",
     "recentActivity": "Recent Activity",
     "noJobs": "No jobs yet. Upload evidence to start.",
     "artifactView": "Artifact View",
+    "reviewTranscript": "Review Transcript",
+    "transcriptHelp": "Review the automatically generated transcript below. You can make manual corrections before processing it into process artifacts.",
+    "confirmProcess": "Confirm & Process",
     "createWorkspace": "Create Workspace",
     "workspaceName": "Workspace Name"
   },
@@ -132,7 +146,9 @@
     "updateFailed": "Failed to update name",
     "uploadingFile": "Uploading {{fileName}}...",
     "uploadFailed": "Upload failed: ",
-    "uploadError": "Upload error"
+    "uploadError": "Upload error",
+    "reviewTranscript": "REVIEW",
+    "processing": "Processing..."
   },
   "workspace": {
     "label": "Workspace:",
@@ -320,7 +336,12 @@
     "noModelsFound": "No models found",
     "modelsLoadedSuccess": "Successfully loaded {{count}} models.",
     "noModelsForProvider": "No models found for this provider.",
-    "toggleSection": "Toggle section"
+    "toggleSection": "Toggle section",
+    "section4Title": "4. Transcription Settings",
+    "transcriptionProvider": "Transcription Provider",
+    "transcriptionModel": "STT Model",
+    "transcriptionMaxFileSize": "Max File Size (MB) before chunking",
+    "saveTranscriptionSettings": "Save Transcription Settings"
   },
   "artifacts": {
     "viewing": "Viewing {{type}}",

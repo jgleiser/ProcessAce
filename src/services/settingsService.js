@@ -11,6 +11,9 @@ class SettingsService {
     this.defaultSettings = {
       'llm.provider': 'openai',
       'llm.model': 'gpt-5-nano-2025-08-07',
+      'transcription.provider': 'openai',
+      'transcription.model': 'whisper-1',
+      'transcription.maxFileSizeMB': '25',
     };
 
     if (!ENCRYPTION_KEY) {
@@ -163,6 +166,28 @@ class SettingsService {
       model,
       apiKey,
       baseUrl,
+    };
+  }
+
+  /**
+   * Get Transcription Configuration
+   * @returns {Object} { provider, model, apiKey, maxFileSizeMB }
+   */
+  getTranscriptionConfig() {
+    const settings = this.getSettings();
+    const provider = settings['transcription.provider'];
+    const model = settings['transcription.model'];
+    const maxFileSizeMB = parseInt(settings['transcription.maxFileSizeMB'], 10) || 25;
+
+    // Transcription uses the same API key logic based on the provider
+    const apiKeyKey = `${provider}.apiKey`;
+    const apiKey = this.getEncryptedSetting(apiKeyKey);
+
+    return {
+      provider,
+      model,
+      apiKey,
+      maxFileSizeMB,
     };
   }
 }
