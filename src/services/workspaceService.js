@@ -176,9 +176,7 @@ class WorkspaceService {
       }
 
       // Check if user is already a member
-      const existingMember = db
-        .prepare('SELECT 1 FROM workspace_members WHERE workspace_id = ? AND user_id = ?')
-        .get(workspaceId, recipientUser.id);
+      const existingMember = db.prepare('SELECT 1 FROM workspace_members WHERE workspace_id = ? AND user_id = ?').get(workspaceId, recipientUser.id);
 
       if (existingMember) {
         throw new Error('User is already a member of this workspace');

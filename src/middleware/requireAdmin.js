@@ -15,10 +15,7 @@ const requireAdmin = (req, res, next) => {
     }
 
     if (user.role !== 'admin') {
-      logger.warn(
-        { userId: req.user.id, attemptedRoute: req.originalUrl },
-        'Non-admin user attempted to access admin route',
-      );
+      logger.warn({ userId: req.user.id, attemptedRoute: req.originalUrl }, 'Non-admin user attempted to access admin route');
       return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
     }
 

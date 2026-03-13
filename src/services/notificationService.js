@@ -109,9 +109,7 @@ class NotificationService {
    * @param {string} userId
    */
   getUnreadCount(userId) {
-    const result = db
-      .prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0')
-      .get(userId);
+    const result = db.prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0').get(userId);
     return result.count;
   }
 }

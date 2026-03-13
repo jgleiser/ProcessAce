@@ -33,7 +33,7 @@ trigger: always_on
 
 **5. Code Quality & Testing**
 
-- **Standards:** Strictly adhere to `.eslintrc` and Prettier formatting rules. Do not introduce external dependencies unless strictly necessary.
+- **Standards:** Do not format code manually. You MUST run `npm run format` and `npm run lint:fix` after any modifications to enforce `.editorconfig`, `eslint.config.js`, and `prettier.config.cjs`. Do not introduce unnecessary dependencies.
 - **Testing:** Write unit/integration tests for transformation functions, versioning, and queue handlers.
 - **Mocking:** Mock all LLM responses in tests. Never execute real LLM calls in test suites.
 - **Validation:** Programmatically validate generated artifacts (e.g., BPMN schema checks) and explicitly log failures as `validation_error`.

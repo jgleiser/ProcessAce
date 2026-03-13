@@ -42,26 +42,15 @@ class AuthService {
       const status = 'active';
 
       // Insert user with role, status, and name
-      const stmt = db.prepare(
-        'INSERT INTO users (id, name, email, password_hash, created_at, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      );
+      const stmt = db.prepare('INSERT INTO users (id, name, email, password_hash, created_at, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
       stmt.run(userId, name, email, passwordHash, now, role, status);
 
       logger.info({ userId, role, name }, 'User registered successfully');
 
       // Find or create default workspace for user (Simple 1:1 for now)
       const workspaceId = uuidv4();
-      db.prepare('INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)').run(
-        workspaceId,
-        'My Workspace',
-        userId,
-        now,
-      );
-      db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)').run(
-        workspaceId,
-        userId,
-        'admin',
-      );
+      db.prepare('INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)').run(workspaceId, 'My Workspace', userId, now);
+      db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)').run(workspaceId, userId, 'admin');
 
       return { id: userId, name, email, role, status, createdAt: now };
     } catch (error) {
@@ -271,9 +260,7 @@ class AuthService {
     if (!query || query.length < 2) return [];
 
     const likeQuery = `%${query}%`;
-    return db
-      .prepare('SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10')
-      .all(likeQuery, likeQuery);
+    return db.prepare('SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10').all(likeQuery, likeQuery);
   }
 }
 

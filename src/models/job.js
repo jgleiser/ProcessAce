@@ -102,9 +102,7 @@ const getJobsByUserId = (userId) => {
 };
 
 // Filter jobs by user AND workspace
-const listJobsByWorkspaceStmt = db.prepare(
-  'SELECT * FROM jobs WHERE user_id = ? AND workspace_id = ? ORDER BY createdAt DESC LIMIT 20',
-);
+const listJobsByWorkspaceStmt = db.prepare('SELECT * FROM jobs WHERE user_id = ? AND workspace_id = ? ORDER BY createdAt DESC LIMIT 20');
 
 const getJobsByUserAndWorkspace = (userId, workspaceId) => {
   const rows = listJobsByWorkspaceStmt.all(userId, workspaceId);
@@ -121,9 +119,7 @@ const getJobsByUserAndWorkspace = (userId, workspaceId) => {
 };
 
 // Get all jobs for a workspace (regardless of user)
-const listJobsByWorkspaceIdStmt = db.prepare(
-  'SELECT * FROM jobs WHERE workspace_id = ? ORDER BY createdAt DESC LIMIT 50',
-);
+const listJobsByWorkspaceIdStmt = db.prepare('SELECT * FROM jobs WHERE workspace_id = ? ORDER BY createdAt DESC LIMIT 50');
 
 const getJobsByWorkspace = (workspaceId) => {
   const rows = listJobsByWorkspaceIdStmt.all(workspaceId);

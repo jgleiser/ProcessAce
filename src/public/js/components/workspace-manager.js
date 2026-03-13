@@ -86,8 +86,7 @@ window.WorkspaceManager = (function () {
     const role = ws ? ws.role : 'viewer';
 
     const uploadZone = document.getElementById('uploadZone');
-    const uploadContainer =
-      document.querySelector('.card:has(#uploadZone)') || (uploadZone ? uploadZone.closest('.card') : null);
+    const uploadContainer = document.querySelector('.card:has(#uploadZone)') || (uploadZone ? uploadZone.closest('.card') : null);
 
     const viewerMsgId = 'viewer-msg';
     let msg = document.getElementById(viewerMsgId);

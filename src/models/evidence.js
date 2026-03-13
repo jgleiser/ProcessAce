@@ -38,9 +38,9 @@ const insertStmt = db.prepare(`
 `);
 
 const updateStmt = db.prepare(`
-    UPDATE evidence SET 
-        status = @status, 
-        metadata = @metadata, 
+    UPDATE evidence SET
+        status = @status,
+        metadata = @metadata,
         updatedAt = @updatedAt,
         user_id = @user_id,
         workspace_id = @workspace_id

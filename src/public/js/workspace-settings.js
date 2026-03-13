@@ -403,10 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.querySelectorAll('.remove-member').forEach((btn) => {
           btn.addEventListener('click', async () => {
-            const confirmed = await showConfirmModal(
-              t('workspaceSettings.removeConfirm'),
-              t('workspaceSettings.removeTitle'),
-            );
+            const confirmed = await showConfirmModal(t('workspaceSettings.removeConfirm'), t('workspaceSettings.removeTitle'));
             if (confirmed) {
               removeMember(btn.dataset.wid, btn.dataset.uid);
             }
@@ -415,8 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (e) {
       console.error(e);
-      if (membersList)
-        membersList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadMembersFailed')}</li>`;
+      if (membersList) membersList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadMembersFailed')}</li>`;
     }
   }
 
@@ -451,10 +447,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.querySelectorAll('.revoke-invite').forEach((btn) => {
           btn.addEventListener('click', async () => {
-            const confirmed = await showConfirmModal(
-              t('workspaceSettings.revokeConfirm'),
-              t('workspaceSettings.revokeTitle'),
-            );
+            const confirmed = await showConfirmModal(t('workspaceSettings.revokeConfirm'), t('workspaceSettings.revokeTitle'));
             if (confirmed) {
               revokeInvitation(btn.dataset.wid, btn.dataset.id);
             }
@@ -463,8 +456,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (e) {
       console.error(e);
-      if (invitationsList)
-        invitationsList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadInvitationsFailed')}</li>`;
+      if (invitationsList) invitationsList.innerHTML = `<li class="list-item-padded text-error">${t('workspaceSettings.loadInvitationsFailed')}</li>`;
     }
   }
 

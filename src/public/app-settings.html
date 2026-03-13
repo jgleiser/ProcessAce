@@ -54,22 +54,10 @@
                     <div class="api-key-status">
                       <span class="status-icon">✓</span>
                       <span data-i18n="appSettings.apiKeyConfigured">API Key is configured</span>
-                      <button
-                        type="button"
-                        class="btn-change"
-                        data-action="change"
-                        data-provider="openai"
-                        data-i18n="appSettings.changeBtn"
-                      >
+                      <button type="button" class="btn-change" data-action="change" data-provider="openai" data-i18n="appSettings.changeBtn">
                         Change
                       </button>
-                      <button
-                        type="button"
-                        class="btn-change btn-delete-key"
-                        data-action="delete"
-                        data-provider="openai"
-                        data-i18n="common.delete"
-                      >
+                      <button type="button" class="btn-change btn-delete-key" data-action="delete" data-provider="openai" data-i18n="common.delete">
                         Delete
                       </button>
                     </div>
@@ -84,20 +72,10 @@
                       placeholder="Enter OpenAI API Key"
                       autocomplete="off"
                     />
-                    <button
-                      type="button"
-                      class="btn-primary btn-sm btn-save-key"
-                      data-provider="openai"
-                      data-i18n="appSettings.saveKeyBtn"
-                    >
+                    <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="openai" data-i18n="appSettings.saveKeyBtn">
                       Save Key
                     </button>
-                    <button
-                      type="button"
-                      class="btn-secondary btn-sm btn-cancel-key hidden"
-                      data-provider="openai"
-                      data-i18n="common.cancel"
-                    >
+                    <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden" data-provider="openai" data-i18n="common.cancel">
                       Cancel
                     </button>
                   </div>
@@ -116,22 +94,10 @@
                     <div class="api-key-status">
                       <span class="status-icon">✓</span>
                       <span data-i18n="appSettings.apiKeyConfigured">API Key is configured</span>
-                      <button
-                        type="button"
-                        class="btn-change"
-                        data-action="change"
-                        data-provider="google"
-                        data-i18n="appSettings.changeBtn"
-                      >
+                      <button type="button" class="btn-change" data-action="change" data-provider="google" data-i18n="appSettings.changeBtn">
                         Change
                       </button>
-                      <button
-                        type="button"
-                        class="btn-change btn-delete-key"
-                        data-action="delete"
-                        data-provider="google"
-                        data-i18n="common.delete"
-                      >
+                      <button type="button" class="btn-change btn-delete-key" data-action="delete" data-provider="google" data-i18n="common.delete">
                         Delete
                       </button>
                     </div>
@@ -146,20 +112,10 @@
                       placeholder="Enter Google GenAI API Key"
                       autocomplete="off"
                     />
-                    <button
-                      type="button"
-                      class="btn-primary btn-sm btn-save-key"
-                      data-provider="google"
-                      data-i18n="appSettings.saveKeyBtn"
-                    >
+                    <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="google" data-i18n="appSettings.saveKeyBtn">
                       Save Key
                     </button>
-                    <button
-                      type="button"
-                      class="btn-secondary btn-sm btn-cancel-key hidden"
-                      data-provider="google"
-                      data-i18n="common.cancel"
-                    >
+                    <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden" data-provider="google" data-i18n="common.cancel">
                       Cancel
                     </button>
                   </div>
@@ -178,13 +134,7 @@
                     <div class="api-key-status">
                       <span class="status-icon">✓</span>
                       <span data-i18n="appSettings.apiKeyConfigured">API Key is configured</span>
-                      <button
-                        type="button"
-                        class="btn-change"
-                        data-action="change"
-                        data-provider="anthropic"
-                        data-i18n="appSettings.changeBtn"
-                      >
+                      <button type="button" class="btn-change" data-action="change" data-provider="anthropic" data-i18n="appSettings.changeBtn">
                         Change
                       </button>
                       <button
@@ -208,20 +158,10 @@
                       placeholder="Enter Anthropic API Key"
                       autocomplete="off"
                     />
-                    <button
-                      type="button"
-                      class="btn-primary btn-sm btn-save-key"
-                      data-provider="anthropic"
-                      data-i18n="appSettings.saveKeyBtn"
-                    >
+                    <button type="button" class="btn-primary btn-sm btn-save-key" data-provider="anthropic" data-i18n="appSettings.saveKeyBtn">
                       Save Key
                     </button>
-                    <button
-                      type="button"
-                      class="btn-secondary btn-sm btn-cancel-key hidden"
-                      data-provider="anthropic"
-                      data-i18n="common.cancel"
-                    >
+                    <button type="button" class="btn-secondary btn-sm btn-cancel-key hidden" data-provider="anthropic" data-i18n="common.cancel">
                       Cancel
                     </button>
                   </div>
@@ -277,9 +217,7 @@
             </div>
 
             <div class="form-group mt-4 mb-4">
-              <button type="button" id="loadModelsBtn" class="btn-secondary" data-i18n="appSettings.loadModelsBtn">
-                Load Models
-              </button>
+              <button type="button" id="loadModelsBtn" class="btn-secondary" data-i18n="appSettings.loadModelsBtn">Load Models</button>
               <small class="text-muted mt-1 block" data-i18n="appSettings.loadModelsHelp"
                 >Click "Load Models" to fetch available models for the selected provider.</small
               >
@@ -304,9 +242,7 @@
               >
             </div>
             <div class="text-right">
-              <button type="submit" class="btn-primary" id="saveBtn" data-i18n="appSettings.saveDefaultModel">
-                Save Default Model
-              </button>
+              <button type="submit" class="btn-primary" id="saveBtn" data-i18n="appSettings.saveDefaultModel">Save Default Model</button>
             </div>
           </form>
         </div>
@@ -315,9 +251,7 @@
       <!-- SECTION 3: Information -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">
-          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">
-            3. Supported Models & Configuration Info
-          </h2>
+          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">3. Supported Models & Configuration Info</h2>
           <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
             <svg
               width="24"
@@ -342,21 +276,17 @@
                 <li>
                   <strong>OpenAI:</strong>
                   <ul class="provider-models-list">
-                    <li>
-                      <code>gpt-5-nano-2025-08-07</code>: Default model, overall good results but very slow generation
-                    </li>
+                    <li><code>gpt-5-nano-2025-08-07</code>: Default model, overall good results but very slow generation</li>
                     <li><code>gpt-5-nano</code>: Overall good results but very slow generation</li>
                   </ul>
                 </li>
                 <li class="mt-2">
                   <strong>Google GenAI:</strong>
                   <ul class="provider-models-list">
+                    <li><code>gemini-3.1-flash-lite-preview</code>: Default model, overall good results across artifacts</li>
                     <li>
-                      <code>gemini-3.1-flash-lite-preview</code>: Default model, overall good results across artifacts
-                    </li>
-                    <li>
-                      <code>gemini-3.0-flash-preview</code>: overall good results across artifacts, doesn't show better
-                      results than <code>gemini-3.1-flash-lite-preview</code>
+                      <code>gemini-3.0-flash-preview</code>: overall good results across artifacts, doesn't show better results than
+                      <code>gemini-3.1-flash-lite-preview</code>
                       format
                     </li>
                   </ul>
@@ -372,9 +302,8 @@
             <div class="mt-4">
               <h3 data-i18n="appSettings.localModelsTitle">Local / Custom Models (Ollama, LocalAI, etc.)</h3>
               <p class="text-muted mt-2" data-i18n="appSettings.localModelsDesc">
-                You can connect to a local or custom LLM by overriding the Base URL above. For instance, if you run
-                Ollama locally, you can configure a dummy API key for OpenAI, select OpenAI as the provider, and set the
-                Base URL to
+                You can connect to a local or custom LLM by overriding the Base URL above. For instance, if you run Ollama locally, you can configure
+                a dummy API key for OpenAI, select OpenAI as the provider, and set the Base URL to
                 <code>http://localhost:11434/v1</code>.
               </p>
             </div>

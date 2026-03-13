@@ -737,13 +737,7 @@ window.ArtifactViewer = (function () {
       const alertModal = document.getElementById('alertModal');
       const isAlertOpen = alertModal && !alertModal.classList.contains('hidden');
 
-      if (
-        e.key === 'Escape' &&
-        !modal.classList.contains('hidden') &&
-        !isUnsavedOpen &&
-        !isConfirmOpen &&
-        !isAlertOpen
-      ) {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden') && !isUnsavedOpen && !isConfirmOpen && !isAlertOpen) {
         history.back();
       }
     });

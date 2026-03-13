@@ -14,4 +14,4 @@
 package-lock.json text eol=lf
 
 # Shell scripts
-*.sh text eol=lf 
+*.sh text eol=lf

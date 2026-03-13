@@ -198,10 +198,7 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
 
       while (attempt < MAX_RETRIES) {
         attempt++;
-        logger.info(
-          { jobId: job.id, attempt, maxRetries: MAX_RETRIES },
-          `BPMN generation attempt ${attempt}/${MAX_RETRIES}`,
-        );
+        logger.info({ jobId: job.id, attempt, maxRetries: MAX_RETRIES }, `BPMN generation attempt ${attempt}/${MAX_RETRIES}`);
 
         const rawResponse = await llm.complete(currentUserPrompt, bpmnPrompt, {
           use_case: 'bpmn_generation',
@@ -279,17 +276,14 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
           let errorFeedback;
 
           if (validationError instanceof ZodError) {
-            const issues = validationError.issues
-              .map((issue) => `Path '${issue.path.join('.')}' - ${issue.message}`)
-              .join('\n');
+            const issues = validationError.issues.map((issue) => `Path '${issue.path.join('.')}' - ${issue.message}`).join('\n');
             errorFeedback =
               'Your previous JSON output failed schema validation:\n' +
               issues +
               '\n\nPlease correct these specific fields and return the updated JSON.';
           } else {
             errorFeedback =
-              `Your previous JSON had a structural error: ${validationError.message}\n` +
-              'Please fix this and return the corrected JSON.';
+              `Your previous JSON had a structural error: ${validationError.message}\n` + 'Please fix this and return the corrected JSON.';
           }
 
           logger.warn(
@@ -304,11 +298,9 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
           );
 
           if (attempt === MAX_RETRIES) {
-            throw new Error(
-              `Failed to generate valid BPMN after ${MAX_RETRIES} attempts. ` +
-                `Last error: ${validationError.message}`,
-              { cause: validationError },
-            );
+            throw new Error(`Failed to generate valid BPMN after ${MAX_RETRIES} attempts. ` + `Last error: ${validationError.message}`, {
+              cause: validationError,
+            });
           }
 
           currentUserPrompt += `\n\nSystem Error: ${errorFeedback}`;

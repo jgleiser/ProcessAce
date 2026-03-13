@@ -86,9 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const deleteBtn = document.querySelector(`button[data-action="delete"][data-provider="${provider}"]`);
     if (deleteBtn) {
       deleteBtn.addEventListener('click', async () => {
-        if (
-          !(await showConfirmModal(t('appSettings.deleteKeyConfirm', { provider: providerDisplayNames[provider] })))
-        ) {
+        if (!(await showConfirmModal(t('appSettings.deleteKeyConfirm', { provider: providerDisplayNames[provider] })))) {
           return;
         }
 

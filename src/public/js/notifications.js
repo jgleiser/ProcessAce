@@ -32,11 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = '';
 
     const filteredNotifications = notifications.filter((notif) => {
-      if (
-        notif.type === 'workspace_invite' &&
-        notif.data &&
-        (notif.data.inviteStatus === 'accepted' || notif.data.inviteStatus === 'declined')
-      ) {
+      if (notif.type === 'workspace_invite' && notif.data && (notif.data.inviteStatus === 'accepted' || notif.data.inviteStatus === 'declined')) {
         return false;
       }
       return true;

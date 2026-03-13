@@ -18,9 +18,7 @@
       <!-- Main Content -->
       <div class="header-stacked">
         <h1 class="text-2xl m-0" data-i18n="workspaceSettings.pageTitle">Workspace Dashboard</h1>
-        <p class="text-muted m-0" data-i18n="workspaceSettings.pageSubtitle">
-          Manage your workspaces and shared collaborations
-        </p>
+        <p class="text-muted m-0" data-i18n="workspaceSettings.pageSubtitle">Manage your workspaces and shared collaborations</p>
         <a href="/" class="back-link mt-1" data-i18n="common.back">&larr; Back to Dashboard</a>
       </div>
 
@@ -43,9 +41,7 @@
       </div>
       <div id="shared-workspaces-list" class="workspaces-grid">
         <!-- Populated by JS -->
-        <div class="empty-state grid-full-span" data-i18n="workspaceSettings.noSharedWorkspaces">
-          No shared workspaces found.
-        </div>
+        <div class="empty-state grid-full-span" data-i18n="workspaceSettings.noSharedWorkspaces">No shared workspaces found.</div>
       </div>
     </div>
 
@@ -93,9 +89,7 @@
           <!-- Tabs -->
           <div class="tabs-container">
             <button class="tab-btn active" id="tab-members" data-i18n="workspaceSettings.membersTab">Members</button>
-            <button class="tab-btn" id="tab-invites" data-i18n="workspaceSettings.pendingInvitations">
-              Pending Invitations
-            </button>
+            <button class="tab-btn" id="tab-invites" data-i18n="workspaceSettings.pendingInvitations">Pending Invitations</button>
           </div>
 
           <!-- Webkit scrollbar styling could be added in css, for now just max-height -->
@@ -123,18 +117,10 @@
           <form id="create-workspace-form">
             <div class="mb-1">
               <label class="form-label" data-i18n="workspaceSettings.workspaceNameLabel">Workspace Name</label>
-              <input
-                type="text"
-                id="new-workspace-name"
-                required
-                class="form-input"
-                placeholder="e.g. Finance Projects"
-              />
+              <input type="text" id="new-workspace-name" required class="form-input" placeholder="e.g. Finance Projects" />
             </div>
             <div class="flex-end-gap">
-              <button type="button" id="cancel-create-btn" class="btn-secondary" data-i18n="common.cancel">
-                Cancel
-              </button>
+              <button type="button" id="cancel-create-btn" class="btn-secondary" data-i18n="common.cancel">Cancel</button>
               <button type="submit" class="btn-primary" data-i18n="common.create">Create</button>
             </div>
           </form>

@@ -42,9 +42,7 @@ const insertStmt = db.prepare(`
 const getStmt = db.prepare('SELECT * FROM artifacts WHERE id = ? ORDER BY version DESC LIMIT 1');
 const deleteStmt = db.prepare('DELETE FROM artifacts WHERE id = ?');
 
-const getHistoryStmt = db.prepare(
-  'SELECT version, createdAt, createdBy FROM artifacts WHERE id = ? ORDER BY version DESC',
-);
+const getHistoryStmt = db.prepare('SELECT version, createdAt, createdBy FROM artifacts WHERE id = ? ORDER BY version DESC');
 const getVersionStmt = db.prepare('SELECT * FROM artifacts WHERE id = ? AND version = ?');
 
 const saveArtifact = async (artifact) => {

@@ -172,8 +172,7 @@ router.get('/:id/versions/:version/content', async (req, res) => {
 
   res.setHeader('Content-Type', mimeType);
 
-  const downloadName =
-    artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
+  const downloadName = artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
 
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);

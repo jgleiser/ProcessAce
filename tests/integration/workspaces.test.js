@@ -78,20 +78,14 @@ describe('Workspace API Integration Tests', () => {
 
   // --- POST /api/workspaces/:id/invite ---
   it('should invite a registered user', async () => {
-    const res = await agent
-      .post(`/api/workspaces/${workspaceId}/invite`)
-      .send({ email: secondUser.email, role: 'editor' })
-      .expect(200);
+    const res = await agent.post(`/api/workspaces/${workspaceId}/invite`).send({ email: secondUser.email, role: 'editor' }).expect(200);
 
     assert.ok(res.body.token);
     assert.strictEqual(res.body.email, secondUser.email);
   });
 
   it('should fail to invite non-registered user', async () => {
-    const res = await agent
-      .post(`/api/workspaces/${workspaceId}/invite`)
-      .send({ email: 'nonexistent@test.com', role: 'viewer' })
-      .expect(500);
+    const res = await agent.post(`/api/workspaces/${workspaceId}/invite`).send({ email: 'nonexistent@test.com', role: 'viewer' }).expect(500);
 
     assert.ok(res.body.error);
   });

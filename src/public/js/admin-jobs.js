@@ -581,8 +581,7 @@ function renderArtifactContent(type, content, _artifactId) {
       })
       .catch((err) => {
         console.error('BPMN Import Error', err);
-        document.getElementById('bpmn-canvas').innerHTML =
-          `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
+        document.getElementById('bpmn-canvas').innerHTML = `<p class="error-inline">Error rendering BPMN: ${err.message}</p>`;
       });
   }
 }

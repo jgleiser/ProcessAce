@@ -164,11 +164,7 @@
 
       window.BpmnJS = class CustomModeler extends BpmnModeler {
         constructor(options = {}) {
-          options.additionalModules = [
-            ...(options.additionalModules || []),
-            BpmnColorPickerModule,
-            CreateAppendAnythingModule,
-          ];
+          options.additionalModules = [...(options.additionalModules || []), BpmnColorPickerModule, CreateAppendAnythingModule];
           super(options);
         }
       };
