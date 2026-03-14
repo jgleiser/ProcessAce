@@ -54,7 +54,7 @@
                   Supported: MP3, M4A, WAV, MP4, WEBM (Max size limit applies)
                 </p>
               </div>
-              <select id="audioLanguageSelect" class="form-select hidden" style="width: 100%; margin: 10px 0; max-width: 300px">
+              <select id="audioLanguageSelect" class="form-select hidden">
                 <option value="" data-i18n="dashboard.langAutoDetect">Auto-Detect Language</option>
                 <option value="en" data-i18n="dashboard.langEnglish">English</option>
                 <option value="es" data-i18n="dashboard.langSpanish">Spanish</option>
@@ -111,14 +111,15 @@
           <span class="close-transcript-modal close-modal-sm">&times;</span>
         </div>
         <div class="modal-body">
+          <div class="doc-controls-bar">
+            <button id="cancelTranscriptBtn" class="bpmn-btn" data-i18n="common.cancel">Cancel</button>
+            <button id="saveTranscriptBtn" class="bpmn-btn primary" data-i18n="common.saveChanges">Save Changes</button>
+            <button id="confirmProcessTranscriptBtn" class="bpmn-btn primary" data-i18n="dashboard.confirmProcess">Confirm & Process</button>
+          </div>
           <p class="text-muted mb-4" data-i18n="dashboard.transcriptHelp">
             Review the automatically generated transcript below. You can make manual corrections before processing it into process artifacts.
           </p>
-          <textarea id="transcriptEditTextarea" class="form-input" style="height: 300px; width: 100%; resize: vertical"></textarea>
-          <div class="flex-end-gap mt-4">
-            <button id="cancelTranscriptBtn" class="btn-primary btn-cancel" data-i18n="common.cancel">Cancel</button>
-            <button id="confirmProcessTranscriptBtn" class="btn-primary" data-i18n="dashboard.confirmProcess">Confirm & Process</button>
-          </div>
+          <textarea id="transcriptEditTextarea" class="form-input"></textarea>
         </div>
       </div>
     </div>

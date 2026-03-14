@@ -386,6 +386,14 @@
   padding: 20px;
 }
 
+/* ── Transcript Review Modal ── */
+#transcriptEditTextarea {
+  height: 300px;
+  width: 100%;
+  resize: vertical;
+  font-size: medium;
+}
+
 /* ── Print Styles ── */
 @media print {
   body > *:not(.modal) {

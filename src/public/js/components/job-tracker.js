@@ -7,6 +7,8 @@ window.JobTracker = (function () {
   let trackedJobs = [];
   const ACTIVE_STATUSES = ['pending', 'processing', 'in_progress', 'queued'];
   let pollTimeout = null;
+  let originalTranscriptContent = null;
+  let isHandlingPopState = false;
 
   // DOM Elements
   let jobsList, jobCount;
@@ -115,14 +117,18 @@ window.JobTracker = (function () {
       result.artifacts.forEach((art) => {
         const label = art.type.toUpperCase();
         html += `<div class="artifact-btn-group">`;
-        html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
 
-        if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
-          html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
-        } else if (art.type === 'transcript') {
-          html += `<button class="btn-primary review-transcript-btn" data-artifact-id="${art.id}" data-evidence-id="${result.evidenceId}">${t()('dashboard.reviewTranscript') || 'REVIEW'}</button>`;
+        if (art.type === 'transcript') {
+          // Special case for transcript: only one button, same size as others
+          html += `<button class="btn-primary review-transcript-btn artifact-btn-download" data-artifact-id="${art.id}" data-evidence-id="${result.evidenceId}">${t()('dashboard.reviewTranscript') || 'REVIEW'}</button>`;
         } else {
-          html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
+          html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
+
+          if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
+            html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
+          } else {
+            html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
+          }
         }
         html += `</div>`;
       });
@@ -230,11 +236,20 @@ window.JobTracker = (function () {
       textarea.value = text;
 
       confirmBtn.dataset.evidenceId = evidenceId;
+      confirmBtn.dataset.artifactId = artifactId;
+      originalTranscriptContent = text;
       modal.classList.remove('hidden');
+      history.pushState({ transcriptModalOpen: true }, '');
     } catch (err) {
       console.error(err);
       if (window.showToast) window.showToast('Failed to load transcript', 'error');
     }
+  }
+
+  function hasUnsavedChanges() {
+    const textarea = document.getElementById('transcriptEditTextarea');
+    if (!textarea || originalTranscriptContent === null) return false;
+    return textarea.value !== originalTranscriptContent;
   }
 
   function setupTranscriptModal() {
@@ -244,10 +259,149 @@ window.JobTracker = (function () {
     const closeBtn = reviewModal.querySelector('.close-transcript-modal');
     const cancelBtn = document.getElementById('cancelTranscriptBtn');
     const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
+    const saveBtn = document.getElementById('saveTranscriptBtn');
 
-    const closeReview = () => reviewModal.classList.add('hidden');
-    if (closeBtn) closeBtn.addEventListener('click', closeReview);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeReview);
+    const closeReview = () => {
+      if (!reviewModal.classList.contains('hidden')) {
+        reviewModal.classList.add('hidden');
+        originalTranscriptContent = null;
+      }
+    };
+
+    const handleClosure = async () => {
+      if (hasUnsavedChanges()) {
+        if (window.showUnsavedChangesModal) {
+          const choice = await window.showUnsavedChangesModal();
+          if (choice === 'save') {
+            const artifactId = confirmBtn.dataset.artifactId;
+            const text = document.getElementById('transcriptEditTextarea').value;
+            try {
+              const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text }),
+              });
+              if (res.ok) {
+                if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+                closeReview();
+                history.back();
+              } else {
+                throw new Error('Save failed');
+              }
+            } catch (err) {
+              console.error(err);
+              if (window.showToast) window.showToast(t()('common.saveFailed') || 'Save failed', 'error');
+            }
+          } else if (choice === 'discard') {
+            closeReview();
+            history.back();
+          }
+          // if 'cancel', do nothing
+        } else {
+          closeReview();
+          history.back();
+        }
+      } else {
+        closeReview();
+        history.back();
+      }
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', handleClosure);
+    if (cancelBtn) cancelBtn.addEventListener('click', handleClosure);
+
+    // Close on outside click
+    reviewModal.addEventListener('click', (e) => {
+      if (e.target === reviewModal) handleClosure();
+    });
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !reviewModal.classList.contains('hidden')) {
+        handleClosure();
+      }
+    });
+
+    // Handle back button
+    window.addEventListener('popstate', () => {
+      if (isHandlingPopState) {
+        history.pushState({ transcriptModalOpen: true }, '');
+        return;
+      }
+
+      if (!reviewModal.classList.contains('hidden')) {
+        if (hasUnsavedChanges()) {
+          isHandlingPopState = true;
+          history.pushState({ transcriptModalOpen: true }, '');
+
+          (async () => {
+            if (window.showUnsavedChangesModal) {
+              const choice = await window.showUnsavedChangesModal();
+              isHandlingPopState = false;
+              if (choice === 'save') {
+                const artifactId = confirmBtn.dataset.artifactId;
+                const text = document.getElementById('transcriptEditTextarea').value;
+                try {
+                  const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: text }),
+                  });
+                  if (res.ok) {
+                    if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+                    closeReview();
+                    history.back();
+                  }
+                } catch (err) {
+                  console.error(err);
+                }
+              } else if (choice === 'discard') {
+                closeReview();
+                history.back();
+              }
+            } else {
+              isHandlingPopState = false;
+              closeReview();
+            }
+          })();
+        } else {
+          closeReview();
+        }
+      } else {
+        // Just in case, clean up if modal is already hidden but popstate fired
+        originalTranscriptContent = null;
+      }
+    });
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        const artifactId = confirmBtn.dataset.artifactId;
+        const text = document.getElementById('transcriptEditTextarea').value;
+
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = t()('common.saving') || 'Saving...';
+
+        try {
+          const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: text }),
+          });
+
+          if (!res.ok) throw new Error('Save failed');
+
+          originalTranscriptContent = text;
+          if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+        } catch (err) {
+          console.error(err);
+          if (window.showToast) window.showToast(t()('common.saveFailed') || 'Save failed', 'error');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+      });
+    }
 
     if (confirmBtn) {
       confirmBtn.addEventListener('click', async () => {
@@ -268,7 +422,9 @@ window.JobTracker = (function () {
 
           if (!res.ok) throw new Error('Failed to start processing');
 
-          closeReview();
+          // Successful processing means changes are effectively "saved" and modal should close
+          originalTranscriptContent = text;
+          history.back();
           if (window.showToast) window.showToast('Processing started', 'success');
           loadJobsFromServer();
         } catch (err) {
