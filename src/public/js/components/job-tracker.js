@@ -257,9 +257,9 @@ window.JobTracker = (function () {
     if (!reviewModal) return;
 
     const closeBtn = reviewModal.querySelector('.close-transcript-modal');
-    const cancelBtn = document.getElementById('cancelTranscriptBtn');
     const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
     const saveBtn = document.getElementById('saveTranscriptBtn');
+    const exportBtn = document.getElementById('exportTranscriptBtn');
 
     const closeReview = () => {
       if (!reviewModal.classList.contains('hidden')) {
@@ -308,7 +308,26 @@ window.JobTracker = (function () {
     };
 
     if (closeBtn) closeBtn.addEventListener('click', handleClosure);
-    if (cancelBtn) cancelBtn.addEventListener('click', handleClosure);
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const text = document.getElementById('transcriptEditTextarea').value;
+        const artifactId = confirmBtn.dataset.artifactId;
+        const filename = `transcript_${artifactId.substring(0, 8)}.txt`;
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (window.showToast) window.showToast(t()('common.exportSuccess') || 'Export successful', 'success');
+      });
+    }
 
     // Close on outside click
     reviewModal.addEventListener('click', (e) => {

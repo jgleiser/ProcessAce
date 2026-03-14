@@ -11,6 +11,8 @@
     "ok": "OK",
     "error": "Error",
     "success": "Success",
+    "exportSuccess": "Export successful",
+    "exportFailed": "Export failed",
     "back": "← Back to Dashboard",
     "all": "All",
     "clear": "Clear",
@@ -132,6 +134,7 @@
     "reviewTranscript": "Review Transcript",
     "transcriptHelp": "Review the automatically generated transcript below. You can make manual corrections before processing it into process artifacts.",
     "confirmProcess": "Confirm & Process",
+    "exportTxt": "Export TXT",
     "createWorkspace": "Create Workspace",
     "workspaceName": "Workspace Name"
   },

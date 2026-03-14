@@ -11,6 +11,8 @@
     "ok": "Aceptar",
     "error": "Error",
     "success": "Éxito",
+    "exportSuccess": "Exportación exitosa",
+    "exportFailed": "Exportación fallida",
     "back": "← Volver al panel",
     "all": "Todos",
     "clear": "Limpiar",
@@ -132,6 +134,7 @@
     "reviewTranscript": "Revisar Transcripción",
     "transcriptHelp": "Revisa la transcripción generada automáticamente a continuación. Puedes realizar correcciones manuales antes de procesarla en artefactos de proceso.",
     "confirmProcess": "Confirmar y Procesar",
+    "exportTxt": "Exportar TXT",
     "createWorkspace": "Crear espacio de trabajo",
     "workspaceName": "Nombre del espacio"
   },
