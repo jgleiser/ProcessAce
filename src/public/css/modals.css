@@ -85,6 +85,14 @@
   font-size: 0.95rem;
 }
 
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
 /* Modal Size Variants */
 .modal-small {
   max-width: 400px;
