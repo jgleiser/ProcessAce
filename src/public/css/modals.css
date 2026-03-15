@@ -362,30 +362,15 @@
   margin-top: 5px;
 }
 
-/* ── Artifact Button Group ── */
-.artifact-btn-group {
-  display: inline-flex;
-  gap: 1px;
-  margin-right: 5px;
-}
-
 .artifact-btn-download {
   text-decoration: none;
   font-size: 0.8rem;
   padding: 4px 10px;
 }
 
-.artifact-btn-download.grouped {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
 .artifact-btn-view {
-  border-left: 1px solid rgba(0, 0, 0, 0.2);
   font-size: 0.8rem;
-  padding: 4px 8px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  padding: 4px 10px;
 }
 
 /* ── Error inline ── */

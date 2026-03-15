@@ -110,27 +110,21 @@ window.JobTracker = (function () {
     let html = '<div class="artifact-container">';
 
     if (result.artifactId && !result.artifacts) {
-      html += `<a href="/api/artifacts/${result.artifactId}/content" class="btn-primary artifact-btn-download">Download BPMN</a>`;
+      html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${result.artifactId}" data-type="bpmn" data-can-edit="${canEdit}">BPMN</button>`;
     }
 
     if (result.artifacts && Array.isArray(result.artifacts)) {
       result.artifacts.forEach((art) => {
         const label = art.type.toUpperCase();
-        html += `<div class="artifact-btn-group">`;
 
         if (art.type === 'transcript') {
           // Special case for transcript: only one button, same size as others
           html += `<button class="btn-primary review-transcript-btn artifact-btn-download" data-artifact-id="${art.id}" data-evidence-id="${result.evidenceId}">${t()('dashboard.reviewTranscript') || 'REVIEW'}</button>`;
         } else {
-          html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
-
           if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
-            html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
-          } else {
-            html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
+            html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">${label}</button>`;
           }
         }
-        html += `</div>`;
       });
     }
 
