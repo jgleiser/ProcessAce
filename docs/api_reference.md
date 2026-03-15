@@ -49,9 +49,11 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Evidence (`/api/evidence`)
 
-| Method | Path                   | Auth | Description                  |
-| ------ | ---------------------- | ---- | ---------------------------- |
-| `POST` | `/api/evidence/upload` | Yes  | Upload a file for processing |
+| Method | Path                             | Auth | Description                                  |
+| ------ | -------------------------------- | ---- | -------------------------------------------- |
+| `POST` | `/api/evidence/upload`           | Yes  | Upload a file for processing                 |
+| `GET`  | `/api/evidence/:id/file`         | Yes  | Stream the original evidence file            |
+| `POST` | `/api/evidence/:id/process-text` | Yes  | Submit edited transcript text for processing |
 
 ### `POST /api/evidence/upload`
 
@@ -60,8 +62,24 @@ All API endpoints are served under `http://localhost:3000` (default).
 - `file` (required): The evidence file.
 - `workspaceId` (optional): Workspace to associate with.
 - `processName` (optional): Custom process name.
+- `uploadType` (optional): Use `audio` to force audio/video handling.
 - Provider/model from app settings are used automatically.
-- Returns `202 Accepted` with `{ evidenceId, jobId, statusUrl }`.
+- Audio/video uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "transcription", statusUrl }`.
+- Text/document uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "processing", statusUrl }`.
+
+### `GET /api/evidence/:id/file`
+
+- Streams the original evidence file for playback or download.
+- Supports `Range` requests for audio/video seeking.
+- Returns `206 Partial Content` when `Range` is provided.
+
+### `POST /api/evidence/:id/process-text`
+
+**Body**: `{ "text": "string", "processName"?: "string", "workspaceId"?: "string" }`
+
+- Writes the edited transcript to a new evidence file.
+- Enqueues a `process_evidence` job.
+- Returns `202 Accepted` with `{ evidenceId, jobId, phase: "processing", statusUrl }`.
 
 ---
 
@@ -71,7 +89,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 | -------- | --------------- | ---- | ----------------------------------------- |
 | `GET`    | `/api/jobs`     | Yes  | List jobs (filtered by workspace or user) |
 | `GET`    | `/api/jobs/:id` | Yes  | Get a specific job with artifacts         |
-| `PUT`    | `/api/jobs/:id` | Yes  | Update job (e.g. process name)            |
+| `PATCH`  | `/api/jobs/:id` | Yes  | Update job (e.g. process name)            |
 | `DELETE` | `/api/jobs/:id` | Yes  | Delete job, evidence, and artifacts       |
 
 ### `GET /api/jobs`
@@ -84,7 +102,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Returns job data with associated artifacts array.
 
-### `PUT /api/jobs/:id`
+### `PATCH /api/jobs/:id`
 
 **Body**: `{ "processName": "string" }`
 
@@ -231,6 +249,8 @@ All API endpoints are served under `http://localhost:3000` (default).
 **Query**: `?page=1&limit=20&type=process_evidence` (all optional)
 
 - Returns `{ jobs: [...], pagination: { page, limit, total, totalPages } }`.
+- Each job includes `evidenceId` (when available).
+- Filters support: `user`, `workspace`, `status`, `type`, `provider`, `model`.
 - Each job enriched with `user`, `workspace`, `artifacts`, `llm_provider`, `llm_model`.
 
 ---
@@ -279,11 +299,12 @@ All endpoints return errors in the format:
 ```
 
 Common HTTP status codes:
-| Code | Meaning |
-|------|---------|
+
+| Code  | Meaning                                  |
+| ----- | ---------------------------------------- |
 | `400` | Bad request (missing/invalid parameters) |
-| `401` | Unauthorized (missing or invalid JWT) |
-| `403` | Forbidden (insufficient role) |
-| `404` | Resource not found |
-| `409` | Conflict (e.g. duplicate user) |
-| `500` | Internal server error |
+| `401` | Unauthorized (missing or invalid JWT)    |
+| `403` | Forbidden (insufficient role)            |
+| `404` | Resource not found                       |
+| `409` | Conflict (e.g. duplicate user)           |
+| `500` | Internal server error                    |

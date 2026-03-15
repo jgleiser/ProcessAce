@@ -70,6 +70,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `js/header.js` – Header with user menu and workspace switcher.
   - `js/modal-utils.js` – Reusable confirmation modals.
   - `js/app.js` – Main dashboard logic (upload, polling, artifact viewing/editing).
+- Transcript review modal for audio/video evidence (edit, save, export, audio playback).
 - Interactive Editing:
   - **BPMN**: `bpmn-js` v18 Modeler for graphical editing, XML/PNG/SVG export.
   - **Markdown**: `EasyMDE` for rich text editing (WYSIWYG), PDF/MD/DOCX export (`html-to-docx` used for document generation).
@@ -82,7 +83,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
 - Exposes endpoints:
   - `/health` – Health check (unauthenticated).
   - `/api/auth` – Registration, login, logout, profile management (`src/api/auth.js`).
-  - `/api/evidence` – File upload and evidence management (authenticated).
+  - `/api/evidence` – File upload and evidence management (authenticated, includes file streaming for playback).
   - `/api/jobs` – Job CRUD, process name update (authenticated).
   - `/api/artifacts` – Artifact retrieval and content updates (authenticated).
   - `/api/workspaces` – Workspace CRUD (authenticated).
@@ -112,8 +113,10 @@ To handle long-running tasks (LLM analysis, artifact generation), ProcessAce use
   - **Transcribe Evidence Handler** (`src/workers/transcriptionWorker.js`):
     - Listens for `transcribe_evidence` jobs.
     - Unconditionally transcodes incoming containers to pristine 128kbps `.mp3` format utilizing ffmpeg (`src/utils/audioChunker.js`).
+    - Splits large files based on `transcription.maxFileSizeMB` before transcription.
     - Feeds standardized audio to dedicated STT models (e.g., OpenAI Whisper).
     - Generates an intermediate `transcript` artifact for Human-in-the-Loop review.
+    - Review confirmation submits edited text and enqueues a follow-on `process_evidence` job.
 
 This architecture keeps HTTP requests short and allows horizontal scaling of workers (future).
 
@@ -124,6 +127,7 @@ The processing pipeline is implemented inside the worker process and consists of
 1. **Ingestion & parsing**
    - Text documents → reading file content (`fs.readFile`).
    - Audio files → routed to STT abstraction layer (e.g. OpenAI Whisper) for text transcription.
+   - Audio/video transcription produces a transcript artifact that must be reviewed before artifact generation.
    - Evidence record retrieved from SQLite.
 
 2. **LLM analysis (worker)**
@@ -168,6 +172,8 @@ The processing pipeline is implemented inside the worker process and consists of
   - OpenAI: `gpt-5-nano-2025-08-07`
   - Google: `gemini-3.1-flash-lite-preview`
   - Anthropic: `claude-haiku-4-5-20251001`
+- Default transcription model: `whisper-1`.
+- Supported OpenAI transcription models: `whisper-1`, `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gpt-4o-transcribe-diarize`.
 - Each provider exposes `complete(prompt, system, options)` and `listModels()`.
 - **JSON response mode**: Providers support `options.responseFormat = 'json'`:
   - **OpenAI**: Passes `response_format: { type: "json_object" }`.
@@ -195,6 +201,7 @@ The processing pipeline is implemented inside the worker process and consists of
   - SQLite for generated content (artifact content stored as TEXT in the `artifacts` table).
 - **Settings Storage** (`src/services/settingsService.js`):
   - LLM configuration (provider, model, API keys, base URLs) stored in `app_settings`.
+  - Transcription configuration stored in `app_settings` (`transcription.provider`, `transcription.model`, `transcription.maxFileSizeMB`).
   - API keys encrypted with AES-256-CBC using `ENCRYPTION_KEY` env var.
 
 ### 3.7. Authentication & Authorization

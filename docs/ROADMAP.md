@@ -119,9 +119,11 @@
 - [x] **Self-Healing Loop**: Up to 3 retry attempts; feeds structured Zod error messages back to LLM for correction.
 - [x] **Dependencies**: Added `xmlbuilder2`, `bpmn-auto-layout`, `zod`.
 
-## Phase 16 – Audio Transcription [PLANNED]
+## Phase 16 - Audio Transcription [COMPLETED]
 
-- [ ] **Audio Ingestion**: Support for uploading audio/video files (mp3, wav, mp4, etc.).
-- [ ] **Transcription Configuration**: Configure a dedicated LLM Provider and Model for transcription (STT) in App Settings involving separate configuration from the main generation model.
-- [ ] **Transcription Processing**: If an audio file is uploaded, automatically transcribe it to text using the configured model.
-- [ ] **Evidence Pipeline Integration**: Use the transcribed text as process evidence to generate artifacts (BPMN, SIPOC, RACI).
+- [x] **Audio Ingestion**: Support for uploading audio/video files (mp3, wav, mp4, etc.).
+- [x] **Transcription Configuration**: Configure a dedicated LLM Provider and Model for transcription (STT) in App Settings involving separate configuration from the main generation model.
+- [x] **Transcription Processing**: If an audio file is uploaded, automatically transcribe it to text using the configured model.
+- [x] **Transcript Review**: Review and edit transcripts before generating process artifacts.
+- [x] **Transcript Export & Playback**: Export transcripts to TXT and play back audio during review.
+- [x] **Evidence Pipeline Integration**: Use the transcribed text as process evidence to generate artifacts (BPMN, SIPOC, RACI).
