@@ -5,6 +5,8 @@
 window.EvidenceUpload = (function () {
   const t = () => (window.i18n ? window.i18n.t : (k) => k);
   let uploadZone, fileInput, browseBtn, processNameInput, providerSelect, modelSelect;
+  let audioLanguageSelect;
+  let currentTab = 'document'; // 'document' or 'audio'
 
   async function handleFiles(files) {
     const file = files[0]; // Process single file for now
@@ -12,6 +14,7 @@ window.EvidenceUpload = (function () {
     const processName = processNameInput ? processNameInput.value.trim() : '';
     const provider = providerSelect ? providerSelect.value : '';
     const model = modelSelect ? modelSelect.value.trim() : '';
+    const language = audioLanguageSelect && currentTab === 'audio' ? audioLanguageSelect.value : '';
 
     // Show loading state
     const originalContent = uploadZone.innerHTML;
@@ -28,11 +31,13 @@ window.EvidenceUpload = (function () {
 
     const formData = new FormData();
     const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
-    formData.append('workspaceId', workspaceId);
+    if (workspaceId) formData.append('workspaceId', workspaceId);
 
     if (processName) formData.append('processName', processName);
     if (provider) formData.append('provider', provider);
     if (model) formData.append('model', model);
+    if (language) formData.append('language', language);
+    formData.append('uploadType', currentTab || 'document');
     formData.append('file', file);
 
     try {
@@ -71,7 +76,10 @@ window.EvidenceUpload = (function () {
     } finally {
       setTimeout(() => {
         uploadZone.innerHTML = originalContent;
-        window.location.reload();
+        // Re-attach event listeners since we replaced innerHTML
+        setupEventListeners();
+        if (fileInput) fileInput.value = '';
+        if (processNameInput) processNameInput.value = '';
       }, 1000);
     }
   }
@@ -99,6 +107,30 @@ window.EvidenceUpload = (function () {
     fileInput.addEventListener('change', () => {
       if (fileInput.files.length) handleFiles(fileInput.files);
     });
+
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const docDesc = document.querySelector('.format-desc-doc');
+    const audioDesc = document.querySelector('.format-desc-audio');
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        tabBtns.forEach((b) => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentTab = e.target.dataset.tab;
+
+        if (currentTab === 'audio') {
+          if (docDesc) docDesc.classList.add('hidden');
+          if (audioDesc) audioDesc.classList.remove('hidden');
+          if (audioLanguageSelect) audioLanguageSelect.classList.remove('hidden');
+          fileInput.accept = 'audio/*,video/mp4,video/webm,video/ogg';
+        } else {
+          if (docDesc) docDesc.classList.remove('hidden');
+          if (audioDesc) audioDesc.classList.add('hidden');
+          if (audioLanguageSelect) audioLanguageSelect.classList.add('hidden');
+          fileInput.accept = '.pdf,.doc,.docx,.txt';
+        }
+      });
+    });
   }
 
   function init() {
@@ -108,6 +140,7 @@ window.EvidenceUpload = (function () {
     processNameInput = document.getElementById('processNameInput');
     providerSelect = document.getElementById('providerSelect');
     modelSelect = document.getElementById('modelSelect');
+    audioLanguageSelect = document.getElementById('audioLanguageSelect');
 
     setupEventListeners();
   }

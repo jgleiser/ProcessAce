@@ -4,7 +4,8 @@ WORKDIR /app
 
 # Install build dependencies for better-sqlite3
 # python3, make, and g++ are needed for native modules
-RUN apk add --no-cache python3 make g++
+# ffmpeg is needed for fluent-ffmpeg audio chunking
+RUN apk add --no-cache python3 make g++ ffmpeg
 
 COPY package*.json ./
 

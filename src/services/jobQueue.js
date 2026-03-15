@@ -65,79 +65,93 @@ class JobQueue {
   }
 
   registerWorker(type, handler) {
-    logger.info({ queue: this.name, type }, 'Registering worker');
+    logger.info({ queue: this.name, type }, 'Registering worker handler');
 
-    const worker = new Worker(
-      this.name,
-      async (bullJob) => {
-        const { jobId } = bullJob.data;
+    if (!this.handlers) {
+      this.handlers = new Map();
+    }
+    this.handlers.set(type, handler);
 
-        // Sync status start
-        let jobRecord = getJob(jobId);
-        if (jobRecord) {
-          jobRecord.status = 'processing';
-          saveJob(jobRecord);
-        }
+    if (!this.worker) {
+      logger.info({ queue: this.name }, 'Starting BullMQ Worker dispatcher');
+      this.worker = new Worker(
+        this.name,
+        async (bullJob) => {
+          const type = bullJob.name;
+          const { jobId } = bullJob.data;
+          const mappedHandler = this.handlers.get(type);
 
-        try {
-          logger.info({ event_type: 'job_started', jobId, type }, 'Job started processing');
-          // Execute Handler
-          // Construct a job-like object compatible with old handler signature
-          const jobContext = {
-            id: jobId,
-            data: bullJob.data,
-            user_id: jobRecord?.user_id,
-            workspace_id: jobRecord?.workspace_id,
-          };
-          const result = await handler(jobContext);
+          if (!mappedHandler) {
+            throw new Error(`No handler registered for job type: ${type}`);
+          }
 
-          // Sync success
-          jobRecord = getJob(jobId);
+          // Sync status start
+          let jobRecord = getJob(jobId);
           if (jobRecord) {
-            jobRecord.status = 'completed';
-            jobRecord.result = result;
+            jobRecord.status = 'processing';
             saveJob(jobRecord);
+          }
 
-            // Sync Evidence Status
-            if (jobRecord.data?.evidenceId) {
-              const evidence = await getEvidence(jobRecord.data.evidenceId);
-              if (evidence) {
-                evidence.status = 'completed';
-                await saveEvidence(evidence);
+          try {
+            logger.info({ event_type: 'job_started', jobId, type }, 'Job started processing');
+            // Execute Handler
+            // Construct a job-like object compatible with old handler signature
+            const jobContext = {
+              id: jobId,
+              data: bullJob.data,
+              user_id: jobRecord?.user_id,
+              workspace_id: jobRecord?.workspace_id,
+            };
+            const result = await mappedHandler(jobContext);
+
+            // Sync success
+            jobRecord = getJob(jobId);
+            if (jobRecord) {
+              jobRecord.status = 'completed';
+              jobRecord.result = result;
+              saveJob(jobRecord);
+
+              // Sync Evidence Status
+              if (jobRecord.data?.evidenceId) {
+                const evidence = await getEvidence(jobRecord.data.evidenceId);
+                if (evidence) {
+                  evidence.status = 'completed';
+                  await saveEvidence(evidence);
+                }
               }
             }
-          }
-          logger.info({ event_type: 'job_completed', jobId, type }, 'Job completed successfully');
-          return result;
-        } catch (err) {
-          // Sync failure
-          jobRecord = getJob(jobId);
-          if (jobRecord) {
-            jobRecord.status = 'failed';
-            jobRecord.error = err.message;
-            saveJob(jobRecord);
+            logger.info({ event_type: 'job_completed', jobId, type }, 'Job completed successfully');
+            return result;
+          } catch (err) {
+            // Sync failure
+            jobRecord = getJob(jobId);
+            if (jobRecord) {
+              jobRecord.status = 'failed';
+              jobRecord.error = err.message;
+              saveJob(jobRecord);
 
-            // Sync Evidence Status
-            if (jobRecord.data?.evidenceId) {
-              const evidence = await getEvidence(jobRecord.data.evidenceId);
-              if (evidence) {
-                evidence.status = 'failed';
-                await saveEvidence(evidence);
+              // Sync Evidence Status
+              if (jobRecord.data?.evidenceId) {
+                const evidence = await getEvidence(jobRecord.data.evidenceId);
+                if (evidence) {
+                  evidence.status = 'failed';
+                  await saveEvidence(evidence);
+                }
               }
             }
+            logger.error({ event_type: 'job_failed', jobId, type, err }, 'Job failed');
+            throw err;
           }
-          logger.error({ event_type: 'job_failed', jobId, type, err }, 'Job failed');
-          throw err;
-        }
-      },
-      { connection },
-    );
+        },
+        { connection },
+      );
 
-    this.workers.push(worker);
+      this.workers.push(this.worker);
 
-    worker.on('failed', (job, err) => {
-      logger.error({ jobId: job?.id, err }, 'Worker failed');
-    });
+      this.worker.on('failed', (job, err) => {
+        logger.error({ jobId: job?.id, queue: this.name, type: job?.name, err }, 'Worker failed');
+      });
+    }
   }
 }
 

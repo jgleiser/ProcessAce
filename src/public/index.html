@@ -25,6 +25,13 @@
       </div>
 
       <main>
+        <div class="tabs-container">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="document" data-i18n="dashboard.tabDocument">📝 Document / Text</button>
+            <button class="tab-btn" data-tab="audio" data-i18n="dashboard.tabAudio">🎙️ Audio / Video</button>
+          </div>
+        </div>
+
         <section class="upload-section">
           <div class="upload-zone" id="uploadZone">
             <div class="upload-content">
@@ -41,7 +48,20 @@
                 </svg>
               </div>
               <h3 data-i18n="dashboard.dropEvidence">Drop your evidence here</h3>
-              <p data-i18n="dashboard.supportedFormats">Support for Audio (future), Video (future), and Documents (available!)</p>
+              <div id="uploadFormatDesc">
+                <p data-i18n="dashboard.supportedFormatsDoc" class="format-desc-doc">Supported: PDF, DOCX, TXT</p>
+                <p data-i18n="dashboard.supportedFormatsAudio" class="format-desc-audio hidden">
+                  Supported: MP3, M4A, WAV, MP4, WEBM (Max size limit applies)
+                </p>
+              </div>
+              <select id="audioLanguageSelect" class="form-select hidden">
+                <option value="" data-i18n="dashboard.langAutoDetect">Auto-Detect Language</option>
+                <option value="en" data-i18n="dashboard.langEnglish">English</option>
+                <option value="es" data-i18n="dashboard.langSpanish">Spanish</option>
+                <option value="pt" data-i18n="dashboard.langPortuguese">Portuguese</option>
+                <option value="fr" data-i18n="dashboard.langFrench">French</option>
+                <option value="de" data-i18n="dashboard.langGerman">German</option>
+              </select>
               <input
                 type="text"
                 id="processNameInput"
@@ -83,6 +103,29 @@
         <div id="modalBody" class="modal-body"></div>
       </div>
     </div>
+    <!-- Transcript Review Modal -->
+    <div id="transcriptReviewModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 data-i18n="dashboard.reviewTranscript">Review Transcript</h3>
+          <span class="close-transcript-modal close-modal-sm">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="doc-controls-bar">
+            <button id="saveTranscriptBtn" class="bpmn-btn primary" data-i18n="common.saveChanges">Save Changes</button>
+            <button id="exportTranscriptBtn" class="bpmn-btn primary" data-i18n="dashboard.exportTxt">Export to TXT</button>
+          </div>
+          <p class="text-muted mb-4" data-i18n="dashboard.transcriptHelp">
+            Review the automatically generated transcript below. You can make manual corrections before processing it into process artifacts.
+          </p>
+          <textarea id="transcriptEditTextarea" class="form-input"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmProcessTranscriptBtn" class="bpmn-btn primary" data-i18n="dashboard.confirmProcess">Confirm & Process</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Workspace Creation Modal -->
     <div id="workspaceModal" class="modal hidden">
       <div class="modal-content modal-small">

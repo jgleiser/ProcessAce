@@ -16,11 +16,11 @@ const LANGUAGE_INSTRUCTION =
   'Do NOT translate to English unless the source is already in English.';
 
 const processEvidence = async (job) => {
-  const { evidenceId, filename, processName, provider, model } = job.data;
+  const { evidenceId, filename, processName, originalName, provider, model } = job.data;
   logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
 
   // Naming Logic
-  let baseName = processName || filename.replace(/\.[^/.]+$/, '');
+  let baseName = processName || (originalName ? originalName.replace(/\.[^/.]+$/, '') : filename.replace(/\.[^/.]+$/, ''));
 
   // Normalize: remove accents, lowercase, replace non-alphanum with _, dedupe _
   const normalizedName = baseName

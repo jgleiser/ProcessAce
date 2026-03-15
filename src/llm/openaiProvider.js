@@ -1,4 +1,7 @@
+const fs = require('fs');
+const path = require('path');
 const OpenAI = require('openai');
+const { toFile } = require('openai');
 const LlmProvider = require('./provider');
 const logger = require('../logging/logger');
 
@@ -72,6 +75,84 @@ class OpenAIProvider extends LlmProvider {
           err,
         },
         'OpenAI API call failed',
+      );
+      throw err;
+    }
+  }
+
+  async transcribe(filePath, language = null) {
+    try {
+      logger.info({ model: this.model, filePath }, 'Calling OpenAI Transcription API');
+
+      const fileName = path.basename(filePath);
+      const ext = path.extname(fileName).toLowerCase();
+
+      const mimeTypes = {
+        '.mp3': 'audio/mpeg',
+        '.m4a': 'audio/mp4',
+        '.wav': 'audio/wav',
+        '.mp4': 'audio/mp4',
+        '.webm': 'audio/webm',
+        '.ogg': 'audio/ogg',
+        '.flac': 'audio/flac',
+        '.mpeg': 'audio/mpeg',
+        '.mpga': 'audio/mpeg',
+        '.oga': 'audio/ogg',
+      };
+
+      const fileType = mimeTypes[ext] || 'audio/mp4';
+
+      const params = {
+        file: await toFile(fs.createReadStream(filePath), fileName, { type: fileType }),
+        model: this.model,
+      };
+
+      if (language) {
+        params.language = language;
+      }
+
+      // Handle specialized parameters based on model
+      if (this.model === 'gpt-4o-transcribe-diarize') {
+        params.response_format = 'diarized_json';
+        params.chunking_strategy = 'auto'; // Required for inputs > 30s
+      }
+
+      const response = await this.client.audio.transcriptions.create(params);
+
+      // Handle diarized output if requested
+      let textResult = '';
+      if (this.model === 'gpt-4o-transcribe-diarize' && response.segments) {
+        textResult = response.segments.map((s) => `${s.speaker}: ${s.text}`).join('\n');
+      } else {
+        textResult = response.text;
+      }
+
+      logger.info(
+        {
+          event_type: 'llm_call',
+          llm_provider: 'openai',
+          llm_model: this.model,
+          prompt_type: 'transcription',
+          response_metadata: {
+            status: 'success',
+            response_length: textResult.length,
+          },
+        },
+        'OpenAI Transcription response received',
+      );
+
+      return textResult;
+    } catch (err) {
+      logger.error(
+        {
+          event_type: 'llm_call',
+          llm_provider: 'openai',
+          llm_model: this.model,
+          prompt_type: 'transcription',
+          response_metadata: { status: 'error' },
+          err,
+        },
+        'OpenAI Transcription API call failed',
       );
       throw err;
     }

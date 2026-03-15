@@ -248,10 +248,79 @@
         </div>
       </div>
 
-      <!-- SECTION 3: Information -->
+      <!-- SECTION 3: Transcription Settings -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">
-          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">3. Supported Models & Configuration Info</h2>
+          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">3. Transcription Settings</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content mt-4">
+          <form id="transcriptionSettingsForm">
+            <div class="form-group">
+              <label class="form-label" data-i18n="appSettings.transcriptionProvider">Transcription Provider</label>
+              <select id="transcriptionProviderSelect" class="form-select">
+                <option value="openai" selected>OpenAI</option>
+              </select>
+            </div>
+
+            <div class="form-group mt-4 mb-4">
+              <button type="button" id="loadTranscriptionModelsBtn" class="btn-secondary" data-i18n="appSettings.loadTranscriptionModelsBtn">
+                Load Transcription Models
+              </button>
+              <small class="text-muted mt-1 block" data-i18n="appSettings.loadTranscriptionModelsHelp"
+                >Click "Load Transcription Models" to fetch and validate available models.</small
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="appSettings.transcriptionModel">STT Model</label>
+              <div class="combobox-container" id="transcriptionModelCombobox">
+                <input
+                  type="text"
+                  id="transcriptionModelInput"
+                  class="combobox-input"
+                  data-i18n-placeholder="appSettings.modelSearchPlaceholder"
+                  placeholder="Type to search models..."
+                  autocomplete="off"
+                />
+                <input type="hidden" id="transcriptionModelValue" />
+                <div class="combobox-dropdown" id="transcriptionModelDropdown"></div>
+              </div>
+            </div>
+
+            <div class="form-group mt-4">
+              <label class="form-label" data-i18n="appSettings.transcriptionMaxFileSize">Max File Size (MB) before chunking</label>
+              <input type="number" id="transcriptionMaxFileSizeInput" class="form-input" min="1" max="1000" value="25" />
+              <small class="text-muted mt-1 block">Files larger than this limit will be split with FFmpeg and transcribed in chunks.</small>
+            </div>
+
+            <div class="text-right mt-4">
+              <button type="submit" class="btn-primary" id="saveTranscriptionBtn" data-i18n="appSettings.saveTranscriptionSettings">
+                Save Transcription Settings
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Information -->
+      <div class="card app-settings-card collapsed">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="appSettings.section4Title">4. Supported Models & Configuration Info</h2>
           <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
             <svg
               width="24"
@@ -275,13 +344,21 @@
               <ul class="provider-list">
                 <li>
                   <strong>OpenAI:</strong>
+                  <h4 class="mt-2 text-sm font-medium">LLM Models</h4>
                   <ul class="provider-models-list">
                     <li><code>gpt-5-nano-2025-08-07</code>: Default model, overall good results but very slow generation</li>
                     <li><code>gpt-5-nano</code>: Overall good results but very slow generation</li>
                   </ul>
+                  <h4 class="mt-2 text-sm font-medium">Transcription Models</h4>
+                  <ul class="provider-models-list ml-4">
+                    <li><code>whisper-1</code>: Fast and efficient transcription, great results</li>
+                    <li><code>gpt-4o-transcribe</code>: High-quality transcription, great results</li>
+                    <li><code>gpt-4o-mini-transcribe</code>: Budget-friendly high-quality transcription, good results for half the price</li>
+                  </ul>
                 </li>
                 <li class="mt-2">
                   <strong>Google GenAI:</strong>
+                  <h4 class="mt-2 text-sm font-medium">LLM Models</h4>
                   <ul class="provider-models-list">
                     <li><code>gemini-3.1-flash-lite-preview</code>: Default model, overall good results across artifacts</li>
                     <li>
@@ -293,6 +370,7 @@
                 </li>
                 <li class="mt-2">
                   <strong>Anthropic:</strong>
+                  <h4 class="mt-2 text-sm font-medium">LLM Models</h4>
                   <ul class="provider-models-list">
                     <li><code>claude-haiku-4-5-20251001</code>: Default model, excellent overall results</li>
                   </ul>

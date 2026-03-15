@@ -7,6 +7,8 @@ window.JobTracker = (function () {
   let trackedJobs = [];
   const ACTIVE_STATUSES = ['pending', 'processing', 'in_progress', 'queued'];
   let pollTimeout = null;
+  let originalTranscriptContent = null;
+  let isHandlingPopState = false;
 
   // DOM Elements
   let jobsList, jobCount;
@@ -115,12 +117,18 @@ window.JobTracker = (function () {
       result.artifacts.forEach((art) => {
         const label = art.type.toUpperCase();
         html += `<div class="artifact-btn-group">`;
-        html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
 
-        if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
-          html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
+        if (art.type === 'transcript') {
+          // Special case for transcript: only one button, same size as others
+          html += `<button class="btn-primary review-transcript-btn artifact-btn-download" data-artifact-id="${art.id}" data-evidence-id="${result.evidenceId}">${t()('dashboard.reviewTranscript') || 'REVIEW'}</button>`;
         } else {
-          html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
+          html += `<a href="/api/artifacts/${art.id}/content" class="btn-primary artifact-btn-download grouped">${label}</a>`;
+
+          if (['sipoc', 'raci', 'doc', 'bpmn'].includes(art.type)) {
+            html += `<button class="btn-primary view-artifact-btn artifact-btn-view" data-id="${art.id}" data-type="${art.type}" data-can-edit="${canEdit}">👁️</button>`;
+          } else {
+            html = html.replace('artifact-btn-download grouped', 'artifact-btn-download');
+          }
         }
         html += `</div>`;
       });
@@ -134,6 +142,14 @@ window.JobTracker = (function () {
     if (!jobsList) return;
 
     jobsList.addEventListener('click', async (e) => {
+      const reviewBtn = e.target.closest('.review-transcript-btn');
+      if (reviewBtn) {
+        e.preventDefault();
+        const { artifactId, evidenceId } = reviewBtn.dataset;
+        openTranscriptReview(artifactId, evidenceId);
+        return;
+      }
+
       const editBtn = e.target.closest('.edit-job-btn');
       if (editBtn) {
         const jobId = editBtn.dataset.id;
@@ -206,11 +222,247 @@ window.JobTracker = (function () {
     });
   }
 
+  async function openTranscriptReview(artifactId, evidenceId) {
+    const modal = document.getElementById('transcriptReviewModal');
+    const textarea = document.getElementById('transcriptEditTextarea');
+    const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
+
+    if (!modal || !textarea || !confirmBtn) return;
+
+    try {
+      const res = await fetch(`/api/artifacts/${artifactId}/content?view=true`);
+      if (!res.ok) throw new Error('Failed to load transcript');
+      const text = await res.text();
+      textarea.value = text;
+
+      confirmBtn.dataset.evidenceId = evidenceId;
+      confirmBtn.dataset.artifactId = artifactId;
+      originalTranscriptContent = text;
+      modal.classList.remove('hidden');
+      history.pushState({ transcriptModalOpen: true }, '');
+    } catch (err) {
+      console.error(err);
+      if (window.showToast) window.showToast('Failed to load transcript', 'error');
+    }
+  }
+
+  function hasUnsavedChanges() {
+    const textarea = document.getElementById('transcriptEditTextarea');
+    if (!textarea || originalTranscriptContent === null) return false;
+    return textarea.value !== originalTranscriptContent;
+  }
+
+  function setupTranscriptModal() {
+    const reviewModal = document.getElementById('transcriptReviewModal');
+    if (!reviewModal) return;
+
+    const closeBtn = reviewModal.querySelector('.close-transcript-modal');
+    const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
+    const saveBtn = document.getElementById('saveTranscriptBtn');
+    const exportBtn = document.getElementById('exportTranscriptBtn');
+
+    const closeReview = () => {
+      if (!reviewModal.classList.contains('hidden')) {
+        reviewModal.classList.add('hidden');
+        originalTranscriptContent = null;
+      }
+    };
+
+    const handleClosure = async () => {
+      if (hasUnsavedChanges()) {
+        if (window.showUnsavedChangesModal) {
+          const choice = await window.showUnsavedChangesModal();
+          if (choice === 'save') {
+            const artifactId = confirmBtn.dataset.artifactId;
+            const text = document.getElementById('transcriptEditTextarea').value;
+            try {
+              const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: text }),
+              });
+              if (res.ok) {
+                if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+                closeReview();
+                history.back();
+              } else {
+                throw new Error('Save failed');
+              }
+            } catch (err) {
+              console.error(err);
+              if (window.showToast) window.showToast(t()('common.saveFailed') || 'Save failed', 'error');
+            }
+          } else if (choice === 'discard') {
+            closeReview();
+            history.back();
+          }
+          // if 'cancel', do nothing
+        } else {
+          closeReview();
+          history.back();
+        }
+      } else {
+        closeReview();
+        history.back();
+      }
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', handleClosure);
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const text = document.getElementById('transcriptEditTextarea').value;
+        const artifactId = confirmBtn.dataset.artifactId;
+        const filename = `transcript_${artifactId.substring(0, 8)}.txt`;
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (window.showToast) window.showToast(t()('common.exportSuccess') || 'Export successful', 'success');
+      });
+    }
+
+    // Close on outside click
+    reviewModal.addEventListener('click', (e) => {
+      if (e.target === reviewModal) handleClosure();
+    });
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !reviewModal.classList.contains('hidden')) {
+        handleClosure();
+      }
+    });
+
+    // Handle back button
+    window.addEventListener('popstate', () => {
+      if (isHandlingPopState) {
+        history.pushState({ transcriptModalOpen: true }, '');
+        return;
+      }
+
+      if (!reviewModal.classList.contains('hidden')) {
+        if (hasUnsavedChanges()) {
+          isHandlingPopState = true;
+          history.pushState({ transcriptModalOpen: true }, '');
+
+          (async () => {
+            if (window.showUnsavedChangesModal) {
+              const choice = await window.showUnsavedChangesModal();
+              isHandlingPopState = false;
+              if (choice === 'save') {
+                const artifactId = confirmBtn.dataset.artifactId;
+                const text = document.getElementById('transcriptEditTextarea').value;
+                try {
+                  const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: text }),
+                  });
+                  if (res.ok) {
+                    if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+                    closeReview();
+                    history.back();
+                  }
+                } catch (err) {
+                  console.error(err);
+                }
+              } else if (choice === 'discard') {
+                closeReview();
+                history.back();
+              }
+            } else {
+              isHandlingPopState = false;
+              closeReview();
+            }
+          })();
+        } else {
+          closeReview();
+        }
+      } else {
+        // Just in case, clean up if modal is already hidden but popstate fired
+        originalTranscriptContent = null;
+      }
+    });
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async () => {
+        const artifactId = confirmBtn.dataset.artifactId;
+        const text = document.getElementById('transcriptEditTextarea').value;
+
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = t()('common.saving') || 'Saving...';
+
+        try {
+          const res = await fetch(`/api/artifacts/${artifactId}/content`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: text }),
+          });
+
+          if (!res.ok) throw new Error('Save failed');
+
+          originalTranscriptContent = text;
+          if (window.showToast) window.showToast(t()('common.saveSuccess') || 'Changes saved', 'success');
+        } catch (err) {
+          console.error(err);
+          if (window.showToast) window.showToast(t()('common.saveFailed') || 'Save failed', 'error');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+      });
+    }
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        const evidenceId = confirmBtn.dataset.evidenceId;
+        const text = document.getElementById('transcriptEditTextarea').value;
+        const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
+
+        const originalText = confirmBtn.textContent;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = t()('dashboard.processing') || 'Processing...';
+
+        try {
+          const res = await fetch(`/api/evidence/${evidenceId}/process-text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, workspaceId }),
+          });
+
+          if (!res.ok) throw new Error('Failed to start processing');
+
+          // Successful processing means changes are effectively "saved" and modal should close
+          originalTranscriptContent = text;
+          history.back();
+          if (window.showToast) window.showToast('Processing started', 'success');
+          loadJobsFromServer();
+        } catch (err) {
+          console.error(err);
+          if (window.showToast) window.showToast('Error starting process', 'error');
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = originalText;
+        }
+      });
+    }
+  }
+
   function init() {
     jobsList = document.getElementById('jobsList');
     jobCount = document.getElementById('jobCount');
 
     setupEventListeners();
+    setupTranscriptModal();
 
     // Initial load happens after workspace manager loads and fires event,
     // but if it's already fired before we init, or we just load it anyway:
