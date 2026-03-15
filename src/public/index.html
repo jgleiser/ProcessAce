@@ -121,7 +121,10 @@
           <textarea id="transcriptEditTextarea" class="form-input"></textarea>
         </div>
         <div class="modal-footer">
-          <button id="confirmProcessTranscriptBtn" class="bpmn-btn primary" data-i18n="dashboard.confirmProcess">Confirm & Process</button>
+          <div class="transcript-footer">
+            <audio id="transcriptAudioPlayer" class="transcript-audio is-hidden" controls preload="none"></audio>
+            <button id="confirmProcessTranscriptBtn" class="bpmn-btn primary" data-i18n="dashboard.confirmProcess">Confirm & Process</button>
+          </div>
         </div>
       </div>
     </div>

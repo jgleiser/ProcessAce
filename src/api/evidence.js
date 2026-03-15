@@ -1,10 +1,11 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
 const { saveEvidence, Evidence, getEvidence, updateEvidencePath } = require('../models/evidence');
 const { evidenceQueue } = require('../services/queueInstance');
 const settingsService = require('../services/settingsService');
+const workspaceService = require('../services/workspaceService');
 
 const router = express.Router();
 
@@ -117,6 +118,91 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 });
 
 /**
+ * GET /api/evidence/:id/file
+ * Stream the original evidence file for playback.
+ */
+router.get('/:id/file', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const evidence = await getEvidence(id);
+
+    if (!evidence) {
+      return res.status(404).json({ error: 'Evidence not found' });
+    }
+
+    let canView = false;
+    if (evidence.user_id && evidence.user_id === req.user.id) {
+      canView = true;
+    }
+
+    if (!canView && evidence.workspace_id) {
+      const role = workspaceService.getMemberRole(evidence.workspace_id, req.user.id);
+      if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+        canView = true;
+      }
+    }
+
+    if (!canView) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const absolutePath = path.resolve(evidence.path);
+    const stat = await fs.promises.stat(absolutePath);
+    const fileSize = stat.size;
+
+    const downloadName = evidence.originalName || evidence.filename || `evidence-${id}`;
+    res.setHeader('Content-Type', evidence.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    const range = req.headers.range;
+    if (range) {
+      const match = /^bytes=(\d+)-(\d*)$/.exec(range);
+      if (!match) {
+        return res.status(416).json({ error: 'Invalid range' });
+      }
+
+      const start = Number(match[1]);
+      const end = match[2] ? Number(match[2]) : fileSize - 1;
+
+      if (Number.isNaN(start) || Number.isNaN(end) || start < 0 || end >= fileSize || start > end) {
+        return res.status(416).json({ error: 'Invalid range' });
+      }
+
+      const chunkSize = end - start + 1;
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+      res.setHeader('Content-Length', chunkSize);
+
+      const stream = fs.createReadStream(absolutePath, { start, end });
+      stream.on('error', (err) => {
+        req.log.error({ err, evidenceId: id }, 'Evidence file stream failed');
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Failed to stream evidence' });
+        }
+      });
+      return stream.pipe(res);
+    }
+
+    res.setHeader('Content-Length', fileSize);
+    const stream = fs.createReadStream(absolutePath);
+    stream.on('error', (err) => {
+      req.log.error({ err, evidenceId: id }, 'Evidence file stream failed');
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to stream evidence' });
+      }
+    });
+    stream.pipe(res);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      return res.status(404).json({ error: 'Evidence file not found' });
+    }
+    req.log.error({ err, evidenceId: req.params.id }, 'Evidence file retrieval failed');
+    return res.status(500).json({ error: 'Failed to load evidence file' });
+  }
+});
+
+/**
  * POST /api/evidence/:id/process-text
  * Accept edited transcript text, write to file, and enqueue process_evidence
  */
@@ -139,7 +225,7 @@ router.post('/:id/process-text', async (req, res) => {
     const newFilename = `transcript-${uniqueSuffix}.txt`;
     const newPath = path.join('uploads', newFilename);
 
-    await fs.writeFile(newPath, text, 'utf8');
+    await fs.promises.writeFile(newPath, text, 'utf8');
 
     // Update evidence path
     await updateEvidencePath(id, newPath, newFilename);

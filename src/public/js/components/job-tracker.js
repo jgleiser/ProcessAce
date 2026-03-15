@@ -40,6 +40,46 @@ window.JobTracker = (function () {
     pollTimeout = setTimeout(updateJobs, interval);
   }
 
+  function resetTranscriptAudioPlayer() {
+    const audioPlayer = document.getElementById('transcriptAudioPlayer');
+    if (!audioPlayer) return;
+    audioPlayer.pause();
+    audioPlayer.removeAttribute('src');
+    audioPlayer.load();
+    audioPlayer.classList.add('is-hidden');
+  }
+
+  function setTranscriptAudioSource(evidenceId) {
+    const audioPlayer = document.getElementById('transcriptAudioPlayer');
+    if (!audioPlayer) return;
+    if (!evidenceId) {
+      resetTranscriptAudioPlayer();
+      return;
+    }
+    audioPlayer.src = `/api/evidence/${evidenceId}/file`;
+    audioPlayer.classList.remove('is-hidden');
+    audioPlayer.load();
+  }
+
+  function handleTranscriptAudioSeek(e, reviewModal, audioPlayer) {
+    if (!reviewModal || reviewModal.classList.contains('hidden')) return;
+    if (!audioPlayer || audioPlayer.classList.contains('is-hidden')) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT' || activeElement.isContentEditable)) {
+      return;
+    }
+
+    if (Number.isNaN(audioPlayer.duration) || audioPlayer.duration === 0) return;
+
+    const direction = e.key === 'ArrowRight' ? 1 : -1;
+    const targetTime = audioPlayer.currentTime + direction * 5;
+    const clampedTime = Math.max(0, Math.min(targetTime, audioPlayer.duration));
+    audioPlayer.currentTime = clampedTime;
+    e.preventDefault();
+  }
+
   function addJobToTrack() {
     loadJobsFromServer();
   }
@@ -232,10 +272,12 @@ window.JobTracker = (function () {
       confirmBtn.dataset.evidenceId = evidenceId;
       confirmBtn.dataset.artifactId = artifactId;
       originalTranscriptContent = text;
+      setTranscriptAudioSource(evidenceId);
       modal.classList.remove('hidden');
       history.pushState({ transcriptModalOpen: true }, '');
     } catch (err) {
       console.error(err);
+      resetTranscriptAudioPlayer();
       if (window.showToast) window.showToast('Failed to load transcript', 'error');
     }
   }
@@ -254,11 +296,13 @@ window.JobTracker = (function () {
     const confirmBtn = document.getElementById('confirmProcessTranscriptBtn');
     const saveBtn = document.getElementById('saveTranscriptBtn');
     const exportBtn = document.getElementById('exportTranscriptBtn');
+    const audioPlayer = document.getElementById('transcriptAudioPlayer');
 
     const closeReview = () => {
       if (!reviewModal.classList.contains('hidden')) {
         reviewModal.classList.add('hidden');
         originalTranscriptContent = null;
+        resetTranscriptAudioPlayer();
       }
     };
 
@@ -302,6 +346,7 @@ window.JobTracker = (function () {
     };
 
     if (closeBtn) closeBtn.addEventListener('click', handleClosure);
+    if (audioPlayer) audioPlayer.addEventListener('error', () => resetTranscriptAudioPlayer());
 
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
@@ -333,6 +378,7 @@ window.JobTracker = (function () {
       if (e.key === 'Escape' && !reviewModal.classList.contains('hidden')) {
         handleClosure();
       }
+      handleTranscriptAudioSeek(e, reviewModal, audioPlayer);
     });
 
     // Handle back button
