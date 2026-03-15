@@ -2,8 +2,8 @@
  * Workspace Manager
  * Handles workspace fetching, selection, and UI updates.
  */
-window.WorkspaceManager = (function () {
-  const t = () => (window.i18n ? window.i18n.t : (k) => k);
+globalThis.WorkspaceManager = (function () {
+  const t = () => (globalThis.i18n ? globalThis.i18n.t : (k) => k);
   let currentWorkspaceId = null;
   let currentWorkspaceName = 'Loading...';
   let workspacesCache = [];
@@ -31,7 +31,7 @@ window.WorkspaceManager = (function () {
 
   async function loadWorkspaces() {
     try {
-      const res = await window.apiClient.get('/api/workspaces');
+      const res = await globalThis.apiClient.get('/api/workspaces');
       workspacesCache = res;
       populateWorkspaceSelect();
 
@@ -143,8 +143,8 @@ window.WorkspaceManager = (function () {
     if (workspaceSelect.value === '__NEW__') {
       const name = newWorkspaceInput ? newWorkspaceInput.value.trim() : '';
       if (!name) {
-        if (typeof window.showAlertModal === 'function') {
-          await window.showAlertModal('Please enter a workspace name');
+        if (typeof globalThis.showAlertModal === 'function') {
+          await globalThis.showAlertModal('Please enter a workspace name');
         } else {
           alert(t()('workspace.enterName'));
         }
@@ -152,7 +152,7 @@ window.WorkspaceManager = (function () {
       }
 
       try {
-        const newWorkspace = await window.apiClient.post('/api/workspaces', { name });
+        const newWorkspace = await globalThis.apiClient.post('/api/workspaces', { name });
         currentWorkspaceId = newWorkspace.id;
         setCookie('processAce_workspaceId', currentWorkspaceId);
 
@@ -160,8 +160,8 @@ window.WorkspaceManager = (function () {
         showViewMode();
       } catch (err) {
         console.error(t()('workspace.createError'), err);
-        if (typeof window.showAlertModal === 'function') {
-          await window.showAlertModal('Error creating workspace');
+        if (typeof globalThis.showAlertModal === 'function') {
+          await globalThis.showAlertModal('Error creating workspace');
         }
       }
     } else {

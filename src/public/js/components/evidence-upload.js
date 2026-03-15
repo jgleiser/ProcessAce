@@ -2,8 +2,8 @@
  * Evidence Upload
  * Handles drag and drop file uploads and form inputs.
  */
-window.EvidenceUpload = (function () {
-  const t = () => (window.i18n ? window.i18n.t : (k) => k);
+globalThis.EvidenceUpload = (function () {
+  const t = () => (globalThis.i18n ? globalThis.i18n.t : (k) => k);
   let uploadZone, fileInput, browseBtn, processNameInput, providerSelect, modelSelect;
   let audioLanguageSelect;
   let currentTab = 'document'; // 'document' or 'audio'
@@ -30,7 +30,7 @@ window.EvidenceUpload = (function () {
     }
 
     const formData = new FormData();
-    const workspaceId = window.WorkspaceManager ? window.WorkspaceManager.getCurrentWorkspaceId() : null;
+    const workspaceId = globalThis.WorkspaceManager ? globalThis.WorkspaceManager.getCurrentWorkspaceId() : null;
     if (workspaceId) formData.append('workspaceId', workspaceId);
 
     if (processName) formData.append('processName', processName);
@@ -48,12 +48,12 @@ window.EvidenceUpload = (function () {
       const data = await response.json();
 
       if (response.ok) {
-        if (window.JobTracker) {
-          window.JobTracker.addJobToTrack(data.jobId, file.name, processName);
+        if (globalThis.JobTracker) {
+          globalThis.JobTracker.addJobToTrack(data.jobId, file.name, processName);
         }
       } else {
-        if (typeof window.showAlertModal === 'function') {
-          await window.showAlertModal('Upload failed: ' + (data.error || 'Unknown error'));
+        if (typeof globalThis.showAlertModal === 'function') {
+          await globalThis.showAlertModal('Upload failed: ' + (data.error || 'Unknown error'));
         } else {
           if (progressText) {
             progressText.textContent = t()('jobs.uploadFailed') + (data.error || 'Unknown error');
@@ -64,8 +64,8 @@ window.EvidenceUpload = (function () {
       }
     } catch (error) {
       console.error('Error:', error);
-      if (typeof window.showAlertModal === 'function') {
-        await window.showAlertModal('Upload error');
+      if (typeof globalThis.showAlertModal === 'function') {
+        await globalThis.showAlertModal('Upload error');
       } else {
         if (progressText) {
           progressText.textContent = t()('jobs.uploadError');

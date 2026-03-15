@@ -70,7 +70,7 @@
     <script src="js/i18n.js"></script>
     <script>
       // Initialize i18n for login page (no header.js on auth pages)
-      if (window.i18n) window.i18n.init();
+      if (globalThis.i18n) globalThis.i18n.init();
 
       // Auth page language switcher logic
       (function () {
@@ -80,7 +80,7 @@
         if (!btn || !dropdown) return;
 
         // Set label to current language
-        if (window.i18n) label.textContent = window.i18n.currentLang.toUpperCase();
+        if (globalThis.i18n) label.textContent = globalThis.i18n.currentLang.toUpperCase();
 
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -90,8 +90,8 @@
         dropdown.querySelectorAll('.auth-lang-option').forEach((opt) => {
           opt.addEventListener('click', async () => {
             const lang = opt.dataset.lang;
-            if (window.i18n) {
-              await window.i18n.setLanguage(lang);
+            if (globalThis.i18n) {
+              await globalThis.i18n.setLanguage(lang);
               label.textContent = lang.toUpperCase();
             }
             dropdown.classList.add('hidden');
@@ -103,7 +103,7 @@
 
       const loginForm = document.getElementById('loginForm');
       const errorMsg = document.getElementById('errorMsg');
-      const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+      const t = globalThis.i18n ? globalThis.i18n.t.bind(globalThis.i18n) : (k) => k;
 
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -122,7 +122,7 @@
           const data = await response.json();
 
           if (response.ok) {
-            window.location.href = '/';
+            globalThis.location.href = '/';
           } else {
             errorMsg.textContent = data.error || t('login.loginFailed');
             errorMsg.style.display = 'block';

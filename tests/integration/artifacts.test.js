@@ -73,7 +73,7 @@ describe('Artifacts API Integration Tests', () => {
     assert.ok(res.headers['content-disposition'].includes('attachment'), 'Content-Disposition should trigger download');
     assert.ok(res.headers['content-disposition'].includes('.docx'), 'Filename should have .docx extension');
     // Verify a non-trivially-sized payload was generated
-    const contentLength = parseInt(res.headers['content-length'], 10);
+    const contentLength = Number.parseInt(res.headers['content-length'], 10);
     assert.ok(contentLength > 1000, `Expected a non-empty DOCX (got ${contentLength} bytes)`);
   });
 

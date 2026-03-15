@@ -4,8 +4,8 @@
  */
 /* global marked, BpmnJS, EasyMDE */
 
-window.ArtifactViewer = (function () {
-  const t = () => (window.i18n ? window.i18n.t : (k) => k);
+globalThis.ArtifactViewer = (function () {
+  const t = () => (globalThis.i18n ? globalThis.i18n.t : (k) => k);
   let modal, modalTitle, modalBody, closeModal;
   let bpmnInstance = null;
   let easyMDEInstance = null;
@@ -96,7 +96,7 @@ window.ArtifactViewer = (function () {
           e.stopPropagation();
           exportMenu.classList.toggle('hidden');
         };
-        window.addEventListener('click', () => {
+        globalThis.addEventListener('click', () => {
           if (exportMenu && !exportMenu.classList.contains('hidden')) exportMenu.classList.add('hidden');
         });
       }
@@ -265,7 +265,7 @@ window.ArtifactViewer = (function () {
       })
       .catch(async (err) => {
         console.error('Modeler Error', err);
-        if (window.showAlertModal) await window.showAlertModal(t()('artifacts.errorEditMode'));
+        if (globalThis.showAlertModal) await globalThis.showAlertModal(t()('artifacts.errorEditMode'));
       });
   }
 
@@ -289,7 +289,7 @@ window.ArtifactViewer = (function () {
       cancelEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
+      if (globalThis.showAlertModal) await globalThis.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.getElementById('saveBpmn');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -364,7 +364,7 @@ window.ArtifactViewer = (function () {
       cancelDocEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
+      if (globalThis.showAlertModal) await globalThis.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.getElementById('saveDoc');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -481,7 +481,7 @@ window.ArtifactViewer = (function () {
   }
 
   function downloadDocx() {
-    window.location.href = `/api/artifacts/${currentArtifactId}/export/docx`;
+    globalThis.location.href = `/api/artifacts/${currentArtifactId}/export/docx`;
   }
 
   function printDoc() {
@@ -489,7 +489,7 @@ window.ArtifactViewer = (function () {
     const printContent = document.getElementById('markdown-content').innerHTML;
 
     // 2. Open a temporary hidden window/tab
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    const printWindow = globalThis.open('', '_blank', 'width=800,height=600');
 
     // 3. Inject the content and essential print styles
     printWindow.document.write(`
@@ -652,7 +652,7 @@ window.ArtifactViewer = (function () {
       cancelTableEdit();
     } catch (err) {
       console.error(err);
-      if (window.showAlertModal) await window.showAlertModal(t()('artifacts.saveFailed'));
+      if (globalThis.showAlertModal) await globalThis.showAlertModal(t()('artifacts.saveFailed'));
       const saveBtn = document.querySelector('#btn-save-table');
       if (saveBtn) {
         saveBtn.textContent = 'Save Changes';
@@ -725,11 +725,11 @@ window.ArtifactViewer = (function () {
   function setupEventListeners() {
     closeModal.addEventListener('click', () => history.back());
 
-    window.addEventListener('click', (e) => {
+    globalThis.addEventListener('click', (e) => {
       if (e.target === modal) history.back();
     });
 
-    window.addEventListener('keydown', (e) => {
+    globalThis.addEventListener('keydown', (e) => {
       const unsavedModal = document.getElementById('unsavedChangesModal');
       const isUnsavedOpen = unsavedModal && !unsavedModal.classList.contains('hidden');
       const confirmModal = document.getElementById('confirmModal');
@@ -742,7 +742,7 @@ window.ArtifactViewer = (function () {
       }
     });
 
-    window.addEventListener('popstate', async () => {
+    globalThis.addEventListener('popstate', async () => {
       if (isHandlingPopState) {
         history.pushState({ modalOpen: true }, '');
         return;
@@ -753,8 +753,8 @@ window.ArtifactViewer = (function () {
           isHandlingPopState = true;
           history.pushState({ modalOpen: true }, '');
 
-          if (window.showUnsavedChangesModal) {
-            const choice = await window.showUnsavedChangesModal();
+          if (globalThis.showUnsavedChangesModal) {
+            const choice = await globalThis.showUnsavedChangesModal();
             if (choice === 'save') {
               await saveCurrentChanges();
               if (!hasUnsavedChanges()) {

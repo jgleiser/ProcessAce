@@ -78,7 +78,7 @@
     <script src="js/modal-utils.js"></script>
     <script>
       // Initialize i18n for register page
-      if (window.i18n) window.i18n.init();
+      if (globalThis.i18n) globalThis.i18n.init();
 
       // Auth page language switcher logic
       (function () {
@@ -86,7 +86,7 @@
         const dropdown = document.getElementById('authLangDropdown');
         const label = document.getElementById('authLangLabel');
         if (!btn || !dropdown) return;
-        if (window.i18n) label.textContent = window.i18n.currentLang.toUpperCase();
+        if (globalThis.i18n) label.textContent = globalThis.i18n.currentLang.toUpperCase();
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           dropdown.classList.toggle('hidden');
@@ -94,8 +94,8 @@
         dropdown.querySelectorAll('.auth-lang-option').forEach((opt) => {
           opt.addEventListener('click', async () => {
             const lang = opt.dataset.lang;
-            if (window.i18n) {
-              await window.i18n.setLanguage(lang);
+            if (globalThis.i18n) {
+              await globalThis.i18n.setLanguage(lang);
               label.textContent = lang.toUpperCase();
             }
             dropdown.classList.add('hidden');
@@ -107,7 +107,7 @@
       const registerForm = document.getElementById('registerForm');
       const errorMsg = document.getElementById('errorMsg');
       const passwordInput = document.getElementById('password');
-      const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+      const t = globalThis.i18n ? globalThis.i18n.t.bind(globalThis.i18n) : (k) => k;
 
       // Custom HTML5 validation messages
       passwordInput.addEventListener('invalid', function () {
@@ -147,8 +147,8 @@
           const data = await response.json();
 
           if (response.ok) {
-            await window.showAlertModal(t('register.registrationSuccess'), t('common.success'), t('common.accept'));
-            window.location.href = '/login.html';
+            await globalThis.showAlertModal(t('register.registrationSuccess'), t('common.success'), t('common.accept'));
+            globalThis.location.href = '/login.html';
           } else {
             errorMsg.textContent = data.error || t('register.registrationFailed');
             errorMsg.style.display = 'block';
