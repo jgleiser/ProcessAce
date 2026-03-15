@@ -62,6 +62,14 @@
             </select>
           </div>
           <div class="filter-group">
+            <label for="filterType" data-i18n="adminJobs.filterType">Job Type</label>
+            <select id="filterType" class="filter-select">
+              <option value="All" data-i18n="common.all">All</option>
+              <option value="transcribe_evidence" data-i18n="adminJobs.filterTypeTranscript">Transcript</option>
+              <option value="process_evidence" data-i18n="adminJobs.filterTypeArtifact">Artifact Generation</option>
+            </select>
+          </div>
+          <div class="filter-group">
             <label for="filterProvider" data-i18n="adminJobs.filterProvider">Provider</label>
             <select id="filterProvider" class="filter-select">
               <option value="All" data-i18n="common.all">All</option>

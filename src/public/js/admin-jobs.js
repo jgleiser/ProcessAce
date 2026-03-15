@@ -25,6 +25,7 @@ const errorContainer = document.getElementById('errorContainer');
 const filterUser = document.getElementById('filterUser');
 const filterWorkspace = document.getElementById('filterWorkspace');
 const filterStatus = document.getElementById('filterStatus');
+const filterType = document.getElementById('filterType');
 const filterProvider = document.getElementById('filterProvider');
 const filterModel = document.getElementById('filterModel');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
@@ -347,6 +348,7 @@ function getFilters() {
     user: filterUser.value.trim(),
     workspace: filterWorkspace.value.trim(),
     status: filterStatus.value,
+    type: filterType.value,
     provider: filterProvider.value,
     model: filterModel.value.trim(),
   };
@@ -368,6 +370,10 @@ function setupFilters() {
     currentPage = 1;
     loadJobs(currentPage, currentLimit);
   });
+  filterType.addEventListener('change', () => {
+    currentPage = 1;
+    loadJobs(currentPage, currentLimit);
+  });
   filterProvider.addEventListener('change', () => {
     currentPage = 1;
     loadJobs(currentPage, currentLimit);
@@ -378,6 +384,7 @@ function setupFilters() {
     filterUser.value = '';
     filterWorkspace.value = '';
     filterStatus.value = 'All';
+    filterType.value = 'All';
     filterProvider.value = 'All';
     filterModel.value = '';
     currentPage = 1;

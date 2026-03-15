@@ -228,7 +228,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ### `GET /api/admin/jobs`
 
-**Query**: `?page=1&limit=20`
+**Query**: `?page=1&limit=20&type=process_evidence` (all optional)
 
 - Returns `{ jobs: [...], pagination: { page, limit, total, totalPages } }`.
 - Each job enriched with `user`, `workspace`, `artifacts`, `llm_provider`, `llm_model`.

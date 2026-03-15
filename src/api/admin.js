@@ -74,7 +74,7 @@ router.get('/jobs', (req, res) => {
     const offset = (page - 1) * limit;
 
     // Filters
-    const { user, workspace, status, provider, model } = req.query;
+    const { user, workspace, status, type, provider, model } = req.query;
 
     let whereClauses = [];
     let params = [];
@@ -95,6 +95,12 @@ router.get('/jobs', (req, res) => {
     if (status && status !== 'All') {
       whereClauses.push('j.status = ?');
       params.push(status);
+    }
+
+    // Filter by Job Type (exact match)
+    if (type && type !== 'All') {
+      whereClauses.push('j.type = ?');
+      params.push(type);
     }
 
     // Filter by LLM Provider/Model
@@ -243,7 +249,7 @@ router.get('/jobs', (req, res) => {
         page,
         limit,
         total,
-        filters: { user, workspace, status, provider, model },
+        filters: { user, workspace, status, type, provider, model },
       },
       'Admin retrieved jobs list with filters',
     );
