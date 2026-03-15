@@ -156,116 +156,145 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Searchable Combobox Elements
   const modelInput = document.getElementById('modelInput');
   const modelValue = document.getElementById('modelValue');
-  const modelDropdown = document.getElementById('modelDropdown');
   const loadModelsBtn = document.getElementById('loadModelsBtn');
   const baseUrlInput = document.getElementById('baseUrlInput');
 
-  let allModels = [];
-  let highlightedIndex = -1;
+  const transcriptionModelValue = document.getElementById('transcriptionModelValue');
+  const loadTranscriptionModelsBtn = document.getElementById('loadTranscriptionModelsBtn');
 
-  function renderDropdown(filter = '') {
-    if (allModels.length === 0) {
-      modelDropdown.innerHTML = '<div class="combobox-no-results">' + t('appSettings.noModelsLoaded') + '</div>';
-      modelDropdown.classList.add('open');
-      return;
+  let allModels = [];
+  let allTranscriptionModels = [];
+  const VALID_TRANSCRIPTION_MODELS = ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize'];
+
+  // --- Generic Searchable Combobox Logic ---
+  function initCombobox(containerId, inputId, valueId, dropdownId, getModels, onSelect) {
+    const input = document.getElementById(inputId);
+    const valueEl = document.getElementById(valueId);
+    const dropdown = document.getElementById(dropdownId);
+    let highlightedIndex = -1;
+
+    function render(filter = '') {
+      const models = getModels();
+      if (models.length === 0) {
+        dropdown.innerHTML = `<div class="combobox-no-results">${t('appSettings.noModelsLoaded')}</div>`;
+        dropdown.classList.add('open');
+        return;
+      }
+
+      const filtered = models.filter(
+        (m) => (m.id || '').toLowerCase().includes(filter.toLowerCase()) || (m.name || '').toLowerCase().includes(filter.toLowerCase()),
+      );
+
+      dropdown.innerHTML = '';
+      highlightedIndex = -1;
+
+      if (filtered.length === 0) {
+        dropdown.innerHTML = `<div class="combobox-no-results">${t('appSettings.noModelsFound')}</div>`;
+      } else {
+        filtered.forEach((model, index) => {
+          const div = document.createElement('div');
+          div.className = 'combobox-option';
+          div.textContent = model.name || model.id;
+          div.dataset.value = model.id;
+          div.addEventListener('click', () => {
+            input.value = model.name || model.id;
+            valueEl.value = model.id;
+            dropdown.classList.remove('open');
+            if (onSelect) onSelect(model);
+          });
+          div.addEventListener('mouseenter', () => {
+            highlightedIndex = index;
+            updateHighlight();
+          });
+          dropdown.appendChild(div);
+        });
+      }
     }
 
-    const filtered = allModels.filter(
-      (m) => m.id.toLowerCase().includes(filter.toLowerCase()) || m.name.toLowerCase().includes(filter.toLowerCase()),
-    );
-
-    modelDropdown.innerHTML = '';
-    highlightedIndex = -1;
-
-    if (filtered.length === 0) {
-      modelDropdown.innerHTML = '<div class="combobox-no-results">' + t('appSettings.noModelsFound') + '</div>';
-    } else {
-      filtered.forEach((model, index) => {
-        const div = document.createElement('div');
-        div.className = 'combobox-option';
-        div.textContent = model.name || model.id;
-        div.dataset.value = model.id;
-        div.dataset.index = index;
-        div.addEventListener('click', () => selectModel(model));
-        div.addEventListener('mouseenter', () => {
-          highlightedIndex = index;
-          updateHighlight();
-        });
-        modelDropdown.appendChild(div);
+    function updateHighlight() {
+      const options = dropdown.querySelectorAll('.combobox-option');
+      options.forEach((opt, i) => {
+        opt.classList.toggle('highlighted', i === highlightedIndex);
       });
     }
-  }
 
-  function selectModel(model) {
-    modelInput.value = model.name || model.id;
-    modelValue.value = model.id;
-    modelDropdown.classList.remove('open');
-  }
-
-  function updateHighlight() {
-    const options = modelDropdown.querySelectorAll('.combobox-option');
-    options.forEach((opt, i) => {
-      opt.classList.toggle('highlighted', i === highlightedIndex);
+    input.addEventListener('focus', () => {
+      render(input.value);
+      dropdown.classList.add('open');
     });
+
+    input.addEventListener('input', () => {
+      render(input.value);
+      dropdown.classList.add('open');
+    });
+
+    input.addEventListener('keydown', (e) => {
+      const options = dropdown.querySelectorAll('.combobox-option');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, options.length - 1);
+        updateHighlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, 0);
+        updateHighlight();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && options[highlightedIndex]) {
+          const val = options[highlightedIndex].dataset.value;
+          const model = getModels().find((m) => m.id === val);
+          if (model) {
+            input.value = model.name || model.id;
+            valueEl.value = model.id;
+            dropdown.classList.remove('open');
+            if (onSelect) onSelect(model);
+          }
+        }
+      } else if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest(`#${containerId}`)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    return { render };
   }
 
-  modelInput.addEventListener('focus', () => {
-    renderDropdown(modelInput.value);
-    modelDropdown.classList.add('open');
-  });
-
-  modelInput.addEventListener('input', () => {
-    renderDropdown(modelInput.value);
-    modelDropdown.classList.add('open');
-  });
-
-  modelInput.addEventListener('keydown', (e) => {
-    const options = modelDropdown.querySelectorAll('.combobox-option');
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      highlightedIndex = Math.min(highlightedIndex + 1, options.length - 1);
-      updateHighlight();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      highlightedIndex = Math.max(highlightedIndex - 1, 0);
-      updateHighlight();
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (highlightedIndex >= 0 && options[highlightedIndex]) {
-        const value = options[highlightedIndex].dataset.value;
-        const model = allModels.find((m) => m.id === value);
-        if (model) selectModel(model);
-      }
-    } else if (e.key === 'Escape') {
-      modelDropdown.classList.remove('open');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#modelCombobox')) {
-      modelDropdown.classList.remove('open');
-    }
-  });
+  const llmCombobox = initCombobox('modelCombobox', 'modelInput', 'modelValue', 'modelDropdown', () => allModels);
+  const sttCombobox = initCombobox(
+    'transcriptionModelCombobox',
+    'transcriptionModelInput',
+    'transcriptionModelValue',
+    'transcriptionModelDropdown',
+    () => allTranscriptionModels,
+  );
 
   // Load models function
-  async function loadModels() {
-    const provider = providerSelect.value;
+  async function loadModels(type = 'llm') {
+    const isLlm = type === 'llm';
+    const provider = isLlm ? providerSelect.value : transcriptionProviderSelect.value;
+    const btn = isLlm ? loadModelsBtn : loadTranscriptionModelsBtn;
+    const baseUrl = isLlm ? baseUrlInput.value : '';
+
     if (!provider) {
       showMessage('error', t('appSettings.selectProviderFirst'));
       return;
     }
 
-    loadModelsBtn.disabled = true;
-    const originalText = loadModelsBtn.textContent;
-    loadModelsBtn.textContent = t('appSettings.loadingModels');
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = t('appSettings.loadingModels');
     messageContainer.innerHTML = '';
 
     try {
       const res = await fetch('/api/settings/verify-provider', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, apiKey: '', baseUrl: baseUrlInput.value }),
+        body: JSON.stringify({ provider, apiKey: '', baseUrl }),
       });
 
       if (!res.ok) {
@@ -276,11 +305,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await res.json();
 
       if (data.models && data.models.length > 0) {
-        allModels = data.models.map((m) => ({ id: m.id, name: m.name || m.id }));
-        modelInput.value = '';
-        modelValue.value = '';
-        renderDropdown('');
-        showMessage('success', t('appSettings.modelsLoadedSuccess', { count: data.models.length }));
+        if (isLlm) {
+          allModels = data.models.map((m) => ({ id: m.id, name: m.name || m.id }));
+          modelInput.value = '';
+          modelValue.value = '';
+          llmCombobox.render('');
+          showMessage('success', t('appSettings.modelsLoadedSuccess', { count: data.models.length }));
+        } else {
+          allTranscriptionModels = data.models
+            .filter((m) => VALID_TRANSCRIPTION_MODELS.includes(m.id))
+            .map((m) => ({ id: m.id, name: m.name || m.id }));
+
+          if (allTranscriptionModels.length === 0) {
+            showMessage('error', t('appSettings.noSupportedTranscriptionModels'));
+            return;
+          }
+
+          transcriptionModelInput.value = '';
+          transcriptionModelValue.value = '';
+          sttCombobox.render('');
+          showMessage('success', t('appSettings.modelsLoadedSuccess', { count: allTranscriptionModels.length }));
+        }
       } else {
         showMessage('error', t('appSettings.noModelsForProvider'));
       }
@@ -288,20 +333,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error(err);
       showMessage('error', `Error: ${err.message}`);
     } finally {
-      loadModelsBtn.disabled = false;
-      loadModelsBtn.textContent = originalText;
+      btn.disabled = false;
+      btn.textContent = originalText;
     }
   }
 
-  // Load Models Handler
-  loadModelsBtn.addEventListener('click', loadModels);
+  // Load Models Handlers
+  loadModelsBtn.addEventListener('click', () => loadModels('llm'));
+  loadTranscriptionModelsBtn.addEventListener('click', () => loadModels('transcription'));
 
   // Provider select change handler
   providerSelect.addEventListener('change', async () => {
     allModels = [];
     modelInput.value = '';
     modelValue.value = '';
-    renderDropdown('');
+    llmCombobox.render('');
 
     // If switching back to the globally saved provider, restore its model and base URL
     try {
@@ -368,7 +414,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         transcriptionProviderSelect.value = settings['transcription.provider'];
       }
       if (settings['transcription.model']) {
+        if (!allTranscriptionModels.some((m) => m.id === settings['transcription.model'])) {
+          allTranscriptionModels.push({ id: settings['transcription.model'], name: settings['transcription.model'] });
+        }
         transcriptionModelInput.value = settings['transcription.model'];
+        transcriptionModelValue.value = settings['transcription.model'];
       }
       if (settings['transcription.maxFileSizeMB']) {
         transcriptionMaxFileSizeInput.value = settings['transcription.maxFileSizeMB'];
@@ -440,7 +490,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await fetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'transcription.model', value: transcriptionModelInput.value.trim() }),
+          body: JSON.stringify({
+            key: 'transcription.model',
+            value: (transcriptionModelValue.value || transcriptionModelInput.value).trim(),
+          }),
         });
 
         await fetch('/api/settings', {

@@ -82,7 +82,7 @@ class OpenAIProvider extends LlmProvider {
 
   async transcribe(filePath, language = null) {
     try {
-      logger.info({ model: this.model, filePath }, 'Calling OpenAI Whisper API');
+      logger.info({ model: this.model, filePath }, 'Calling OpenAI Transcription API');
 
       const fileName = path.basename(filePath);
       const ext = path.extname(fileName).toLowerCase();
@@ -104,14 +104,28 @@ class OpenAIProvider extends LlmProvider {
 
       const params = {
         file: await toFile(fs.createReadStream(filePath), fileName, { type: fileType }),
-        model: this.model, // Usually whisper-1
+        model: this.model,
       };
 
       if (language) {
         params.language = language;
       }
 
+      // Handle specialized parameters based on model
+      if (this.model === 'gpt-4o-transcribe-diarize') {
+        params.response_format = 'diarized_json';
+        params.chunking_strategy = 'auto'; // Required for inputs > 30s
+      }
+
       const response = await this.client.audio.transcriptions.create(params);
+
+      // Handle diarized output if requested
+      let textResult = '';
+      if (this.model === 'gpt-4o-transcribe-diarize' && response.segments) {
+        textResult = response.segments.map((s) => `${s.speaker}: ${s.text}`).join('\n');
+      } else {
+        textResult = response.text;
+      }
 
       logger.info(
         {
@@ -121,13 +135,13 @@ class OpenAIProvider extends LlmProvider {
           prompt_type: 'transcription',
           response_metadata: {
             status: 'success',
-            response_length: response.text.length,
+            response_length: textResult.length,
           },
         },
-        'OpenAI Whisper response received',
+        'OpenAI Transcription response received',
       );
 
-      return response.text;
+      return textResult;
     } catch (err) {
       logger.error(
         {
@@ -138,7 +152,7 @@ class OpenAIProvider extends LlmProvider {
           response_metadata: { status: 'error' },
           err,
         },
-        'OpenAI Whisper API call failed',
+        'OpenAI Transcription API call failed',
       );
       throw err;
     }

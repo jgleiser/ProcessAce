@@ -273,15 +273,33 @@
             <div class="form-group">
               <label class="form-label" data-i18n="appSettings.transcriptionProvider">Transcription Provider</label>
               <select id="transcriptionProviderSelect" class="form-select">
-                <option value="openai" selected>OpenAI (Whisper)</option>
-                <option value="google" disabled>Google GenAI (Not supported yet)</option>
-                <option value="anthropic" disabled>Anthropic (Not supported yet)</option>
+                <option value="openai" selected>OpenAI</option>
               </select>
             </div>
 
-            <div class="form-group mt-4">
+            <div class="form-group mt-4 mb-4">
+              <button type="button" id="loadTranscriptionModelsBtn" class="btn-secondary" data-i18n="appSettings.loadTranscriptionModelsBtn">
+                Load Transcription Models
+              </button>
+              <small class="text-muted mt-1 block" data-i18n="appSettings.loadTranscriptionModelsHelp"
+                >Click "Load Transcription Models" to fetch and validate available models.</small
+              >
+            </div>
+
+            <div class="form-group">
               <label class="form-label" data-i18n="appSettings.transcriptionModel">STT Model</label>
-              <input type="text" id="transcriptionModelInput" class="form-input" placeholder="e.g. whisper-1" value="whisper-1" />
+              <div class="combobox-container" id="transcriptionModelCombobox">
+                <input
+                  type="text"
+                  id="transcriptionModelInput"
+                  class="combobox-input"
+                  data-i18n-placeholder="appSettings.modelSearchPlaceholder"
+                  placeholder="Type to search models..."
+                  autocomplete="off"
+                />
+                <input type="hidden" id="transcriptionModelValue" />
+                <div class="combobox-dropdown" id="transcriptionModelDropdown"></div>
+              </div>
             </div>
 
             <div class="form-group mt-4">
@@ -330,6 +348,13 @@
                     <li><code>gpt-5-nano-2025-08-07</code>: Default model, overall good results but very slow generation</li>
                     <li><code>gpt-5-nano</code>: Overall good results but very slow generation</li>
                   </ul>
+                  <h4 class="mt-2 text-sm font-medium">Transcription Models</h4>
+                  <ul class="provider-models-list ml-4">
+                    <li><code>whisper-1</code>: Fast and efficient transcription</li>
+                    <li><code>gpt-4o-transcribe</code>: High-quality transcription</li>
+                    <li><code>gpt-4o-mini-transcribe</code>: Budget-friendly high-quality transcription</li>
+                    <li><code>gpt-4o-transcribe-diarize</code>: Speaker-aware transcription</li>
+                  </ul>
                 </li>
                 <li class="mt-2">
                   <strong>Google GenAI:</strong>
@@ -361,7 +386,6 @@
           </div>
         </div>
       </div>
-      
     </div>
     <script src="js/api-client.js"></script>
     <script src="js/i18n.js"></script>

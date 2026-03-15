@@ -328,6 +328,7 @@
     "settingsSaveFailed": "Failed to save default settings",
     "loadSettingsFailed": "Failed to load settings",
     "selectProviderFirst": "Please select a configured provider first.",
+    "noSupportedTranscriptionModels": "No supported transcription models were found for this provider.",
     "selectDefaultProvider": "Please select a default provider.",
     "deleteKeyConfirm": "Are you sure you want to delete the {{provider}} API key?",
     "keyDeletedSuccess": "{{provider}} API key deleted successfully",
@@ -344,7 +345,15 @@
     "transcriptionProvider": "Transcription Provider",
     "transcriptionModel": "STT Model",
     "transcriptionMaxFileSize": "Max File Size (MB) before chunking",
-    "saveTranscriptionSettings": "Save Transcription Settings"
+    "saveTranscriptionSettings": "Save Transcription Settings",
+    "loadTranscriptionModelsBtn": "Load Transcription Models",
+    "loadTranscriptionModelsHelp": "Click \"Load Transcription Models\" to fetch and validate available models.",
+    "transcriptionModelsDesc": {
+      "whisper": "Fast and efficient transcription",
+      "gpt4o": "High-quality transcription",
+      "gpt4oMini": "Budget-friendly high-quality transcription",
+      "gpt4oDiarize": "Speaker-aware transcription"
+    }
   },
   "artifacts": {
     "viewing": "Viewing {{type}}",

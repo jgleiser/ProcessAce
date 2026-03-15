@@ -328,6 +328,7 @@
     "settingsSaveFailed": "Error al guardar la configuración predeterminada",
     "loadSettingsFailed": "Error al cargar la configuración",
     "selectProviderFirst": "Por favor selecciona un proveedor configurado primero.",
+    "noSupportedTranscriptionModels": "No se encontraron modelos de transcripción compatibles para este proveedor.",
     "selectDefaultProvider": "Por favor selecciona un proveedor predeterminado.",
     "deleteKeyConfirm": "¿Estás seguro de que deseas eliminar la clave API de {{provider}}?",
     "keyDeletedSuccess": "Clave API de {{provider}} eliminada exitosamente",
@@ -343,8 +344,16 @@
     "section4Title": "4. Modelos soportados e información de configuración",
     "transcriptionProvider": "Proveedor de Transcripción",
     "transcriptionModel": "Modelo STT",
-    "transcriptionMaxFileSize": "Tamaño máximo de archivo (MB) antes de dividir",
-    "saveTranscriptionSettings": "Guardar Configuración de Transcripción"
+    "transcriptionMaxFileSize": "Tamaño Máximo de Archivo (MB) antes de fragmentar",
+    "saveTranscriptionSettings": "Guardar Ajustes de Transcripción",
+    "loadTranscriptionModelsBtn": "Cargar Modelos de Transcripción",
+    "loadTranscriptionModelsHelp": "Haga clic en \"Cargar Modelos de Transcripción\" para obtener y validar los modelos disponibles.",
+    "transcriptionModelsDesc": {
+      "whisper": "Transcripción rápida y eficiente",
+      "gpt4o": "Transcripción de alta calidad",
+      "gpt4oMini": "Transcripción de alta calidad económica",
+      "gpt4oDiarize": "Transcripción con identificación de locutores"
+    }
   },
   "artifacts": {
     "viewing": "Viendo {{type}}",
