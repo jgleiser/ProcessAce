@@ -2,7 +2,7 @@
 
 [![Website](https://img.shields.io/badge/Website-processace.com-blue?style=flat-square)](https://processace.com)
 [![License: Sustainable Use](https://img.shields.io/badge/License-Sustainable%20Use-orange.svg?style=flat-square)](./LICENSE.md)
-[![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?style=flat-square&logo=docker&logoColor=white)]()
+[![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 
 AI-powered process discovery and documentation engine – from raw text to BPMN 2.0, SIPOC, and RACI. Self-hosted with bring-your-own LLM.
 
@@ -60,35 +60,35 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
 ### Quick Start (Docker)
 
-1.  **Clone the repository**:
+1. **Clone the repository**:
 
-    ```bash
-    git clone [https://github.com/jgleiser/ProcessAce.git](https://github.com/jgleiser/ProcessAce.git)
-    cd ProcessAce
-    ```
+   ```bash
+   git clone [https://github.com/jgleiser/ProcessAce.git](https://github.com/jgleiser/ProcessAce.git)
+   cd ProcessAce
+   ```
 
-2.  **Configure Environment**:
+2. **Configure Environment**:
 
-    ```bash
-    cp .env.example .env
-    # Edit .env and set ENCRYPTION_KEY (required for secure API key storage)
-    ```
+   ```bash
+   cp .env.example .env
+   # Edit .env and set ENCRYPTION_KEY (required for secure API key storage)
+   ```
 
-3.  **Run with Docker Compose**:
+3. **Run with Docker Compose**:
 
-    ```bash
-    docker compose up -d --build
-    ```
+   ```bash
+   docker compose up -d --build
+   ```
 
-    > **Note (Windows/Mac/WSL2):** If you encounter `SQLITE_IOERR_SHMOPEN` errors, ensure the environment variable `DISABLE_SQLITE_WAL=true` is set in `docker-compose.yml` (it is by default).
+   > **Note (Windows/Mac/WSL2):** If you encounter `SQLITE_IOERR_SHMOPEN` errors, ensure the environment variable `DISABLE_SQLITE_WAL=true` is set in `docker-compose.yml` (it is by default).
 
-4.  **Open the Web UI**: Navigate to `http://localhost:3000`.
+4. **Open the Web UI**: Navigate to `http://localhost:3000`.
 
-5.  **Create an Account**: Go to `/register.html` to create your first user account (becomes Admin), then login.
+5. **Create an Account**: Go to `/register.html` to create your first user account (becomes Admin), then login.
 
-6.  **Configure LLM Provider**: Go to **App Settings** (`/app-settings.html`) to set your LLM provider and API key.
+6. **Configure LLM Provider**: Go to **App Settings** (`/app-settings.html`) to set your LLM provider and API key.
 
-7.  **Test the Magic**: Drop the provided `samples/sample_process.txt` file into the upload zone on your dashboard to see your first BPMN diagram and SIPOC table generated instantly!
+7. **Test the Magic**: Drop the provided `samples/sample_process.txt` file into the upload zone on your dashboard to see your first BPMN diagram and SIPOC table generated instantly!
 
 ---
 

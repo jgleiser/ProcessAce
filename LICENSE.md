@@ -1,6 +1,6 @@
 # ProcessAce Sustainable Use License
 
-**Version 1.0 – 2026-02-04**
+## Version 1.0 – 2026-02-04
 
 This Sustainable Use License (“**License**”) governs the use of the ProcessAce software, including source code, binaries, and associated documentation (“**ProcessAce**” or the “**Software**”), made available by \<Your Company / Your Name\> (“**Licensor**).
 
