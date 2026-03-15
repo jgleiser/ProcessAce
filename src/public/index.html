@@ -166,7 +166,7 @@
       import BpmnColorPickerModule from 'bpmn-js-color-picker';
       import { CreateAppendAnythingModule } from 'bpmn-js-create-append-anything';
 
-      window.BpmnJS = class CustomModeler extends BpmnModeler {
+      globalThis.BpmnJS = class CustomModeler extends BpmnModeler {
         constructor(options = {}) {
           options.additionalModules = [...(options.additionalModules || []), BpmnColorPickerModule, CreateAppendAnythingModule];
           super(options);
