@@ -42,9 +42,49 @@ const artifactModal = document.getElementById('artifactModal');
 const artifactModalTitle = document.getElementById('artifactModalTitle');
 const artifactModalBody = document.getElementById('artifactModalBody');
 const closeArtifactModal = document.getElementById('closeArtifactModal');
+const adminTranscriptAudioPlayer = document.getElementById('adminTranscriptAudioPlayer');
 
 // BPMN state
 let bpmnInstance = null;
+let currentEvidenceId = null;
+
+function resetAdminTranscriptAudioPlayer() {
+  if (!adminTranscriptAudioPlayer) return;
+  adminTranscriptAudioPlayer.pause();
+  adminTranscriptAudioPlayer.removeAttribute('src');
+  adminTranscriptAudioPlayer.load();
+  adminTranscriptAudioPlayer.classList.add('is-hidden');
+}
+
+function setAdminTranscriptAudioSource(evidenceId) {
+  if (!adminTranscriptAudioPlayer) return;
+  if (!evidenceId) {
+    resetAdminTranscriptAudioPlayer();
+    return;
+  }
+  adminTranscriptAudioPlayer.src = `/api/evidence/${evidenceId}/file`;
+  adminTranscriptAudioPlayer.classList.remove('is-hidden');
+  adminTranscriptAudioPlayer.load();
+}
+
+function handleAdminTranscriptAudioSeek(e) {
+  if (!artifactModal || artifactModal.classList.contains('hidden')) return;
+  if (!adminTranscriptAudioPlayer || adminTranscriptAudioPlayer.classList.contains('is-hidden')) return;
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+  const activeElement = document.activeElement;
+  if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT' || activeElement.isContentEditable)) {
+    return;
+  }
+
+  if (Number.isNaN(adminTranscriptAudioPlayer.duration) || adminTranscriptAudioPlayer.duration === 0) return;
+
+  const direction = e.key === 'ArrowRight' ? 1 : -1;
+  const targetTime = adminTranscriptAudioPlayer.currentTime + direction * 5;
+  const clampedTime = Math.max(0, Math.min(targetTime, adminTranscriptAudioPlayer.duration));
+  adminTranscriptAudioPlayer.currentTime = clampedTime;
+  e.preventDefault();
+}
 
 /**
  * Fetch jobs from the API
@@ -177,7 +217,8 @@ function openJobModal(job) {
     modalArtifacts.innerHTML = job.artifacts
       .map((artifact) => {
         const label = artifact.type.toUpperCase();
-        return `<button class="modal-artifact-btn view-artifact-btn" data-id="${artifact.id}" data-type="${artifact.type}">${label} 👁</button>`;
+        const evidenceAttr = job.evidenceId ? `data-evidence-id="${job.evidenceId}"` : '';
+        return `<button class="modal-artifact-btn view-artifact-btn" data-id="${artifact.id}" data-type="${artifact.type}" ${evidenceAttr}>${label} 👁</button>`;
       })
       .join('');
   } else {
@@ -317,8 +358,8 @@ jobModal.addEventListener('click', (e) => {
 modalArtifacts.addEventListener('click', (e) => {
   const btn = e.target.closest('.view-artifact-btn');
   if (btn) {
-    const { id, type } = btn.dataset;
-    viewArtifact(id, type);
+    const { id, type, evidenceId } = btn.dataset;
+    viewArtifact(id, type, evidenceId);
   }
 });
 
@@ -331,6 +372,7 @@ document.addEventListener('keydown', (e) => {
       closeJobModal();
     }
   }
+  handleAdminTranscriptAudioSeek(e);
 });
 
 // Initialize
@@ -411,7 +453,7 @@ function debounce(func, wait) {
 /**
  * View an artifact in the modal
  */
-async function viewArtifact(id, type) {
+async function viewArtifact(id, type, evidenceId) {
   // Toggle expanded class based on type
   const modalContent = artifactModal.querySelector('.modal-content');
 
@@ -424,6 +466,13 @@ async function viewArtifact(id, type) {
   } else {
     // For tables and docs, use wide mode
     modalContent.classList.add('modal-content-wide');
+  }
+
+  currentEvidenceId = evidenceId || null;
+  if (type === 'transcript') {
+    setAdminTranscriptAudioSource(currentEvidenceId);
+  } else {
+    resetAdminTranscriptAudioPlayer();
   }
 
   openArtifactModalFn();
@@ -461,6 +510,7 @@ function closeArtifactModalFn(fromPopstate = false) {
     destroyBpmn();
     // destroyDocEditor(); // Removed dead code
     artifactModal.classList.add('hidden');
+    resetAdminTranscriptAudioPlayer();
   }
 }
 

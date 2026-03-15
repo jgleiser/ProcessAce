@@ -226,6 +226,7 @@ router.get('/jobs', (req, res) => {
         status: job.status,
         processName: job.process_name || data.processName || null,
         originalName: originalName || data.filename || null,
+        evidenceId: data.evidenceId || null,
         createdAt: job.createdAt,
         user: {
           id: job.user_id,

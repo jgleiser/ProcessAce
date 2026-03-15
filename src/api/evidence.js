@@ -6,6 +6,7 @@ const { saveEvidence, Evidence, getEvidence, updateEvidencePath } = require('../
 const { evidenceQueue } = require('../services/queueInstance');
 const settingsService = require('../services/settingsService');
 const workspaceService = require('../services/workspaceService');
+const authService = require('../services/authService');
 
 const router = express.Router();
 
@@ -143,7 +144,10 @@ router.get('/:id/file', async (req, res) => {
     }
 
     if (!canView) {
-      return res.status(403).json({ error: 'Access denied' });
+      const user = authService.getUserById(req.user.id);
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
     }
 
     const absolutePath = path.resolve(evidence.path);
