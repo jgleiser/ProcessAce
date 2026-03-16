@@ -4,6 +4,7 @@ const { getLlmProvider } = require('../llm');
 const { saveArtifact, Artifact } = require('../models/artifact');
 const { getEvidence } = require('../models/evidence');
 const settingsService = require('../services/settingsService');
+const { unloadModel } = require('../services/ollamaService');
 const { buildBpmnWithLayout, validateProcessGraph } = require('../utils/bpmnBuilder');
 const { ZodError } = require('zod');
 
@@ -18,6 +19,9 @@ const LANGUAGE_INSTRUCTION =
 const processEvidence = async (job) => {
   const { evidenceId, filename, processName, originalName, provider, model } = job.data;
   logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
+  let providerName = (provider || '').toLowerCase() || null;
+  let modelName = model || null;
+  let ollamaBaseUrl = null;
 
   // Naming Logic
   let baseName = processName || (originalName ? originalName.replace(/\.[^/.]+$/, '') : filename.replace(/\.[^/.]+$/, ''));
@@ -45,11 +49,15 @@ const processEvidence = async (job) => {
 
     // 3. Get LLM config from settings (apiKey is stored encrypted in DB)
     const llmConfig = settingsService.getLLMConfig();
+    providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
+    modelName = model || llmConfig.model;
+    ollamaBaseUrl = llmConfig.baseUrl;
+
     const llm = getLlmProvider({
-      provider: provider || llmConfig.provider,
-      model: model || llmConfig.model,
+      provider: providerName,
+      model: modelName,
       apiKey: llmConfig.apiKey,
-      baseURL: llmConfig.baseUrl,
+      baseURL: ollamaBaseUrl,
     });
 
     const bpmnPrompt = `You are an expert business process analyst.
@@ -112,8 +120,8 @@ Include:
 - **Business Rules**: Critical constraints.
 Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
     // Determine provider name for traceability
-    const providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
-    const modelName = llm.config?.model || model || llmConfig.model;
+    providerName = (provider || llmConfig.provider || 'openai').toLowerCase();
+    modelName = llm.config?.model || model || llmConfig.model;
 
     // Helper to generate and save non-BPMN artifacts (SIPOC, RACI, doc)
     const generateAndSave = async (type, systemPrompt, prompt, extension, suffix) => {
@@ -309,12 +317,20 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
     };
 
     // 4. Generate All Artifacts in Parallel
-    const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = await Promise.all([
+    const generationResults = await Promise.allSettled([
       generateBpmn(),
       generateAndSave('sipoc', sipocPrompt, `Generate SIPOC JSON:\n\n${fileContent}`, 'json', 'sipoc'),
       generateAndSave('raci', raciPrompt, `Generate RACI JSON:\n\n${fileContent}`, 'json', 'raci'),
       generateAndSave('doc', docPrompt, `Generate Process Documentation:\n\n${fileContent}`, 'md', 'document'),
     ]);
+
+    const failedGeneration = generationResults.find((result) => result.status === 'rejected');
+    if (failedGeneration) {
+      throw failedGeneration.reason;
+    }
+
+    // Wait for all in-flight local requests to settle before any failure cleanup path runs.
+    const [bpmnArtifact, sipocArtifact, raciArtifact, docArtifact] = generationResults.map((result) => result.value);
 
     logger.info({ jobId: job.id, evidenceId }, 'All artifacts generated successfully');
 
@@ -331,6 +347,14 @@ Return ONLY Markdown content.${LANGUAGE_INSTRUCTION}`;
       ],
     };
   } catch (err) {
+    if (providerName === 'ollama' && modelName && ollamaBaseUrl) {
+      try {
+        await unloadModel(modelName, ollamaBaseUrl);
+      } catch (cleanupErr) {
+        logger.warn({ jobId: job.id, model: modelName, cleanupErr }, 'Failed to unload Ollama model after job failure');
+      }
+    }
+
     logger.error({ jobId: job.id, err }, 'Artifact generation failed');
     throw err;
   }

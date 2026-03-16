@@ -54,9 +54,27 @@ const deleteModel = async (modelName, baseUrl) => {
   }
 };
 
+const unloadModel = async (modelName, baseUrl) => {
+  const response = await fetch(buildOllamaApiUrl(baseUrl, '/api/generate'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: modelName,
+      keep_alive: 0,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to unload Ollama model: ${errorText || response.statusText}`);
+  }
+};
+
 module.exports = {
   buildOllamaApiUrl,
   deleteModel,
   listInstalledModels,
   resolveOllamaBaseUrl,
+  unloadModel,
 };

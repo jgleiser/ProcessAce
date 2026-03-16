@@ -2,7 +2,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert');
 
 const { normalizeOllamaModelId } = require('../../src/services/ollamaModelUtils');
-const { listInstalledModels } = require('../../src/services/ollamaService');
+const { listInstalledModels, unloadModel } = require('../../src/services/ollamaService');
 
 describe('ollamaModelUtils', () => {
   it('should remove the default latest tag from Ollama model ids', () => {
@@ -41,6 +41,40 @@ describe('listInstalledModels', () => {
         models.map((model) => model.id),
         ['karanchopda333/whisper', 'dimavz/whisper-tiny'],
       );
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+});
+
+describe('unloadModel', () => {
+  it('should call Ollama generate with keep_alive zero', async () => {
+    const originalFetch = global.fetch;
+    let capturedRequest = null;
+
+    try {
+      global.fetch = async (url, options) => {
+        capturedRequest = {
+          url,
+          options,
+        };
+
+        return {
+          ok: true,
+        };
+      };
+
+      await unloadModel('qwen3.5:9b', 'http://localhost:11434/v1');
+
+      assert.ok(capturedRequest.url.endsWith('/api/generate'));
+      assert.strictEqual(capturedRequest.options.method, 'POST');
+
+      const body = JSON.parse(capturedRequest.options.body);
+      assert.deepStrictEqual(body, {
+        model: 'qwen3.5:9b',
+        keep_alive: 0,
+        stream: false,
+      });
     } finally {
       global.fetch = originalFetch;
     }
