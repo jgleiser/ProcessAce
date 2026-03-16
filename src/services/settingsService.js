@@ -245,6 +245,10 @@ class SettingsService {
     const model = settings['transcription.model'];
     const maxFileSizeMB = parseInt(settings['transcription.maxFileSizeMB'], 10) || 25;
 
+    if (provider === 'ollama') {
+      throw new Error('Ollama transcription is not supported by the current runtime. Switch the transcription provider to OpenAI.');
+    }
+
     // Transcription uses the same API key logic based on the provider
     const apiKeyKey = `${provider}.apiKey`;
     const apiKey = this.getEncryptedSetting(apiKeyKey);
@@ -253,6 +257,7 @@ class SettingsService {
       provider,
       model,
       apiKey,
+      baseUrl: this.getProviderBaseUrl(provider),
       maxFileSizeMB,
     };
   }

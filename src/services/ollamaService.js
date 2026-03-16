@@ -1,5 +1,6 @@
 const settingsService = require('./settingsService');
 const { validateOllamaBaseURL } = require('../llm/openaiProvider');
+const { normalizeOllamaModelId } = require('./ollamaModelUtils');
 
 const resolveOllamaBaseUrl = (baseUrlOverride) => {
   const config = settingsService.resolveProviderConfig('ollama', {
@@ -33,8 +34,8 @@ const listInstalledModels = async (baseUrl) => {
   const models = Array.isArray(payload.models) ? payload.models : [];
 
   return models.map((model) => ({
-    id: model.model || model.name,
-    name: model.name || model.model,
+    id: normalizeOllamaModelId(model.model || model.name),
+    name: normalizeOllamaModelId(model.name || model.model),
     size: model.size || null,
     modifiedAt: model.modified_at || null,
   }));

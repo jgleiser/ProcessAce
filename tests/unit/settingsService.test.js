@@ -206,5 +206,18 @@ describe('SettingsService', () => {
       assert.strictEqual(config.maxFileSizeMB, 15);
       assert.strictEqual(config.apiKey, 'sk-transcription-test');
     });
+
+    it('should reject unsupported Ollama transcription runtime config', () => {
+      settingsService.updateSetting('transcription.provider', 'ollama');
+      settingsService.updateSetting('transcription.model', 'karanchopda333/whisper');
+
+      assert.throws(
+        () => settingsService.getTranscriptionConfig(),
+        /Ollama transcription is not supported by the current runtime/,
+      );
+
+      settingsService.updateSetting('transcription.provider', 'openai');
+      settingsService.updateSetting('transcription.model', 'whisper-1');
+    });
   });
 });

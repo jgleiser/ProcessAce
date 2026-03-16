@@ -1,5 +1,6 @@
 const express = require('express');
 const ollamaModelCatalog = require('../config/ollamaModelCatalog');
+const ollamaTranscriptionModelCatalog = require('../config/ollamaTranscriptionModelCatalog');
 const settingsService = require('../services/settingsService');
 const { getJob } = require('../models/job');
 const logger = require('../logging/logger');
@@ -104,6 +105,10 @@ router.get('/llm/catalog', requireAdmin, (_req, res) => {
   res.json({ models: ollamaModelCatalog });
 });
 
+router.get('/transcription/catalog', requireAdmin, (_req, res) => {
+  res.json({ models: ollamaTranscriptionModelCatalog });
+});
+
 router.post('/llm/pull', requireAdmin, async (req, res) => {
   try {
     const { modelName, baseUrl } = req.body;
@@ -124,6 +129,30 @@ router.post('/llm/pull', requireAdmin, async (req, res) => {
     res.status(202).json({ jobId: job.id, status: job.status });
   } catch (error) {
     logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to initiate model pull');
+    res.status(500).json({ error: 'Failed to initiate download job' });
+  }
+});
+
+router.post('/transcription/pull', requireAdmin, async (req, res) => {
+  try {
+    const { modelName, baseUrl } = req.body;
+    const model = ollamaTranscriptionModelCatalog.find((entry) => entry.id === modelName);
+
+    if (!model) {
+      return res.status(400).json({ error: 'Model not supported or unauthorized.' });
+    }
+
+    const job = await modelQueue.add(
+      'model_pull',
+      { modelName: model.id, baseUrl },
+      {
+        userId: req.user.id,
+      },
+    );
+
+    res.status(202).json({ jobId: job.id, status: job.status });
+  } catch (error) {
+    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to initiate transcription model pull');
     res.status(500).json({ error: 'Failed to initiate download job' });
   }
 });
@@ -151,6 +180,29 @@ router.delete('/llm/model', requireAdmin, async (req, res) => {
   }
 });
 
+router.delete('/transcription/model', requireAdmin, async (req, res) => {
+  try {
+    const { modelName, baseUrl } = req.body;
+    const model = ollamaTranscriptionModelCatalog.find((entry) => entry.id === modelName);
+
+    if (!model) {
+      return res.status(400).json({ error: 'Model not supported or unauthorized.' });
+    }
+
+    await deleteModel(model.id, baseUrl);
+    const installedModels = await listInstalledModels(baseUrl);
+
+    res.json({
+      success: true,
+      modelName: model.id,
+      installedModels,
+    });
+  } catch (error) {
+    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to delete Ollama transcription model');
+    res.status(500).json({ error: error.message || 'Failed to delete Ollama transcription model' });
+  }
+});
+
 router.get('/llm/pull/:jobId', requireAdmin, (req, res) => {
   try {
     const job = getJob(req.params.jobId);
@@ -174,6 +226,32 @@ router.get('/llm/pull/:jobId', requireAdmin, (req, res) => {
   } catch (error) {
     logger.error({ err: error, jobId: req.params.jobId }, 'Failed to fetch model pull status');
     res.status(500).json({ error: 'Failed to fetch model pull status' });
+  }
+});
+
+router.get('/transcription/pull/:jobId', requireAdmin, (req, res) => {
+  try {
+    const job = getJob(req.params.jobId);
+    if (!job || job.type !== 'model_pull') {
+      return res.status(404).json({ error: 'Model pull job not found' });
+    }
+
+    if (job.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    res.json({
+      id: job.id,
+      type: job.type,
+      status: job.status,
+      progress: job.progress,
+      progressMessage: job.progress_message,
+      result: job.result,
+      error: job.error,
+    });
+  } catch (error) {
+    logger.error({ err: error, jobId: req.params.jobId }, 'Failed to fetch transcription model pull status');
+    res.status(500).json({ error: 'Failed to fetch transcription model pull status' });
   }
 });
 

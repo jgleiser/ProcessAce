@@ -374,6 +374,72 @@
         </div>
       </div>
 
+      <!-- SECTION 3.1: Local Transcription Model Manager -->
+      <div class="card app-settings-card collapsed hidden" id="localTranscriptionModelManagerCard">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="appSettings.sectionTranscriptionOllamaTitle">3.1 Local Transcription Model Manager</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content mt-4">
+          <p class="text-muted mt-0" data-i18n="appSettings.transcriptionModelManagerDescription">
+            Review the recommended local transcription catalog, install the models you want to use, and uninstall local models you no longer need.
+          </p>
+
+          <div class="form-group mt-4 mb-4">
+            <button
+              type="button"
+              id="checkTranscriptionModelStatusBtn"
+              class="btn-secondary"
+              data-i18n="appSettings.checkTranscriptionModelStatusBtn"
+            >
+              Check Status
+            </button>
+            <small class="text-muted mt-1 block" data-i18n="appSettings.checkTranscriptionModelStatusHelp"
+              >Click "Check Status" to refresh installed status and available actions for the transcription catalog.</small
+            >
+          </div>
+
+          <div class="form-group">
+            <div class="text-muted mt-0 mb-4" id="transcriptionModelCatalogSummary" data-i18n="appSettings.transcriptionModelCatalogSummary">
+              Click "Check Status" to refresh installed status and available actions.
+            </div>
+            <div id="transcriptionModelCatalogList" class="ollama-model-list"></div>
+          </div>
+
+          <div id="transcriptionDownloadProgressContainer" class="model-pull-progress hidden mt-4">
+            <div class="text-muted" id="transcriptionModelDownloadStatus" data-i18n="appSettings.modelPullIdle">
+              Select a model to begin the download.
+            </div>
+            <div class="settings-progress-track mt-2" aria-hidden="true">
+              <div
+                id="transcriptionModelDownloadProgressBar"
+                class="settings-progress-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                0%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION 4: Information -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">

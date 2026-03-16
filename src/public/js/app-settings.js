@@ -4,9 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const DEFAULT_OLLAMA_URL = 'http://ollama:11434/v1';
   const ACTIVE_PULL_JOB_STORAGE_KEY = 'ollamaModelPullJobId';
   const ACTIVE_PULL_MODEL_STORAGE_KEY = 'ollamaModelPullModelId';
+  const ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY = 'ollamaTranscriptionModelPullJobId';
+  const ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY = 'ollamaTranscriptionModelPullModelId';
 
   const keyManagedProviders = ['openai', 'google', 'anthropic'];
   const generationProviders = [...keyManagedProviders, 'ollama'];
+  const transcriptionProviders = ['openai'];
   const providerDisplayNames = {
     openai: 'OpenAI',
     google: 'Google GenAI',
@@ -42,20 +45,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   const transcriptionMaxFileSizeInput = document.getElementById('transcriptionMaxFileSizeInput');
   const loadTranscriptionModelsBtn = document.getElementById('loadTranscriptionModelsBtn');
   const saveTranscriptionBtn = document.getElementById('saveTranscriptionBtn');
+  const checkTranscriptionModelStatusBtn = document.getElementById('checkTranscriptionModelStatusBtn');
+  const localTranscriptionModelManagerCard = document.getElementById('localTranscriptionModelManagerCard');
+  const transcriptionModelCatalogSummary = document.getElementById('transcriptionModelCatalogSummary');
+  const transcriptionModelCatalogList = document.getElementById('transcriptionModelCatalogList');
+  const transcriptionDownloadProgressContainer = document.getElementById('transcriptionDownloadProgressContainer');
+  const transcriptionModelDownloadStatus = document.getElementById('transcriptionModelDownloadStatus');
+  const transcriptionModelDownloadProgressBar = document.getElementById('transcriptionModelDownloadProgressBar');
 
-  const VALID_TRANSCRIPTION_MODELS = ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize'];
+  const VALID_OPENAI_TRANSCRIPTION_MODELS = ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize'];
 
   let configuredProviders = new Set();
   let currentSettings = {};
   let allModels = [];
   let allTranscriptionModels = [];
   let ollamaModelCatalog = [];
+  let ollamaTranscriptionModelCatalog = [];
   let ollamaInstalledModelIds = new Set();
+  let ollamaInstalledTranscriptionModelIds = new Set();
   let ollamaStatusResolved = false;
+  let ollamaTranscriptionStatusResolved = false;
   let isCatalogActionPending = false;
+  let isTranscriptionCatalogActionPending = false;
   let pullPollTimeout = null;
+  let transcriptionPullPollTimeout = null;
   let activePullJobId = sessionStorage.getItem(ACTIVE_PULL_JOB_STORAGE_KEY);
   let activePullModelId = sessionStorage.getItem(ACTIVE_PULL_MODEL_STORAGE_KEY);
+  let activeTranscriptionPullJobId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY);
+  let activeTranscriptionPullModelId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY);
 
   const showMessage = (type, text) => {
     const maxLength = 180;
@@ -85,6 +102,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const notifyModelChange = (message, type = 'success') => {
     showMessage(type === 'error' ? 'error' : 'success', message);
+  };
+
+  const showUnsupportedOllamaTranscriptionWarning = () => {
+    showMessage('error', t('appSettings.unsupportedOllamaTranscriptionWarning'));
   };
 
   const saveSettingOrThrow = async (key, value) => {
@@ -117,7 +138,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  const setActiveTranscriptionPullJobId = (jobId) => {
+    activeTranscriptionPullJobId = jobId;
+    if (jobId) {
+      sessionStorage.setItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY, jobId);
+    } else {
+      sessionStorage.removeItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY);
+    }
+  };
+
+  const setActiveTranscriptionPullModelId = (modelId) => {
+    activeTranscriptionPullModelId = modelId;
+    if (modelId) {
+      sessionStorage.setItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY, modelId);
+    } else {
+      sessionStorage.removeItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY);
+    }
+  };
+
   const getActiveOllamaBaseUrl = () => baseUrlInput.value.trim() || getStoredBaseUrl('ollama');
+  const getActiveTranscriptionOllamaBaseUrl = () => getStoredBaseUrl('ollama');
 
   const getStoredBaseUrl = (provider, settings = currentSettings) => {
     if (provider === 'ollama') {
@@ -150,6 +190,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ([...generationProviders, ''].includes(currentValue)) {
       providerSelect.value = currentValue;
     }
+  };
+
+  const getVerificationBaseUrl = (provider, type = 'llm') => {
+    if (provider === 'ollama') {
+      return type === 'llm' ? getActiveOllamaBaseUrl() : getActiveTranscriptionOllamaBaseUrl();
+    }
+
+    if (provider === 'openai') {
+      return type === 'llm' ? baseUrlInput.value.trim() || getStoredBaseUrl('openai') : getStoredBaseUrl('openai');
+    }
+
+    return '';
   };
 
   const showApiKeyConfigured = (provider, configured) => {
@@ -372,6 +424,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     () => allTranscriptionModels,
   );
 
+  const getTranscriptionCatalogIds = () => new Set(ollamaTranscriptionModelCatalog.map((model) => model.id));
+
+  const filterInstalledTranscriptionModels = (models = []) => {
+    const allowedIds = getTranscriptionCatalogIds();
+    return models.filter((model) => allowedIds.has(model.id));
+  };
+
   const resetModelPullUi = () => {
     downloadProgressContainer.classList.add('hidden');
     modelDownloadStatus.textContent = t('appSettings.modelPullIdle');
@@ -386,14 +445,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderModelCatalog();
   };
 
+  const resetTranscriptionModelPullUi = () => {
+    transcriptionDownloadProgressContainer.classList.add('hidden');
+    transcriptionModelDownloadStatus.textContent = t('appSettings.modelPullIdle');
+    transcriptionModelDownloadProgressBar.style.width = '0%';
+    transcriptionModelDownloadProgressBar.textContent = '0%';
+    transcriptionModelDownloadProgressBar.setAttribute('aria-valuenow', '0');
+    transcriptionModelDownloadProgressBar.classList.remove('is-complete', 'is-error');
+  };
+
+  const setTranscriptionModelPullControlsDisabled = (disabled) => {
+    isTranscriptionCatalogActionPending = disabled;
+    renderTranscriptionModelCatalog();
+  };
+
   const syncInstalledOllamaModels = (models = []) => {
     ollamaInstalledModelIds = new Set(models.map((model) => model.id));
     ollamaStatusResolved = true;
   };
 
+  const syncInstalledOllamaTranscriptionModels = (models = []) => {
+    ollamaInstalledTranscriptionModelIds = new Set(filterInstalledTranscriptionModels(models).map((model) => model.id));
+    ollamaTranscriptionStatusResolved = true;
+  };
+
   const upsertModelOption = (modelId) => {
     if (!allModels.some((model) => model.id === modelId)) {
       allModels.push({ id: modelId, name: modelId });
+    }
+  };
+
+  const upsertTranscriptionModelOption = (modelId) => {
+    if (!allTranscriptionModels.some((model) => model.id === modelId)) {
+      allTranscriptionModels.push({ id: modelId, name: modelId });
     }
   };
 
@@ -449,6 +533,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  const applySelectedTranscriptionModel = async (selectedModel, options = {}) => {
+    const provider = options.provider || transcriptionProviderSelect.value;
+    const isOllama = provider === 'ollama';
+    const modelToSave = (selectedModel || '').trim();
+
+    if (!provider) {
+      throw new Error(t('appSettings.selectDefaultProvider'));
+    }
+
+    if (isOllama && !modelToSave) {
+      throw new Error(t('appSettings.selectOllamaTranscriptionModelFirst'));
+    }
+
+    await saveSettingOrThrow('transcription.provider', provider);
+    await saveSettingOrThrow('transcription.model', modelToSave);
+    await saveSettingOrThrow('transcription.maxFileSizeMB', transcriptionMaxFileSizeInput.value.trim());
+
+    currentSettings['transcription.provider'] = provider;
+    currentSettings['transcription.model'] = modelToSave;
+    transcriptionProviderSelect.value = provider;
+    transcriptionModelInput.value = modelToSave;
+    transcriptionModelValue.value = modelToSave;
+  };
+
+  const handleUseOllamaTranscriptionModel = async (modelId) => {
+    upsertTranscriptionModelOption(modelId);
+    transcriptionProviderSelect.value = 'ollama';
+    transcriptionModelInput.value = modelId;
+    transcriptionModelValue.value = modelId;
+    sttCombobox.render('');
+
+    try {
+      await applySelectedTranscriptionModel(modelId, { provider: 'ollama' });
+      const notificationMessage = t('appSettings.activeTranscriptionModelNotification', {
+        provider: t('appSettings.ollamaProvider'),
+        model: modelId,
+      });
+      notifyModelChange(notificationMessage);
+    } catch (err) {
+      console.error(err);
+      notifyModelChange(err.message || t('appSettings.settingsSaveFailed'), 'error');
+    }
+  };
+
   const updateCatalogSummary = () => {
     if (!ollamaStatusResolved) {
       modelCatalogSummary.textContent = t('appSettings.modelCatalogSummary');
@@ -458,6 +586,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const installedCount = ollamaInstalledModelIds.size;
     modelCatalogSummary.textContent =
       installedCount > 0 ? t('appSettings.modelCatalogInstalledSummary', { count: installedCount }) : t('appSettings.noInstalledOllamaModels');
+  };
+
+  const updateTranscriptionCatalogSummary = () => {
+    if (!ollamaTranscriptionStatusResolved) {
+      transcriptionModelCatalogSummary.textContent = t('appSettings.transcriptionModelCatalogSummary');
+      return;
+    }
+
+    const installedCount = ollamaInstalledTranscriptionModelIds.size;
+    transcriptionModelCatalogSummary.textContent =
+      installedCount > 0
+        ? t('appSettings.transcriptionModelCatalogInstalledSummary', { count: installedCount })
+        : t('appSettings.noInstalledOllamaTranscriptionModels');
   };
 
   const renderModelCatalog = () => {
@@ -556,6 +697,103 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   };
 
+  const renderTranscriptionModelCatalog = () => {
+    transcriptionModelCatalogList.innerHTML = '';
+    updateTranscriptionCatalogSummary();
+
+    if (ollamaTranscriptionModelCatalog.length === 0) {
+      transcriptionModelCatalogList.innerHTML = `<div class="text-muted">${t('appSettings.transcriptionModelCatalogLoadFailed')}</div>`;
+      return;
+    }
+
+    ollamaTranscriptionModelCatalog.forEach((model) => {
+      const installed = ollamaInstalledTranscriptionModelIds.has(model.id);
+      const badgeText = installed
+        ? t('appSettings.modelStatusInstalled')
+        : ollamaTranscriptionStatusResolved
+          ? t('appSettings.modelStatusAvailable')
+          : t('appSettings.modelStatusUnknown');
+      const hardwareRequirements = model.hardwareRequirements || {};
+      const detailsItems = [
+        model.languageCapabilities ? `<li><strong>${t('appSettings.languageCapabilitiesLabel')}</strong> ${model.languageCapabilities}</li>` : '',
+        hardwareRequirements.ram ? `<li><strong>${t('appSettings.hardwareRamLabel')}</strong> ${hardwareRequirements.ram}</li>` : '',
+        hardwareRequirements.cpu ? `<li><strong>${t('appSettings.hardwareCpuLabel')}</strong> ${hardwareRequirements.cpu}</li>` : '',
+        hardwareRequirements.gpu ? `<li><strong>${t('appSettings.hardwareGpuLabel')}</strong> ${hardwareRequirements.gpu}</li>` : '',
+      ]
+        .filter(Boolean)
+        .join('');
+      const metaItems = [
+        `<span>${model.id}</span>`,
+        `<span>${model.sizeLabel}</span>`,
+        model.parameterSize ? `<span>${t('appSettings.parameterSizeLabel')} ${model.parameterSize}</span>` : '',
+        model.contextWindow ? `<span>${t('appSettings.contextWindowLabel')} ${model.contextWindow}</span>` : '',
+      ]
+        .filter(Boolean)
+        .join('');
+
+      const card = document.createElement('div');
+      card.className = 'ollama-model-card';
+      card.innerHTML = `
+        <div class="ollama-model-header">
+          <div>
+            <h3 class="ollama-model-title">${model.label}</h3>
+            <div class="ollama-model-meta">${metaItems}</div>
+          </div>
+          <span class="ollama-model-badge ${installed ? 'is-installed' : 'is-available'}">${badgeText}</span>
+        </div>
+        <p class="ollama-model-description">${model.description}</p>
+        ${
+          detailsItems
+            ? `
+          <div class="ollama-model-hardware">
+            <div class="ollama-model-hardware-title">${t('appSettings.transcriptionModelDetailsTitle')}</div>
+            <ul class="ollama-model-hardware-list">
+              ${detailsItems}
+            </ul>
+          </div>
+        `
+            : ''
+        }
+        <div class="ollama-model-actions"></div>
+      `;
+
+      const actions = card.querySelector('.ollama-model-actions');
+
+      if (installed) {
+        const useButton = document.createElement('button');
+        useButton.type = 'button';
+        useButton.className = 'btn-secondary btn-sm';
+        useButton.textContent = t('appSettings.useModelBtn');
+        useButton.disabled = isTranscriptionCatalogActionPending;
+        useButton.addEventListener('click', () => handleUseOllamaTranscriptionModel(model.id));
+        actions.appendChild(useButton);
+
+        const uninstallButton = document.createElement('button');
+        uninstallButton.type = 'button';
+        uninstallButton.className = 'btn-danger btn-sm';
+        uninstallButton.textContent = t('appSettings.uninstallModelBtn');
+        uninstallButton.disabled = isTranscriptionCatalogActionPending;
+        uninstallButton.addEventListener('click', () => uninstallOllamaTranscriptionModel(model.id));
+        actions.appendChild(uninstallButton);
+      } else {
+        const downloadButton = document.createElement('button');
+        downloadButton.type = 'button';
+        const isActiveDownload = isTranscriptionCatalogActionPending && activeTranscriptionPullModelId === model.id;
+        downloadButton.className = `btn-primary btn-sm${isActiveDownload ? ' is-loading' : ''}`;
+        downloadButton.textContent = isActiveDownload ? t('appSettings.modelPullInProgress') : t('appSettings.downloadInstallBtn');
+        downloadButton.disabled = isTranscriptionCatalogActionPending;
+        downloadButton.setAttribute('aria-disabled', String(isTranscriptionCatalogActionPending));
+        if (isActiveDownload) {
+          downloadButton.setAttribute('aria-busy', 'true');
+        }
+        downloadButton.addEventListener('click', () => downloadOllamaTranscriptionModel(model.id));
+        actions.appendChild(downloadButton);
+      }
+
+      transcriptionModelCatalogList.appendChild(card);
+    });
+  };
+
   const updateModelManagerVisibility = () => {
     const isOllama = providerSelect.value === 'ollama';
     localModelManagerCard.classList.toggle('hidden', !isOllama);
@@ -567,6 +805,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       resetModelPullUi();
       setModelPullControlsDisabled(false);
+    }
+  };
+
+  const updateTranscriptionModelManagerVisibility = () => {
+    const isOllama = transcriptionProviderSelect.value === 'ollama';
+    localTranscriptionModelManagerCard.classList.toggle('hidden', !isOllama);
+
+    if (!isOllama) {
+      if (transcriptionPullPollTimeout) {
+        clearTimeout(transcriptionPullPollTimeout);
+        transcriptionPullPollTimeout = null;
+      }
+      resetTranscriptionModelPullUi();
+      setTranscriptionModelPullControlsDisabled(false);
     }
   };
 
@@ -611,6 +863,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  const restoreTranscriptionModelForProvider = () => {
+    allTranscriptionModels = [];
+    transcriptionModelInput.value = '';
+    transcriptionModelValue.value = '';
+    sttCombobox.render('');
+
+    if (
+      currentSettings['transcription.provider'] === transcriptionProviderSelect.value &&
+      currentSettings['transcription.model'] &&
+      (transcriptionProviderSelect.value !== 'ollama' || ollamaInstalledTranscriptionModelIds.has(currentSettings['transcription.model']))
+    ) {
+      allTranscriptionModels.push({ id: currentSettings['transcription.model'], name: currentSettings['transcription.model'] });
+      transcriptionModelInput.value = currentSettings['transcription.model'];
+      transcriptionModelValue.value = currentSettings['transcription.model'];
+    }
+  };
+
   const loadCatalog = async () => {
     const res = await fetch('/api/settings/llm/catalog');
     if (!res.ok) {
@@ -622,11 +891,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderModelCatalog();
   };
 
+  const loadTranscriptionCatalog = async () => {
+    const res = await fetch('/api/settings/transcription/catalog');
+    if (!res.ok) {
+      throw new Error(t('appSettings.transcriptionModelCatalogLoadFailed'));
+    }
+
+    const data = await res.json();
+    ollamaTranscriptionModelCatalog = Array.isArray(data.models) ? data.models : [];
+    renderTranscriptionModelCatalog();
+  };
+
   const loadModels = async (type = 'llm', triggerButton = null) => {
     const isLlm = type === 'llm';
     const provider = isLlm ? providerSelect.value : transcriptionProviderSelect.value;
     const btn = triggerButton || (isLlm ? loadModelsBtn : loadTranscriptionModelsBtn);
-    const baseUrl = isLlm && (provider === 'openai' || provider === 'ollama') ? baseUrlInput.value.trim() : '';
+    const baseUrl = getVerificationBaseUrl(provider, type);
 
     if (!provider) {
       showMessage('error', t('appSettings.selectProviderFirst'));
@@ -670,8 +950,30 @@ document.addEventListener('DOMContentLoaded', async () => {
           llmCombobox.render('');
           showMessage('success', t('appSettings.modelsLoadedSuccess', { count: data.models.length }));
         } else {
+          if (provider === 'ollama') {
+            allTranscriptionModels = filterInstalledTranscriptionModels(data.models).map((model) => ({ id: model.id, name: model.name || model.id }));
+            syncInstalledOllamaTranscriptionModels(allTranscriptionModels);
+            if (
+              currentSettings['transcription.provider'] === 'ollama' &&
+              currentSettings['transcription.model'] &&
+              ollamaInstalledTranscriptionModelIds.has(currentSettings['transcription.model']) &&
+              !transcriptionModelValue.value
+            ) {
+              transcriptionModelInput.value = currentSettings['transcription.model'];
+              transcriptionModelValue.value = currentSettings['transcription.model'];
+            }
+            renderTranscriptionModelCatalog();
+            sttCombobox.render('');
+            if (allTranscriptionModels.length === 0) {
+              showMessage('success', t('appSettings.noInstalledOllamaTranscriptionModels'));
+            } else {
+              showMessage('success', t('appSettings.modelsLoadedSuccess', { count: allTranscriptionModels.length }));
+            }
+            return;
+          }
+
           allTranscriptionModels = data.models
-            .filter((model) => VALID_TRANSCRIPTION_MODELS.includes(model.id))
+            .filter((model) => VALID_OPENAI_TRANSCRIPTION_MODELS.includes(model.id))
             .map((model) => ({ id: model.id, name: model.name || model.id }));
 
           if (allTranscriptionModels.length === 0) {
@@ -689,6 +991,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           renderModelCatalog();
           llmCombobox.render('');
           showMessage('success', t('appSettings.noInstalledOllamaModels'));
+        } else if (!isLlm && provider === 'ollama') {
+          allTranscriptionModels = [];
+          syncInstalledOllamaTranscriptionModels([]);
+          renderTranscriptionModelCatalog();
+          sttCombobox.render('');
+          showMessage('success', t('appSettings.noInstalledOllamaTranscriptionModels'));
         } else {
           showMessage('error', t('appSettings.noModelsForProvider'));
         }
@@ -831,14 +1139,149 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  const pollTranscriptionModelPullJob = async (jobId) => {
+    try {
+      const res = await fetch(`/api/settings/transcription/pull/${jobId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || t('appSettings.modelPullStatusFailed'));
+      }
+
+      transcriptionDownloadProgressContainer.classList.remove('hidden');
+      transcriptionModelDownloadStatus.textContent = data.progressMessage || t('appSettings.modelPullInProgress');
+      transcriptionModelDownloadProgressBar.style.width = `${data.progress}%`;
+      transcriptionModelDownloadProgressBar.textContent = `${data.progress}%`;
+      transcriptionModelDownloadProgressBar.setAttribute('aria-valuenow', String(data.progress));
+
+      if (data.status === 'completed') {
+        transcriptionModelDownloadStatus.textContent = t('appSettings.modelPullComplete');
+        transcriptionModelDownloadProgressBar.classList.add('is-complete');
+        setActiveTranscriptionPullJobId(null);
+        setActiveTranscriptionPullModelId(null);
+        setTranscriptionModelPullControlsDisabled(false);
+        await loadModels('transcription');
+        return;
+      }
+
+      if (data.status === 'failed') {
+        transcriptionModelDownloadStatus.textContent = data.error || t('appSettings.modelPullFailed');
+        transcriptionModelDownloadProgressBar.classList.add('is-error');
+        setActiveTranscriptionPullJobId(null);
+        setActiveTranscriptionPullModelId(null);
+        setTranscriptionModelPullControlsDisabled(false);
+        return;
+      }
+
+      transcriptionPullPollTimeout = setTimeout(() => {
+        pollTranscriptionModelPullJob(jobId);
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      transcriptionModelDownloadStatus.textContent = err.message || t('appSettings.modelPullStatusFailed');
+      transcriptionModelDownloadProgressBar.classList.add('is-error');
+      setActiveTranscriptionPullJobId(null);
+      setActiveTranscriptionPullModelId(null);
+      setTranscriptionModelPullControlsDisabled(false);
+    }
+  };
+
+  const startTranscriptionModelPullPolling = (jobId, modelId = activeTranscriptionPullModelId) => {
+    if (transcriptionPullPollTimeout) {
+      clearTimeout(transcriptionPullPollTimeout);
+      transcriptionPullPollTimeout = null;
+    }
+
+    transcriptionDownloadProgressContainer.classList.remove('hidden');
+    transcriptionModelDownloadProgressBar.classList.remove('is-complete', 'is-error');
+    transcriptionModelDownloadStatus.textContent = t('appSettings.modelPullInProgress');
+    transcriptionModelDownloadProgressBar.style.width = '0%';
+    transcriptionModelDownloadProgressBar.textContent = '0%';
+    transcriptionModelDownloadProgressBar.setAttribute('aria-valuenow', '0');
+    setActiveTranscriptionPullJobId(jobId);
+    setActiveTranscriptionPullModelId(modelId);
+    setTranscriptionModelPullControlsDisabled(true);
+    pollTranscriptionModelPullJob(jobId);
+  };
+
+  const downloadOllamaTranscriptionModel = async (modelId) => {
+    try {
+      setTranscriptionModelPullControlsDisabled(true);
+      transcriptionModelDownloadStatus.textContent = t('appSettings.modelPullStarting');
+      transcriptionDownloadProgressContainer.classList.remove('hidden');
+
+      const res = await fetch('/api/settings/transcription/pull', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelName: modelId, baseUrl: getActiveTranscriptionOllamaBaseUrl() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || t('appSettings.modelPullFailed'));
+      }
+
+      startTranscriptionModelPullPolling(data.jobId, modelId);
+    } catch (err) {
+      console.error(err);
+      transcriptionModelDownloadStatus.textContent = err.message || t('appSettings.modelPullFailed');
+      transcriptionModelDownloadProgressBar.classList.add('is-error');
+      setActiveTranscriptionPullModelId(null);
+      setTranscriptionModelPullControlsDisabled(false);
+    }
+  };
+
+  const uninstallOllamaTranscriptionModel = async (modelId) => {
+    if (!(await showConfirmModal(t('appSettings.uninstallModelConfirm', { model: modelId })))) {
+      return;
+    }
+
+    try {
+      setTranscriptionModelPullControlsDisabled(true);
+      const res = await fetch('/api/settings/transcription/model', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelName: modelId, baseUrl: getActiveTranscriptionOllamaBaseUrl() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || t('appSettings.uninstallModelFailed'));
+      }
+
+      allTranscriptionModels = filterInstalledTranscriptionModels(data.installedModels || []).map((model) => ({ id: model.id, name: model.name || model.id }));
+      syncInstalledOllamaTranscriptionModels(allTranscriptionModels);
+      renderTranscriptionModelCatalog();
+      sttCombobox.render('');
+
+      if (transcriptionModelValue.value === modelId) {
+        transcriptionModelInput.value = '';
+        transcriptionModelValue.value = '';
+      }
+
+      showMessage('success', t('appSettings.uninstallModelSuccess', { model: modelId }));
+    } catch (err) {
+      console.error(err);
+      showMessage('error', err.message || t('appSettings.uninstallModelFailed'));
+    } finally {
+      setTranscriptionModelPullControlsDisabled(false);
+    }
+  };
+
   loadModelsBtn.addEventListener('click', () => loadModels('llm', loadModelsBtn));
   checkModelStatusBtn?.addEventListener('click', () => loadModels('llm', checkModelStatusBtn));
   loadTranscriptionModelsBtn.addEventListener('click', () => loadModels('transcription'));
+  checkTranscriptionModelStatusBtn?.addEventListener('click', () => loadModels('transcription', checkTranscriptionModelStatusBtn));
 
   providerSelect.addEventListener('change', () => {
     restoreModelForProvider();
     updateBaseUrlUi();
     updateModelManagerVisibility();
+  });
+
+  transcriptionProviderSelect.addEventListener('change', () => {
+    restoreTranscriptionModelForProvider();
+    updateTranscriptionModelManagerVisibility();
   });
 
   form.addEventListener('submit', async (event) => {
@@ -873,19 +1316,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveTranscriptionBtn.textContent = t('appSettings.saving');
 
     try {
-      await saveSettingOrThrow('transcription.provider', transcriptionProviderSelect.value);
-      await saveSettingOrThrow('transcription.model', (transcriptionModelValue.value || transcriptionModelInput.value).trim());
-      await saveSettingOrThrow('transcription.maxFileSizeMB', transcriptionMaxFileSizeInput.value.trim());
+      const selectedTranscriptionModel = (transcriptionModelValue.value || transcriptionModelInput.value).trim();
+      await applySelectedTranscriptionModel(selectedTranscriptionModel);
 
       notifyModelChange(
         t('appSettings.activeTranscriptionModelNotification', {
           provider: transcriptionProviderSelect.options[transcriptionProviderSelect.selectedIndex]?.textContent || transcriptionProviderSelect.value,
-          model: (transcriptionModelValue.value || transcriptionModelInput.value).trim(),
+          model: selectedTranscriptionModel,
         }),
       );
     } catch (err) {
       console.error(err);
-      notifyModelChange(t('appSettings.settingsSaveFailed'), 'error');
+      notifyModelChange(err.message || t('appSettings.settingsSaveFailed'), 'error');
     } finally {
       saveTranscriptionBtn.disabled = false;
       saveTranscriptionBtn.textContent = originalText;
@@ -912,7 +1354,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     currentSettings = await settingsRes.json();
     try {
-      await loadCatalog();
+      await Promise.all([loadCatalog(), loadTranscriptionCatalog()]);
     } catch (catalogError) {
       console.error(catalogError);
       showMessage('error', catalogError.message || t('appSettings.modelCatalogLoadFailed'));
@@ -930,24 +1372,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateBaseUrlUi();
     updateModelManagerVisibility();
 
-    if (currentSettings['transcription.provider']) {
+    if (currentSettings['transcription.provider'] === 'ollama') {
+      transcriptionProviderSelect.value = 'openai';
+      showUnsupportedOllamaTranscriptionWarning();
+    } else if (currentSettings['transcription.provider']) {
       transcriptionProviderSelect.value = currentSettings['transcription.provider'];
-    }
-
-    if (currentSettings['transcription.model']) {
-      allTranscriptionModels.push({ id: currentSettings['transcription.model'], name: currentSettings['transcription.model'] });
-      transcriptionModelInput.value = currentSettings['transcription.model'];
-      transcriptionModelValue.value = currentSettings['transcription.model'];
     }
 
     if (currentSettings['transcription.maxFileSizeMB']) {
       transcriptionMaxFileSizeInput.value = currentSettings['transcription.maxFileSizeMB'];
     }
 
+    restoreTranscriptionModelForProvider();
+    updateTranscriptionModelManagerVisibility();
+
     if (activePullJobId && providerSelect.value === 'ollama') {
       startModelPullPolling(activePullJobId, activePullModelId);
     } else {
       resetModelPullUi();
+    }
+
+    if (activeTranscriptionPullJobId && transcriptionProviderSelect.value === 'ollama') {
+      startTranscriptionModelPullPolling(activeTranscriptionPullJobId, activeTranscriptionPullModelId);
+    } else {
+      resetTranscriptionModelPullUi();
     }
   } catch (err) {
     console.error(err);
@@ -957,6 +1405,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('beforeunload', () => {
     if (pullPollTimeout) {
       clearTimeout(pullPollTimeout);
+    }
+    if (transcriptionPullPollTimeout) {
+      clearTimeout(transcriptionPullPollTimeout);
     }
   });
 

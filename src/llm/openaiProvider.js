@@ -4,6 +4,7 @@ const OpenAI = require('openai');
 const { toFile } = require('openai');
 const LlmProvider = require('./provider');
 const logger = require('../logging/logger');
+const { normalizeOllamaModelId } = require('../services/ollamaModelUtils');
 
 const OLLAMA_ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'host.docker.internal']);
 
@@ -66,6 +67,7 @@ class OpenAIProvider extends LlmProvider {
   constructor(config = {}) {
     super(config);
     const providerName = (config.provider || 'openai').toLowerCase();
+    this.providerName = providerName;
     const normalizedBaseURL = normalizeBaseURL(config.baseURL);
 
     if (providerName === 'ollama') {
@@ -229,8 +231,8 @@ class OpenAIProvider extends LlmProvider {
     try {
       const list = await this.client.models.list();
       return list.data.map((model) => ({
-        id: model.id,
-        name: model.id, // OpenAI models usually don't have separate display names
+        id: this.providerName === 'ollama' ? normalizeOllamaModelId(model.id) : model.id,
+        name: this.providerName === 'ollama' ? normalizeOllamaModelId(model.id) : model.id,
       }));
     } catch (err) {
       logger.error({ err }, 'Failed to list OpenAI models');
