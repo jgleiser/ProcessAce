@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: .
@@ -12,8 +10,8 @@ services:
       - MOCK_LLM=${MOCK_LLM}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - DISABLE_SQLITE_WAL=true
-      - OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1
-      - OLLAMA_PULL_HOST=http://ollama:11434
+      - OLLAMA_BASE_URL_DEFAULT=${OLLAMA_BASE_URL_DEFAULT:-http://ollama:11434/v1}
+      - OLLAMA_PULL_HOST=${OLLAMA_PULL_HOST:-http://ollama:11434}
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data

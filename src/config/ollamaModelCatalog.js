@@ -14,6 +14,13 @@ const catalog = [
     recommended: true,
   },
   {
+    id: 'qwen3:4b',
+    label: 'Qwen 3 4B',
+    description: 'Compact reasoning model with strong multilingual output',
+    sizeLabel: '2.6 GB',
+    recommended: true,
+  },
+  {
     id: 'mistral',
     label: 'Mistral',
     description: 'Balanced reasoning and speed',

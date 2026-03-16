@@ -81,6 +81,27 @@ describe('OpenAIProvider Ollama validation', () => {
     assert.strictEqual(provider.config.apiKey, undefined);
   });
 
+  it('should allow the Docker Compose Ollama service host when configured by env', () => {
+    const previousDefaultBaseUrl = process.env.OLLAMA_BASE_URL_DEFAULT;
+    process.env.OLLAMA_BASE_URL_DEFAULT = 'http://ollama:11434/v1';
+
+    try {
+      const provider = new OpenAIProvider({
+        provider: 'ollama',
+        baseURL: 'http://ollama:11434/v1',
+        model: 'llama3.2',
+      });
+
+      assert.strictEqual(provider.config.baseURL, 'http://ollama:11434/v1');
+    } finally {
+      if (previousDefaultBaseUrl === undefined) {
+        delete process.env.OLLAMA_BASE_URL_DEFAULT;
+      } else {
+        process.env.OLLAMA_BASE_URL_DEFAULT = previousDefaultBaseUrl;
+      }
+    }
+  });
+
   it('should reject non-local Ollama URLs', () => {
     assert.throws(
       () =>

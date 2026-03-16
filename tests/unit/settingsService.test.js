@@ -49,6 +49,25 @@ describe('SettingsService', () => {
       assert.ok(settings['llm.provider'], 'Should have default provider');
       assert.ok(settings['llm.model'], 'Should have default model');
     });
+
+    it('should prefer OLLAMA_BASE_URL_DEFAULT over a saved Ollama URL', () => {
+      const previousBaseUrl = process.env.OLLAMA_BASE_URL_DEFAULT;
+
+      try {
+        process.env.OLLAMA_BASE_URL_DEFAULT = 'http://host.docker.internal:11434/v1';
+        settingsService.updateSetting('ollama.baseUrl', 'http://ollama:11434/v1');
+
+        const settings = settingsService.getSettings();
+        assert.strictEqual(settings['ollama.baseUrl'], 'http://host.docker.internal:11434/v1');
+      } finally {
+        if (previousBaseUrl === undefined) {
+          delete process.env.OLLAMA_BASE_URL_DEFAULT;
+        } else {
+          process.env.OLLAMA_BASE_URL_DEFAULT = previousBaseUrl;
+        }
+        settingsService.deleteSetting('ollama.baseUrl');
+      }
+    });
   });
 
   // --- updateSetting ---
@@ -138,6 +157,27 @@ describe('SettingsService', () => {
       assert.strictEqual(config.model, 'llama3.2');
       assert.strictEqual(config.apiKey, null);
       assert.strictEqual(config.baseUrl, 'http://localhost:11434/v1');
+    });
+
+    it('should prefer OLLAMA_BASE_URL_DEFAULT for Ollama runtime config when present', () => {
+      const previousBaseUrl = process.env.OLLAMA_BASE_URL_DEFAULT;
+
+      try {
+        process.env.OLLAMA_BASE_URL_DEFAULT = 'http://host.docker.internal:11434/v1';
+        settingsService.updateSetting('llm.provider', 'ollama');
+        settingsService.updateSetting('llm.model', 'phi3:mini');
+        settingsService.updateSetting('ollama.baseUrl', 'http://ollama:11434/v1');
+
+        const config = settingsService.getLLMConfig();
+        assert.strictEqual(config.baseUrl, 'http://host.docker.internal:11434/v1');
+      } finally {
+        if (previousBaseUrl === undefined) {
+          delete process.env.OLLAMA_BASE_URL_DEFAULT;
+        } else {
+          process.env.OLLAMA_BASE_URL_DEFAULT = previousBaseUrl;
+        }
+        settingsService.deleteSetting('ollama.baseUrl');
+      }
     });
 
     it('should prefer openai.baseUrl over legacy llm.baseUrl when present', () => {

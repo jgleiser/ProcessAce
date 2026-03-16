@@ -4,6 +4,7 @@ const settingsService = require('../services/settingsService');
 const { getJob } = require('../models/job');
 const logger = require('../logging/logger');
 const { getLlmProvider } = require('../llm');
+const { deleteModel, listInstalledModels } = require('../services/ollamaService');
 const { modelQueue } = require('../services/queueInstance');
 
 const router = express.Router();
@@ -105,7 +106,7 @@ router.get('/llm/catalog', requireAdmin, (_req, res) => {
 
 router.post('/llm/pull', requireAdmin, async (req, res) => {
   try {
-    const { modelName } = req.body;
+    const { modelName, baseUrl } = req.body;
     const model = ollamaModelCatalog.find((entry) => entry.id === modelName);
 
     if (!model) {
@@ -114,7 +115,7 @@ router.post('/llm/pull', requireAdmin, async (req, res) => {
 
     const job = await modelQueue.add(
       'model_pull',
-      { modelName: model.id },
+      { modelName: model.id, baseUrl },
       {
         userId: req.user.id,
       },
@@ -124,6 +125,29 @@ router.post('/llm/pull', requireAdmin, async (req, res) => {
   } catch (error) {
     logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to initiate model pull');
     res.status(500).json({ error: 'Failed to initiate download job' });
+  }
+});
+
+router.delete('/llm/model', requireAdmin, async (req, res) => {
+  try {
+    const { modelName, baseUrl } = req.body;
+    const model = ollamaModelCatalog.find((entry) => entry.id === modelName);
+
+    if (!model) {
+      return res.status(400).json({ error: 'Model not supported or unauthorized.' });
+    }
+
+    await deleteModel(model.id, baseUrl);
+    const installedModels = await listInstalledModels(baseUrl);
+
+    res.json({
+      success: true,
+      modelName: model.id,
+      installedModels,
+    });
+  } catch (error) {
+    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to delete Ollama model');
+    res.status(500).json({ error: error.message || 'Failed to delete Ollama model' });
   }
 });
 

@@ -1,9 +1,9 @@
-/* global showConfirmModal */
+/* global showConfirmModal, showToast */
 document.addEventListener('DOMContentLoaded', async () => {
   const t = window.i18n ? window.i18n.t : (key) => key;
-  const DEFAULT_OLLAMA_URL = 'http://localhost:11434/v1';
+  const DEFAULT_OLLAMA_URL = 'http://ollama:11434/v1';
   const ACTIVE_PULL_JOB_STORAGE_KEY = 'ollamaModelPullJobId';
-  const OLLAMA_DEFAULT_MODEL = 'llama3.2';
+  const ACTIVE_PULL_MODEL_STORAGE_KEY = 'ollamaModelPullModelId';
 
   const keyManagedProviders = ['openai', 'google', 'anthropic'];
   const generationProviders = [...keyManagedProviders, 'ollama'];
@@ -26,10 +26,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modelInput = document.getElementById('modelInput');
   const modelValue = document.getElementById('modelValue');
   const loadModelsBtn = document.getElementById('loadModelsBtn');
+  const checkModelStatusBtn = document.getElementById('checkModelStatusBtn');
 
   const localModelManagerCard = document.getElementById('localModelManagerCard');
-  const modelDownloadSelect = document.getElementById('modelDownloadSelect');
-  const btnDownloadModel = document.getElementById('btnDownloadModel');
+  const modelCatalogSummary = document.getElementById('modelCatalogSummary');
+  const modelCatalogList = document.getElementById('modelCatalogList');
   const downloadProgressContainer = document.getElementById('downloadProgressContainer');
   const modelDownloadStatus = document.getElementById('modelDownloadStatus');
   const modelDownloadProgressBar = document.getElementById('modelDownloadProgressBar');
@@ -49,13 +50,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   let allModels = [];
   let allTranscriptionModels = [];
   let ollamaModelCatalog = [];
+  let ollamaInstalledModelIds = new Set();
+  let ollamaStatusResolved = false;
+  let isCatalogActionPending = false;
   let pullPollTimeout = null;
   let activePullJobId = sessionStorage.getItem(ACTIVE_PULL_JOB_STORAGE_KEY);
+  let activePullModelId = sessionStorage.getItem(ACTIVE_PULL_MODEL_STORAGE_KEY);
 
   const showMessage = (type, text) => {
     const maxLength = 180;
     const displayText = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-    messageContainer.innerHTML = `<div class="settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}">${displayText}</div>`;
+    const message = document.createElement('div');
+    const messageText = document.createElement('div');
+    const dismissButton = document.createElement('button');
+
+    message.className = `settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}`;
+    messageText.className = 'settings-message-content';
+    messageText.textContent = displayText;
+
+    dismissButton.type = 'button';
+    dismissButton.className = 'notification-dismiss';
+    dismissButton.setAttribute('aria-label', t('common.close'));
+    dismissButton.innerHTML = '&times;';
+    dismissButton.addEventListener('click', () => message.remove());
+
+    message.append(messageText, dismissButton);
+    messageContainer.innerHTML = '';
+    messageContainer.appendChild(message);
+
+    if (typeof showToast === 'function') {
+      showToast(text, type === 'error' ? 'error' : 'success');
+    }
+  };
+
+  const notifyModelChange = (message, type = 'success') => {
+    showMessage(type === 'error' ? 'error' : 'success', message);
+  };
+
+  const saveSettingOrThrow = async (key, value) => {
+    const response = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value }),
+    });
+
+    if (!response.ok) {
+      throw new Error(t('appSettings.settingsSaveFailed'));
+    }
   };
 
   const setActivePullJobId = (jobId) => {
@@ -66,6 +107,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       sessionStorage.removeItem(ACTIVE_PULL_JOB_STORAGE_KEY);
     }
   };
+
+  const setActivePullModelId = (modelId) => {
+    activePullModelId = modelId;
+    if (modelId) {
+      sessionStorage.setItem(ACTIVE_PULL_MODEL_STORAGE_KEY, modelId);
+    } else {
+      sessionStorage.removeItem(ACTIVE_PULL_MODEL_STORAGE_KEY);
+    }
+  };
+
+  const getActiveOllamaBaseUrl = () => baseUrlInput.value.trim() || getStoredBaseUrl('ollama');
 
   const getStoredBaseUrl = (provider, settings = currentSettings) => {
     if (provider === 'ollama') {
@@ -330,8 +382,149 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const setModelPullControlsDisabled = (disabled) => {
-    modelDownloadSelect.disabled = disabled;
-    btnDownloadModel.disabled = disabled || !modelDownloadSelect.value;
+    isCatalogActionPending = disabled;
+    renderModelCatalog();
+  };
+
+  const syncInstalledOllamaModels = (models = []) => {
+    ollamaInstalledModelIds = new Set(models.map((model) => model.id));
+    ollamaStatusResolved = true;
+  };
+
+  const upsertModelOption = (modelId) => {
+    if (!allModels.some((model) => model.id === modelId)) {
+      allModels.push({ id: modelId, name: modelId });
+    }
+  };
+
+  const applySelectedLlmModel = async (selectedModel, options = {}) => {
+    const provider = options.provider || providerSelect.value;
+    const isOllama = provider === 'ollama';
+    const modelToSave = (selectedModel || '').trim();
+
+    if (!provider) {
+      throw new Error(t('appSettings.selectDefaultProvider'));
+    }
+
+    if (isOllama && !modelToSave) {
+      throw new Error(t('appSettings.selectOllamaModelFirst'));
+    }
+
+    await saveSettingOrThrow('llm.provider', provider);
+    await saveSettingOrThrow('llm.model', modelToSave);
+
+    if (isOllama) {
+      const nextOllamaUrl = baseUrlInput.value.trim() || getStoredBaseUrl('ollama');
+      await saveSettingOrThrow('ollama.baseUrl', nextOllamaUrl);
+      currentSettings['ollama.baseUrl'] = nextOllamaUrl;
+    } else if (provider === 'openai') {
+      const nextOpenAiUrl = baseUrlInput.value.trim();
+      await saveSettingOrThrow('openai.baseUrl', nextOpenAiUrl);
+      currentSettings['openai.baseUrl'] = nextOpenAiUrl;
+    }
+
+    currentSettings['llm.provider'] = provider;
+    currentSettings['llm.model'] = modelToSave;
+    providerSelect.value = provider;
+    modelInput.value = modelToSave;
+    modelValue.value = modelToSave;
+  };
+
+  const handleUseOllamaModel = async (modelId) => {
+    upsertModelOption(modelId);
+    modelInput.value = modelId;
+    modelValue.value = modelId;
+    llmCombobox.render('');
+
+    try {
+      await applySelectedLlmModel(modelId, { provider: 'ollama' });
+      const notificationMessage = t('appSettings.activeModelNotification', {
+        provider: t('appSettings.ollamaProvider'),
+        model: modelId,
+      });
+      notifyModelChange(notificationMessage);
+    } catch (err) {
+      console.error(err);
+      notifyModelChange(err.message || t('appSettings.settingsSaveFailed'), 'error');
+    }
+  };
+
+  const updateCatalogSummary = () => {
+    if (!ollamaStatusResolved) {
+      modelCatalogSummary.textContent = t('appSettings.modelCatalogSummary');
+      return;
+    }
+
+    const installedCount = ollamaInstalledModelIds.size;
+    modelCatalogSummary.textContent =
+      installedCount > 0 ? t('appSettings.modelCatalogInstalledSummary', { count: installedCount }) : t('appSettings.noInstalledOllamaModels');
+  };
+
+  const renderModelCatalog = () => {
+    modelCatalogList.innerHTML = '';
+    updateCatalogSummary();
+
+    if (ollamaModelCatalog.length === 0) {
+      modelCatalogList.innerHTML = `<div class="text-muted">${t('appSettings.modelCatalogLoadFailed')}</div>`;
+      return;
+    }
+
+    ollamaModelCatalog.forEach((model) => {
+      const installed = ollamaInstalledModelIds.has(model.id);
+      const badgeText = installed
+        ? t('appSettings.modelStatusInstalled')
+        : ollamaStatusResolved
+          ? t('appSettings.modelStatusAvailable')
+          : t('appSettings.modelStatusUnknown');
+
+      const card = document.createElement('div');
+      card.className = 'ollama-model-card';
+      card.innerHTML = `
+        <div class="ollama-model-header">
+          <div>
+            <h3 class="ollama-model-title">${model.label}</h3>
+            <div class="ollama-model-meta">
+              <span>${model.id}</span>
+              <span>${model.sizeLabel}</span>
+            </div>
+          </div>
+          <span class="ollama-model-badge ${installed ? 'is-installed' : 'is-available'}">${badgeText}</span>
+        </div>
+        <p class="ollama-model-description">${model.description}</p>
+        <div class="ollama-model-actions"></div>
+      `;
+
+      const actions = card.querySelector('.ollama-model-actions');
+
+      if (installed) {
+        const useButton = document.createElement('button');
+        useButton.type = 'button';
+        useButton.className = 'btn-secondary btn-sm';
+        useButton.textContent = t('appSettings.useModelBtn');
+        useButton.disabled = isCatalogActionPending;
+        useButton.addEventListener('click', () => handleUseOllamaModel(model.id));
+        actions.appendChild(useButton);
+
+        const uninstallButton = document.createElement('button');
+        uninstallButton.type = 'button';
+        uninstallButton.className = 'btn-danger btn-sm';
+        uninstallButton.textContent = t('appSettings.uninstallModelBtn');
+        uninstallButton.disabled = isCatalogActionPending;
+        uninstallButton.addEventListener('click', () => uninstallOllamaModel(model.id));
+        actions.appendChild(uninstallButton);
+      } else {
+        const downloadButton = document.createElement('button');
+        downloadButton.type = 'button';
+        downloadButton.className = 'btn-primary btn-sm';
+        downloadButton.textContent =
+          isCatalogActionPending && activePullModelId === model.id ? t('appSettings.modelPullInProgress') : t('appSettings.downloadInstallBtn');
+        downloadButton.disabled = isCatalogActionPending;
+        downloadButton.addEventListener('click', () => downloadOllamaModel(model.id));
+        actions.appendChild(downloadButton);
+      }
+
+      modelCatalogList.appendChild(card);
+    });
   };
 
   const updateModelManagerVisibility = () => {
@@ -378,38 +571,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     modelValue.value = '';
     llmCombobox.render('');
 
-    if (currentSettings['llm.provider'] === providerSelect.value && currentSettings['llm.model']) {
+    if (
+      currentSettings['llm.provider'] === providerSelect.value &&
+      currentSettings['llm.model'] &&
+      (providerSelect.value !== 'ollama' || ollamaInstalledModelIds.has(currentSettings['llm.model']))
+    ) {
       allModels.push({ id: currentSettings['llm.model'], name: currentSettings['llm.model'] });
       modelInput.value = currentSettings['llm.model'];
       modelValue.value = currentSettings['llm.model'];
-      return;
     }
-
-    if (providerSelect.value === 'ollama') {
-      allModels.push({ id: OLLAMA_DEFAULT_MODEL, name: OLLAMA_DEFAULT_MODEL });
-      modelInput.value = OLLAMA_DEFAULT_MODEL;
-      modelValue.value = OLLAMA_DEFAULT_MODEL;
-    }
-  };
-
-  const renderModelCatalog = () => {
-    modelDownloadSelect.innerHTML = '';
-
-    const placeholderOption = document.createElement('option');
-    placeholderOption.value = '';
-    placeholderOption.disabled = true;
-    placeholderOption.selected = true;
-    placeholderOption.textContent = t('appSettings.selectModelToInstall');
-    modelDownloadSelect.appendChild(placeholderOption);
-
-    ollamaModelCatalog.forEach((model) => {
-      const option = document.createElement('option');
-      option.value = model.id;
-      option.textContent = `${model.label} (${model.sizeLabel})`;
-      modelDownloadSelect.appendChild(option);
-    });
-
-    btnDownloadModel.disabled = true;
   };
 
   const loadCatalog = async () => {
@@ -423,10 +593,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderModelCatalog();
   };
 
-  const loadModels = async (type = 'llm') => {
+  const loadModels = async (type = 'llm', triggerButton = null) => {
     const isLlm = type === 'llm';
     const provider = isLlm ? providerSelect.value : transcriptionProviderSelect.value;
-    const btn = isLlm ? loadModelsBtn : loadTranscriptionModelsBtn;
+    const btn = triggerButton || (isLlm ? loadModelsBtn : loadTranscriptionModelsBtn);
     const baseUrl = isLlm && (provider === 'openai' || provider === 'ollama') ? baseUrlInput.value.trim() : '';
 
     if (!provider) {
@@ -455,6 +625,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (data.models && data.models.length > 0) {
         if (isLlm) {
           allModels = data.models.map((model) => ({ id: model.id, name: model.name || model.id }));
+          if (provider === 'ollama') {
+            syncInstalledOllamaModels(allModels);
+            if (
+              currentSettings['llm.provider'] === 'ollama' &&
+              currentSettings['llm.model'] &&
+              ollamaInstalledModelIds.has(currentSettings['llm.model']) &&
+              !modelValue.value
+            ) {
+              modelInput.value = currentSettings['llm.model'];
+              modelValue.value = currentSettings['llm.model'];
+            }
+            renderModelCatalog();
+          }
           llmCombobox.render('');
           showMessage('success', t('appSettings.modelsLoadedSuccess', { count: data.models.length }));
         } else {
@@ -471,7 +654,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           showMessage('success', t('appSettings.modelsLoadedSuccess', { count: allTranscriptionModels.length }));
         }
       } else {
-        showMessage('error', t('appSettings.noModelsForProvider'));
+        if (isLlm && provider === 'ollama') {
+          allModels = [];
+          syncInstalledOllamaModels([]);
+          renderModelCatalog();
+          llmCombobox.render('');
+          showMessage('success', t('appSettings.noInstalledOllamaModels'));
+        } else {
+          showMessage('error', t('appSettings.noModelsForProvider'));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -501,6 +692,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         modelDownloadStatus.textContent = t('appSettings.modelPullComplete');
         modelDownloadProgressBar.classList.add('is-complete');
         setActivePullJobId(null);
+        setActivePullModelId(null);
         setModelPullControlsDisabled(false);
         await loadModels('llm');
         return;
@@ -510,6 +702,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         modelDownloadStatus.textContent = data.error || t('appSettings.modelPullFailed');
         modelDownloadProgressBar.classList.add('is-error');
         setActivePullJobId(null);
+        setActivePullModelId(null);
         setModelPullControlsDisabled(false);
         return;
       }
@@ -522,11 +715,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       modelDownloadStatus.textContent = err.message || t('appSettings.modelPullStatusFailed');
       modelDownloadProgressBar.classList.add('is-error');
       setActivePullJobId(null);
+      setActivePullModelId(null);
       setModelPullControlsDisabled(false);
     }
   };
 
-  const startModelPullPolling = (jobId) => {
+  const startModelPullPolling = (jobId, modelId = activePullModelId) => {
     if (pullPollTimeout) {
       clearTimeout(pullPollTimeout);
       pullPollTimeout = null;
@@ -539,29 +733,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     modelDownloadProgressBar.textContent = '0%';
     modelDownloadProgressBar.setAttribute('aria-valuenow', '0');
     setActivePullJobId(jobId);
+    setActivePullModelId(modelId);
     setModelPullControlsDisabled(true);
     pollModelPullJob(jobId);
   };
 
-  loadModelsBtn.addEventListener('click', () => loadModels('llm'));
-  loadTranscriptionModelsBtn.addEventListener('click', () => loadModels('transcription'));
-
-  providerSelect.addEventListener('change', () => {
-    restoreModelForProvider();
-    updateBaseUrlUi();
-    updateModelManagerVisibility();
-  });
-
-  modelDownloadSelect.addEventListener('change', () => {
-    btnDownloadModel.disabled = !modelDownloadSelect.value;
-  });
-
-  btnDownloadModel.addEventListener('click', async (event) => {
-    event.preventDefault();
-    if (!modelDownloadSelect.value) {
-      return;
-    }
-
+  const downloadOllamaModel = async (modelId) => {
     try {
       setModelPullControlsDisabled(true);
       modelDownloadStatus.textContent = t('appSettings.modelPullStarting');
@@ -570,7 +747,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const res = await fetch('/api/settings/llm/pull', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modelName: modelDownloadSelect.value }),
+        body: JSON.stringify({ modelName: modelId, baseUrl: getActiveOllamaBaseUrl() }),
       });
       const data = await res.json();
 
@@ -578,63 +755,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(data.error || t('appSettings.modelPullFailed'));
       }
 
-      startModelPullPolling(data.jobId);
+      startModelPullPolling(data.jobId, modelId);
     } catch (err) {
       console.error(err);
       modelDownloadStatus.textContent = err.message || t('appSettings.modelPullFailed');
       modelDownloadProgressBar.classList.add('is-error');
+      setActivePullModelId(null);
       setModelPullControlsDisabled(false);
     }
+  };
+
+  const uninstallOllamaModel = async (modelId) => {
+    if (!(await showConfirmModal(t('appSettings.uninstallModelConfirm', { model: modelId })))) {
+      return;
+    }
+
+    try {
+      setModelPullControlsDisabled(true);
+      const res = await fetch('/api/settings/llm/model', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelName: modelId, baseUrl: getActiveOllamaBaseUrl() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || t('appSettings.uninstallModelFailed'));
+      }
+
+      allModels = Array.isArray(data.installedModels) ? data.installedModels.map((model) => ({ id: model.id, name: model.name || model.id })) : [];
+      syncInstalledOllamaModels(allModels);
+      renderModelCatalog();
+      llmCombobox.render('');
+
+      if (modelValue.value === modelId) {
+        modelInput.value = '';
+        modelValue.value = '';
+      }
+
+      showMessage('success', t('appSettings.uninstallModelSuccess', { model: modelId }));
+    } catch (err) {
+      console.error(err);
+      showMessage('error', err.message || t('appSettings.uninstallModelFailed'));
+    } finally {
+      setModelPullControlsDisabled(false);
+    }
+  };
+
+  loadModelsBtn.addEventListener('click', () => loadModels('llm', loadModelsBtn));
+  checkModelStatusBtn?.addEventListener('click', () => loadModels('llm', checkModelStatusBtn));
+  loadTranscriptionModelsBtn.addEventListener('click', () => loadModels('transcription'));
+
+  providerSelect.addEventListener('change', () => {
+    restoreModelForProvider();
+    updateBaseUrlUi();
+    updateModelManagerVisibility();
   });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    if (!providerSelect.value) {
-      showMessage('error', t('appSettings.selectDefaultProvider'));
-      return;
-    }
-
     saveBtn.disabled = true;
     saveBtn.textContent = t('appSettings.saving');
 
     try {
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'llm.provider', value: providerSelect.value }),
-      });
-
       const selectedModel = (modelValue.value || modelInput.value || '').trim();
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'llm.model', value: selectedModel || (providerSelect.value === 'ollama' ? OLLAMA_DEFAULT_MODEL : '') }),
-      });
-
-      if (providerSelect.value === 'ollama') {
-        const nextOllamaUrl = baseUrlInput.value.trim() || getStoredBaseUrl('ollama');
-        await fetch('/api/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'ollama.baseUrl', value: nextOllamaUrl }),
-        });
-        currentSettings['ollama.baseUrl'] = nextOllamaUrl;
-      } else if (providerSelect.value === 'openai') {
-        await fetch('/api/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'openai.baseUrl', value: baseUrlInput.value.trim() }),
-        });
-        currentSettings['openai.baseUrl'] = baseUrlInput.value.trim();
-      }
-
-      currentSettings['llm.provider'] = providerSelect.value;
-      currentSettings['llm.model'] = selectedModel || (providerSelect.value === 'ollama' ? OLLAMA_DEFAULT_MODEL : '');
-      showMessage('success', t('appSettings.settingsSaved'));
+      await applySelectedLlmModel(selectedModel);
+      notifyModelChange(
+        t('appSettings.activeModelNotification', {
+          provider: providerSelect.options[providerSelect.selectedIndex]?.textContent || providerSelect.value,
+          model: selectedModel,
+        }),
+      );
     } catch (err) {
       console.error(err);
-      showMessage('error', t('appSettings.settingsSaveFailed'));
+      notifyModelChange(err.message || t('appSettings.settingsSaveFailed'), 'error');
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = t('appSettings.saveDefaultModel');
@@ -649,31 +844,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveTranscriptionBtn.textContent = t('appSettings.saving');
 
     try {
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'transcription.provider', value: transcriptionProviderSelect.value }),
-      });
+      await saveSettingOrThrow('transcription.provider', transcriptionProviderSelect.value);
+      await saveSettingOrThrow('transcription.model', (transcriptionModelValue.value || transcriptionModelInput.value).trim());
+      await saveSettingOrThrow('transcription.maxFileSizeMB', transcriptionMaxFileSizeInput.value.trim());
 
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: 'transcription.model',
-          value: (transcriptionModelValue.value || transcriptionModelInput.value).trim(),
+      notifyModelChange(
+        t('appSettings.activeTranscriptionModelNotification', {
+          provider: transcriptionProviderSelect.options[transcriptionProviderSelect.selectedIndex]?.textContent || transcriptionProviderSelect.value,
+          model: (transcriptionModelValue.value || transcriptionModelInput.value).trim(),
         }),
-      });
-
-      await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'transcription.maxFileSizeMB', value: transcriptionMaxFileSizeInput.value.trim() }),
-      });
-
-      showMessage('success', t('appSettings.settingsSaved'));
+      );
     } catch (err) {
       console.error(err);
-      showMessage('error', t('appSettings.settingsSaveFailed'));
+      notifyModelChange(t('appSettings.settingsSaveFailed'), 'error');
     } finally {
       saveTranscriptionBtn.disabled = false;
       saveTranscriptionBtn.textContent = originalText;
@@ -693,13 +876,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const [settingsRes, catalogLoad] = await Promise.all([fetch('/api/settings'), loadCatalog()]);
+    const settingsRes = await fetch('/api/settings');
     if (!settingsRes.ok) {
       throw new Error(t('appSettings.loadSettingsFailed'));
     }
 
     currentSettings = await settingsRes.json();
-    await catalogLoad;
+    try {
+      await loadCatalog();
+    } catch (catalogError) {
+      console.error(catalogError);
+      showMessage('error', catalogError.message || t('appSettings.modelCatalogLoadFailed'));
+    }
 
     keyManagedProviders.forEach((provider) => {
       showApiKeyConfigured(provider, currentSettings[`${provider}.apiKey`] === '********');
@@ -728,7 +916,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (activePullJobId && providerSelect.value === 'ollama') {
-      startModelPullPolling(activePullJobId);
+      startModelPullPolling(activePullJobId, activePullModelId);
     } else {
       resetModelPullUi();
     }

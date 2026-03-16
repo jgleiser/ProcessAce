@@ -16,6 +16,29 @@ const normalizeBaseURL = (value) => {
   return trimmed === '' ? undefined : trimmed;
 };
 
+const getConfiguredOllamaHosts = () => {
+  const configuredHosts = new Set(OLLAMA_ALLOWED_HOSTS);
+  const configuredUrls = [process.env.OLLAMA_BASE_URL_DEFAULT, process.env.OLLAMA_PULL_HOST];
+
+  configuredUrls.forEach((value) => {
+    const normalizedValue = normalizeBaseURL(value);
+    if (!normalizedValue) {
+      return;
+    }
+
+    try {
+      const parsed = new URL(normalizedValue);
+      if (parsed.protocol === 'http:' && !parsed.username && !parsed.password) {
+        configuredHosts.add(parsed.hostname);
+      }
+    } catch {
+      logger.warn({ value: normalizedValue }, 'Ignoring invalid configured Ollama host');
+    }
+  });
+
+  return configuredHosts;
+};
+
 const validateOllamaBaseURL = (baseURL) => {
   let parsed;
   try {
@@ -32,7 +55,7 @@ const validateOllamaBaseURL = (baseURL) => {
     throw new Error('Invalid Ollama base URL. Embedded credentials are not allowed.');
   }
 
-  if (!OLLAMA_ALLOWED_HOSTS.has(parsed.hostname)) {
+  if (!getConfiguredOllamaHosts().has(parsed.hostname)) {
     throw new Error('Invalid Ollama base URL. Only approved local hosts are allowed.');
   }
 

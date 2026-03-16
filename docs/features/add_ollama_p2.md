@@ -51,8 +51,8 @@ services:
       - MOCK_LLM=${MOCK_LLM}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - DISABLE_SQLITE_WAL=true
-      - OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1
-      - OLLAMA_PULL_HOST=http://ollama:11434
+      - OLLAMA_BASE_URL_DEFAULT=${OLLAMA_BASE_URL_DEFAULT:-http://ollama:11434/v1}
+      - OLLAMA_PULL_HOST=${OLLAMA_PULL_HOST:-http://ollama:11434}
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
@@ -99,8 +99,11 @@ This keeps local installs, host-based Ollama setups, and bundled Docker deployme
 
 Document GPU acceleration as optional deployment guidance only.
 
-- Do not make GPU reservation blocks mandatory in Compose.
-- Mention NVIDIA passthrough as a documented opt-in for users who need it.
+- Keep the base `docker-compose.yml` CPU-safe and portable.
+- Add a Linux-only AMD override file such as `docker-compose.ollama-amd.yml`.
+- In that override, switch the Ollama image to `ollama/ollama:rocm` and pass through `/dev/kfd` and `/dev/dri`.
+- Document Windows + AMD as a host-Ollama fallback using `host.docker.internal`, not as bundled Docker GPU passthrough.
+- Do not make GPU reservation or device passthrough blocks mandatory in the default Compose file.
 
 ---
 
@@ -459,7 +462,7 @@ Add frontend-focused validation for:
 
 1. Run `docker-compose up -d`.
 2. Confirm `app`, `redis`, and `ollama` containers start successfully.
-3. Confirm `OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1` and `OLLAMA_PULL_HOST=http://ollama:11434` are present in the app container.
+3. Confirm `OLLAMA_BASE_URL_DEFAULT` and `OLLAMA_PULL_HOST` resolve to the expected Ollama endpoint for the selected deployment mode.
 4. Open `/app-settings.html` as an admin and select `Ollama (Local)`.
 5. Confirm the model-manager card appears and loads the curated catalog.
 6. Start a small pull such as `phi3:mini`.

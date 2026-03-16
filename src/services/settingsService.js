@@ -22,6 +22,10 @@ class SettingsService {
     }
   }
 
+  getConfiguredOllamaBaseUrl() {
+    return this.normalizeValue(process.env.OLLAMA_BASE_URL_DEFAULT);
+  }
+
   encrypt(text) {
     if (!ENCRYPTION_KEY) return text;
     try {
@@ -70,6 +74,12 @@ class SettingsService {
         }
         settings[row.key] = value;
       });
+
+      const configuredOllamaBaseUrl = this.getConfiguredOllamaBaseUrl();
+      if (configuredOllamaBaseUrl) {
+        settings['ollama.baseUrl'] = configuredOllamaBaseUrl;
+      }
+
       return settings;
     } catch (error) {
       logger.error({ err: error }, 'Failed to get settings');
@@ -126,7 +136,9 @@ class SettingsService {
 
   getProviderBaseUrl(provider) {
     if (provider === 'ollama') {
-      return this.normalizeValue(this.getEncryptedSetting('ollama.baseUrl')) || this.defaultSettings['ollama.baseUrl'];
+      return (
+        this.getConfiguredOllamaBaseUrl() || this.normalizeValue(this.getEncryptedSetting('ollama.baseUrl')) || this.defaultSettings['ollama.baseUrl']
+      );
     }
 
     if (provider === 'openai') {

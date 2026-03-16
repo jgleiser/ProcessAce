@@ -1,3 +1,4 @@
+/* global showToast */
 document.addEventListener('DOMContentLoaded', async () => {
   const t = window.i18n ? window.i18n.t : (k) => k;
   const form = document.getElementById('userSettingsForm');
@@ -9,7 +10,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   const messageContainer = document.getElementById('messageContainer');
 
   function showMessage(type, text) {
-    messageContainer.innerHTML = `<div class="settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}">${text}</div>`;
+    const message = document.createElement('div');
+    const messageText = document.createElement('div');
+    const dismissButton = document.createElement('button');
+
+    message.className = `settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}`;
+    messageText.className = 'settings-message-content';
+    messageText.textContent = text;
+
+    dismissButton.type = 'button';
+    dismissButton.className = 'notification-dismiss';
+    dismissButton.setAttribute('aria-label', t('common.close'));
+    dismissButton.innerHTML = '&times;';
+    dismissButton.addEventListener('click', () => message.remove());
+
+    message.append(messageText, dismissButton);
+    messageContainer.innerHTML = '';
+    messageContainer.appendChild(message);
+
+    if (typeof showToast === 'function') {
+      showToast(text, type === 'error' ? 'error' : 'success');
+    }
   }
 
   // Load current user data

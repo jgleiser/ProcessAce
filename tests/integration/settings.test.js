@@ -82,6 +82,7 @@ describe('Settings API Integration Tests', () => {
     const res = await adminAgent.get('/api/settings/llm/catalog').expect(200);
     assert.ok(Array.isArray(res.body.models));
     assert.ok(res.body.models.length > 0);
+    assert.ok(res.body.models.some((model) => model.id === 'qwen3:4b'));
   });
 
   it('should enqueue a supported model pull for admins only', async () => {
@@ -125,5 +126,37 @@ describe('Settings API Integration Tests', () => {
 
     const jobsRes = await adminAgent.get('/api/jobs').expect(200);
     assert.ok(!jobsRes.body.some((job) => job.id === modelPullJob.id));
+  });
+
+  it('should delete a supported Ollama model for admins only', async () => {
+    originalFetch = global.fetch;
+    global.fetch = async (url, options = {}) => {
+      if (String(url).endsWith('/api/delete')) {
+        assert.strictEqual(options.method, 'DELETE');
+        return {
+          ok: true,
+          json: async () => ({}),
+          text: async () => '',
+        };
+      }
+
+      if (String(url).endsWith('/api/tags')) {
+        return {
+          ok: true,
+          json: async () => ({
+            models: [{ name: 'llama3.2', model: 'llama3.2' }],
+          }),
+          text: async () => '',
+        };
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    await editorAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3:mini' }).expect(403);
+
+    const res = await adminAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3:mini' }).expect(200);
+    assert.strictEqual(res.body.success, true);
+    assert.deepStrictEqual(res.body.installedModels, [{ id: 'llama3.2', name: 'llama3.2', size: null, modifiedAt: null }]);
   });
 });

@@ -1,4 +1,5 @@
 const logger = require('../logging/logger');
+const { buildOllamaApiUrl, resolveOllamaBaseUrl } = require('../services/ollamaService');
 
 const readOllamaEvents = async (stream, onEvent) => {
   const reader = stream.getReader();
@@ -32,14 +33,15 @@ const readOllamaEvents = async (stream, onEvent) => {
 };
 
 const processModelPull = async (job) => {
-  const { modelName } = job.data;
-  const ollamaHost = process.env.OLLAMA_PULL_HOST || 'http://localhost:11434';
+  const { modelName, baseUrl } = job.data;
+  const resolvedBaseUrl = resolveOllamaBaseUrl(baseUrl);
+  const pullUrl = buildOllamaApiUrl(resolvedBaseUrl, '/api/pull');
 
-  logger.info({ jobId: job.id, modelName, ollamaHost }, 'Starting Ollama model pull');
+  logger.info({ jobId: job.id, modelName, ollamaBaseUrl: resolvedBaseUrl }, 'Starting Ollama model pull');
   await job.reportProgress(0, 'initializing');
   let lastProgress = 0;
 
-  const response = await fetch(`${ollamaHost}/api/pull`, {
+  const response = await fetch(pullUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: modelName, stream: true }),
