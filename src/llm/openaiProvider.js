@@ -5,14 +5,58 @@ const { toFile } = require('openai');
 const LlmProvider = require('./provider');
 const logger = require('../logging/logger');
 
+const OLLAMA_ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'host.docker.internal']);
+
+const normalizeBaseURL = (value) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = String(value).trim();
+  return trimmed === '' ? undefined : trimmed;
+};
+
+const validateOllamaBaseURL = (baseURL) => {
+  let parsed;
+  try {
+    parsed = new URL(baseURL);
+  } catch {
+    throw new Error('Invalid Ollama base URL.');
+  }
+
+  if (parsed.protocol !== 'http:') {
+    throw new Error('Invalid Ollama base URL. Only http:// local URLs are allowed.');
+  }
+
+  if (parsed.username || parsed.password) {
+    throw new Error('Invalid Ollama base URL. Embedded credentials are not allowed.');
+  }
+
+  if (!OLLAMA_ALLOWED_HOSTS.has(parsed.hostname)) {
+    throw new Error('Invalid Ollama base URL. Only approved local hosts are allowed.');
+  }
+
+  return parsed.toString().replace(/\/$/, '');
+};
+
 class OpenAIProvider extends LlmProvider {
   constructor(config = {}) {
     super(config);
-    if (!config.apiKey) {
+    const providerName = (config.provider || 'openai').toLowerCase();
+    const normalizedBaseURL = normalizeBaseURL(config.baseURL);
+
+    if (providerName === 'ollama') {
+      config.baseURL = validateOllamaBaseURL(normalizedBaseURL || process.env.OLLAMA_BASE_URL_DEFAULT || 'http://localhost:11434/v1');
+    } else {
+      config.baseURL = normalizedBaseURL;
+    }
+
+    if (!config.apiKey && providerName !== 'ollama') {
       throw new Error('OpenAI API key is not configured. Please set it in App Settings.');
     }
+
     this.client = new OpenAI({
-      apiKey: config.apiKey,
+      apiKey: config.apiKey || 'ollama-local-placeholder',
       baseURL: config.baseURL, // Optional, for compatible endpoints like LocalAI
     });
     this.model = config.model || 'gpt-5-nano-2025-08-07';
@@ -173,3 +217,4 @@ class OpenAIProvider extends LlmProvider {
 }
 
 module.exports = OpenAIProvider;
+module.exports.validateOllamaBaseURL = validateOllamaBaseURL;

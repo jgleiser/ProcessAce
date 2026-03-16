@@ -68,3 +68,38 @@ describe('OpenAIProvider Transcription', () => {
     assert.strictEqual(result, 'Hello world');
   });
 });
+
+describe('OpenAIProvider Ollama validation', () => {
+  it('should allow Ollama local hosts without a real API key', () => {
+    const provider = new OpenAIProvider({
+      provider: 'ollama',
+      baseURL: 'http://localhost:11434/v1',
+      model: 'llama3.2',
+    });
+
+    assert.strictEqual(provider.config.baseURL, 'http://localhost:11434/v1');
+    assert.strictEqual(provider.config.apiKey, undefined);
+  });
+
+  it('should reject non-local Ollama URLs', () => {
+    assert.throws(
+      () =>
+        new OpenAIProvider({
+          provider: 'ollama',
+          baseURL: 'http://169.254.169.254/v1',
+        }),
+      /Invalid Ollama base URL/,
+    );
+  });
+
+  it('should reject credential-bearing Ollama URLs', () => {
+    assert.throws(
+      () =>
+        new OpenAIProvider({
+          provider: 'ollama',
+          baseURL: 'http://user:pass@localhost:11434/v1',
+        }),
+      /Embedded credentials are not allowed/,
+    );
+  });
+});

@@ -127,6 +127,27 @@ describe('SettingsService', () => {
       assert.strictEqual(config.apiKey, 'sk-test-config');
       assert.strictEqual(config.baseUrl, 'https://api.custom.com');
     });
+
+    it('should return provider-scoped Ollama config without an API key', () => {
+      settingsService.updateSetting('llm.provider', 'ollama');
+      settingsService.updateSetting('llm.model', 'llama3.2');
+      settingsService.updateSetting('ollama.baseUrl', 'http://localhost:11434/v1');
+
+      const config = settingsService.getLLMConfig();
+      assert.strictEqual(config.provider, 'ollama');
+      assert.strictEqual(config.model, 'llama3.2');
+      assert.strictEqual(config.apiKey, null);
+      assert.strictEqual(config.baseUrl, 'http://localhost:11434/v1');
+    });
+
+    it('should prefer openai.baseUrl over legacy llm.baseUrl when present', () => {
+      settingsService.updateSetting('llm.provider', 'openai');
+      settingsService.updateSetting('openai.baseUrl', 'https://scoped.example.com/v1');
+      settingsService.updateSetting('llm.baseUrl', 'https://legacy.example.com/v1');
+
+      const config = settingsService.getLLMConfig();
+      assert.strictEqual(config.baseUrl, 'https://scoped.example.com/v1');
+    });
   });
 
   // --- getTranscriptionConfig ---

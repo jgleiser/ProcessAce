@@ -12,11 +12,14 @@ services:
       - MOCK_LLM=${MOCK_LLM}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - DISABLE_SQLITE_WAL=true
+      - OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1
+      - OLLAMA_PULL_HOST=http://ollama:11434
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
     depends_on:
       - redis
+      - ollama
     healthcheck:
       test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/health']
       interval: 30s
@@ -33,5 +36,14 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
 volumes:
   redis_data:
+  ollama_data:

@@ -195,24 +195,24 @@
         <div class="card-content mt-4">
           <form id="appSettingsForm">
             <div class="form-group">
-              <label class="form-label" data-i18n="appSettings.configuredProvider">Configured Provider</label>
+              <label class="form-label" data-i18n="appSettings.llmProviderLabel">LLM Provider</label>
               <select id="providerSelect" class="form-select">
                 <option value="" data-i18n="appSettings.selectProvider">-- Select a Provider --</option>
                 <!-- Options populated dynamically -->
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" data-i18n="appSettings.baseUrlLabel">Base URL (Optional)</label>
+            <div class="form-group" id="baseUrlGroup">
+              <label class="form-label" id="baseUrlLabel" data-i18n="appSettings.baseUrlLabelOpenai">Base URL (OpenAI-Compatible, Optional)</label>
               <input
                 type="text"
                 id="baseUrlInput"
                 class="form-input"
-                data-i18n-placeholder="appSettings.baseUrlPlaceholder"
+                data-i18n-placeholder="appSettings.baseUrlPlaceholderOpenai"
                 placeholder="e.g., http://localhost:11434/v1 for Ollama"
               />
-              <small class="text-muted mt-1 block" data-i18n="appSettings.baseUrlHelp"
-                >Leave empty for default provider URLs. Use for local LLMs like Ollama or LocalAI.</small
+              <small class="text-muted mt-1 block" id="baseUrlHelp" data-i18n="appSettings.baseUrlHelpOpenai"
+                >Optional override for trusted OpenAI-compatible endpoints.</small
               >
             </div>
 
@@ -248,10 +248,66 @@
         </div>
       </div>
 
+      <!-- SECTION 3: Ollama Model Manager -->
+      <div class="card app-settings-card collapsed hidden" id="localModelManagerCard">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="appSettings.sectionOllamaTitle">3. Local Model Manager</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content mt-4">
+          <p class="text-muted mt-0" data-i18n="appSettings.modelManagerDescription">
+            Download recommended Ollama models directly from ProcessAce and refresh the available local model list when the pull completes.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="modelDownloadSelect" data-i18n="appSettings.modelManagerSelectLabel">Recommended Model</label>
+            <select id="modelDownloadSelect" class="form-select">
+              <option value="" disabled selected data-i18n="appSettings.selectModelToInstall">-- Select a Model to Install --</option>
+            </select>
+          </div>
+
+          <div class="text-right mt-4">
+            <button type="button" id="btnDownloadModel" class="btn-primary" disabled data-i18n="appSettings.downloadInstallBtn">
+              Download and Install
+            </button>
+          </div>
+
+          <div id="downloadProgressContainer" class="model-pull-progress hidden mt-4">
+            <div class="text-muted" id="modelDownloadStatus" data-i18n="appSettings.modelPullIdle">Select a model to begin the download.</div>
+            <div class="settings-progress-track mt-2" aria-hidden="true">
+              <div
+                id="modelDownloadProgressBar"
+                class="settings-progress-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                0%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION 3: Transcription Settings -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">
-          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">3. Transcription Settings</h2>
+          <h2 class="section-title mb-0" data-i18n="appSettings.section3Title">4. Transcription Settings</h2>
           <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
             <svg
               width="24"
@@ -320,7 +376,7 @@
       <!-- SECTION 4: Information -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">
-          <h2 class="section-title mb-0" data-i18n="appSettings.section4Title">4. Supported Models & Configuration Info</h2>
+          <h2 class="section-title mb-0" data-i18n="appSettings.section4Title">5. Supported Models & Configuration Info</h2>
           <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
             <svg
               width="24"
@@ -380,9 +436,8 @@
             <div class="mt-4">
               <h3 data-i18n="appSettings.localModelsTitle">Local / Custom Models (Ollama, LocalAI, etc.)</h3>
               <p class="text-muted mt-2" data-i18n="appSettings.localModelsDesc">
-                You can connect to a local or custom LLM by overriding the Base URL above. For instance, if you run Ollama locally, you can configure
-                a dummy API key for OpenAI, select OpenAI as the provider, and set the Base URL to
-                <code>http://localhost:11434/v1</code>.
+                Ollama is now available as a first-class provider in the selector above. OpenAI-compatible custom endpoints remain available through
+                the optional OpenAI base URL override when you need to connect to a trusted compatible server.
               </p>
             </div>
           </div>

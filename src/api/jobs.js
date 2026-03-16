@@ -55,48 +55,54 @@ router.get('/', async (req, res) => {
     }
 
     // Pre-calculate permissions for each job to helper frontend
-    const jobsWithPermissions = jobs.map((job) => {
-      let canEdit = false;
-      let canDelete = false;
+    const jobsWithPermissions = jobs
+      .map((job) => {
+        if (job.type === 'model_pull') {
+          return null;
+        }
 
-      // Check Creator
-      if (job.user_id === req.user.id) {
-        canEdit = true;
-        canDelete = true;
-      }
+        let canEdit = false;
+        let canDelete = false;
 
-      // Check Workspace Role
-      if ((!canEdit || !canDelete) && job.workspace_id) {
-        // We need to fetch role, but doing it inside map is N+1.
-        // However, since we filtered by workspaceId usually, we can fetch role once.
-        // If not filtered (all user jobs), we might need to fetch role for each workspace.
-        // Optimization: fetch all user's workspace roles once.
-        // For now, let's just use the service check per job if necessary, but cache it?
-        // Actually workspaceService.getMemberRole does a DB query.
-        // Let's optimize: get all user's roles.
-        // But simplified: Just do the query. SQLite is fast.
-
-        const role = workspaceService.getMemberRole(job.workspace_id, req.user.id);
-        if (['admin', 'editor', 'owner'].includes(role)) {
+        // Check Creator
+        if (job.user_id === req.user.id) {
           canEdit = true;
           canDelete = true;
         }
-      }
 
-      return {
-        id: job.id,
-        type: job.type,
-        status: job.status,
-        result: job.result,
-        error: job.error,
-        createdAt: job.createdAt,
-        updatedAt: job.updatedAt,
-        filename: job.data?.originalName || job.data?.filename || null,
-        processName: job.process_name || job.data?.processName || null,
-        canEdit,
-        canDelete,
-      };
-    });
+        // Check Workspace Role
+        if ((!canEdit || !canDelete) && job.workspace_id) {
+          // We need to fetch role, but doing it inside map is N+1.
+          // However, since we filtered by workspaceId usually, we can fetch role once.
+          // If not filtered (all user jobs), we might need to fetch role for each workspace.
+          // Optimization: fetch all user's workspace roles once.
+          // For now, let's just use the service check per job if necessary, but cache it?
+          // Actually workspaceService.getMemberRole does a DB query.
+          // Let's optimize: get all user's roles.
+          // But simplified: Just do the query. SQLite is fast.
+
+          const role = workspaceService.getMemberRole(job.workspace_id, req.user.id);
+          if (['admin', 'editor', 'owner'].includes(role)) {
+            canEdit = true;
+            canDelete = true;
+          }
+        }
+
+        return {
+          id: job.id,
+          type: job.type,
+          status: job.status,
+          result: job.result,
+          error: job.error,
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
+          filename: job.data?.originalName || job.data?.filename || null,
+          processName: job.process_name || job.data?.processName || null,
+          canEdit,
+          canDelete,
+        };
+      })
+      .filter(Boolean);
 
     res.json(jobsWithPermissions);
   } catch (err) {

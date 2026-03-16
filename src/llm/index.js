@@ -31,12 +31,14 @@ const getLlmProvider = (options = {}) => {
     openai: 'gpt-5-nano-2025-08-07',
     google: 'gemini-3.1-flash-lite-preview',
     anthropic: 'claude-haiku-4-5-20251001',
+    ollama: 'llama3.2',
   };
 
   const model = options.model || defaults[providerName];
 
   const config = {
     model,
+    provider: providerName,
   };
 
   // Prioritize passed API Key, then fall back to env vars
@@ -55,6 +57,10 @@ const getLlmProvider = (options = {}) => {
     case 'anthropic':
     case 'claude':
       return new AnthropicProvider(config);
+    case 'ollama':
+      config.apiKey = 'ollama-local-placeholder';
+      config.baseURL = config.baseURL || process.env.OLLAMA_BASE_URL_DEFAULT || 'http://localhost:11434/v1';
+      return new OpenAIProvider(config);
     case 'openai':
     default:
       return new OpenAIProvider(config);

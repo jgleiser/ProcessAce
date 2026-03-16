@@ -9,6 +9,8 @@ class Job {
     status = 'pending',
     result = null,
     error = null,
+    progress = 0,
+    progress_message = null,
     createdAt = new Date(),
     updatedAt = new Date(),
     user_id = null,
@@ -21,6 +23,8 @@ class Job {
     this.status = status;
     this.result = result;
     this.error = error;
+    this.progress = progress;
+    this.progress_message = progress_message;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.user_id = user_id;
@@ -30,12 +34,22 @@ class Job {
 }
 
 const insertStmt = db.prepare(`
-    INSERT INTO jobs (id, type, data, status, result, error, createdAt, updatedAt, user_id, workspace_id, process_name)
-    VALUES (@id, @type, @data, @status, @result, @error, @createdAt, @updatedAt, @user_id, @workspace_id, @process_name)
+    INSERT INTO jobs (id, type, data, status, result, error, progress, progress_message, createdAt, updatedAt, user_id, workspace_id, process_name)
+    VALUES (@id, @type, @data, @status, @result, @error, @progress, @progress_message, @createdAt, @updatedAt, @user_id, @workspace_id, @process_name)
 `);
 
 const updateStmt = db.prepare(`
-    UPDATE jobs SET status = @status, result = @result, error = @error, updatedAt = @updatedAt, user_id = @user_id, workspace_id = @workspace_id, process_name = @process_name WHERE id = @id
+    UPDATE jobs
+    SET status = @status,
+        result = @result,
+        error = @error,
+        progress = @progress,
+        progress_message = @progress_message,
+        updatedAt = @updatedAt,
+        user_id = @user_id,
+        workspace_id = @workspace_id,
+        process_name = @process_name
+    WHERE id = @id
 `);
 
 const getStmt = db.prepare('SELECT * FROM jobs WHERE id = ?');
@@ -57,6 +71,8 @@ const saveJob = (job) => {
       status: payload.status,
       result: payload.result,
       error: payload.error,
+      progress: payload.progress,
+      progress_message: payload.progress_message,
       updatedAt: payload.updatedAt,
       user_id: payload.user_id,
       workspace_id: payload.workspace_id,

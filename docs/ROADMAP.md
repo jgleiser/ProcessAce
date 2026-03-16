@@ -127,3 +127,20 @@
 - [x] **Transcript Review**: Review and edit transcripts before generating process artifacts.
 - [x] **Transcript Export & Playback**: Export transcripts to TXT and play back audio during review.
 - [x] **Evidence Pipeline Integration**: Use the transcribed text as process evidence to generate artifacts (BPMN, SIPOC, RACI).
+
+## Phase 17: Local AI Integration (Ollama)
+
+### Phase 17.1: Core Ollama Support & Security
+
+- [ ] **UI Enhancements:** Add 'Ollama (Local)' to the LLM Provider options (`app-settings.html`). Implement dynamic UI toggling to hide the API Key field and display a Custom Base URL field when Ollama is selected.
+- [ ] **Provider Factory Update:** Modify `src/llm/index.js` to securely intercept Ollama selections. Inject a dummy API key to ensure existing OpenAI keys are never accidentally leaked to the local network.
+- [ ] **SSRF Protection & API Key Relaxation:** Update `OpenAIProvider` to relax the strict API key requirement _only_ for verified local endpoints (e.g., `localhost`, `127.0.0.1`, `host.docker.internal`). Block external untrusted URLs to prevent Server-Side Request Forgery.
+- [ ] **Dynamic Model Loading:** Verify and test that the existing `listModels()` implementation successfully fetches available local models via Ollama's OpenAI-compatible `/v1/models` endpoint.
+
+### Phase 17.2: "Plug & Play" Docker Orchestration & Model Manager
+
+- [ ] **Infrastructure Update:** Integrate the `ollama/ollama:latest` service into `docker-compose.yml`. Configure a persistent volume (`ollama_data`) to ensure downloaded models survive container restarts.
+- [ ] **Model Pull API:** Create a new backend route (`/api/settings/llm/pull`) that accepts requests to download a curated list of supported models (e.g., Llama 3.2, Qwen 2.5, Mistral).
+- [ ] **Background Worker Integration:** Implement a queue worker (`src/workers/modelWorker.js`) using the existing Redis/BullMQ architecture to process long-running model downloads via Ollama's native `/api/pull` endpoint.
+- [ ] **Model Manager UI:** Build a "Local Model Manager" section in the App Settings page. Allow users to select recommended models and initiate downloads directly from the interface.
+- [ ] **Progress Tracking:** Connect the background download worker to the frontend using the existing `job-tracker.js` components to provide users with a real-time progress bar during model installation.
