@@ -476,6 +476,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         : ollamaStatusResolved
           ? t('appSettings.modelStatusAvailable')
           : t('appSettings.modelStatusUnknown');
+      const hardwareRequirements = model.hardwareRequirements || {};
+      const hardwareItems = [
+        hardwareRequirements.ram ? `<li><strong>${t('appSettings.hardwareRamLabel')}</strong> ${hardwareRequirements.ram}</li>` : '',
+        hardwareRequirements.cpu ? `<li><strong>${t('appSettings.hardwareCpuLabel')}</strong> ${hardwareRequirements.cpu}</li>` : '',
+        hardwareRequirements.gpu ? `<li><strong>${t('appSettings.hardwareGpuLabel')}</strong> ${hardwareRequirements.gpu}</li>` : '',
+      ]
+        .filter(Boolean)
+        .join('');
+      const metaItems = [
+        `<span>${model.id}</span>`,
+        `<span>${model.sizeLabel}</span>`,
+        model.parameterSize ? `<span>${t('appSettings.parameterSizeLabel')} ${model.parameterSize}</span>` : '',
+        model.contextWindow ? `<span>${t('appSettings.contextWindowLabel')} ${model.contextWindow}</span>` : '',
+      ]
+        .filter(Boolean)
+        .join('');
 
       const card = document.createElement('div');
       card.className = 'ollama-model-card';
@@ -483,14 +499,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="ollama-model-header">
           <div>
             <h3 class="ollama-model-title">${model.label}</h3>
-            <div class="ollama-model-meta">
-              <span>${model.id}</span>
-              <span>${model.sizeLabel}</span>
-            </div>
+            <div class="ollama-model-meta">${metaItems}</div>
           </div>
           <span class="ollama-model-badge ${installed ? 'is-installed' : 'is-available'}">${badgeText}</span>
         </div>
         <p class="ollama-model-description">${model.description}</p>
+        ${
+          hardwareItems
+            ? `
+          <div class="ollama-model-hardware">
+            <div class="ollama-model-hardware-title">${t('appSettings.hardwareRequirementsTitle')}</div>
+            <ul class="ollama-model-hardware-list">
+              ${hardwareItems}
+            </ul>
+          </div>
+        `
+            : ''
+        }
         <div class="ollama-model-actions"></div>
       `;
 
@@ -515,10 +540,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         const downloadButton = document.createElement('button');
         downloadButton.type = 'button';
-        downloadButton.className = 'btn-primary btn-sm';
-        downloadButton.textContent =
-          isCatalogActionPending && activePullModelId === model.id ? t('appSettings.modelPullInProgress') : t('appSettings.downloadInstallBtn');
+        const isActiveDownload = isCatalogActionPending && activePullModelId === model.id;
+        downloadButton.className = `btn-primary btn-sm${isActiveDownload ? ' is-loading' : ''}`;
+        downloadButton.textContent = isActiveDownload ? t('appSettings.modelPullInProgress') : t('appSettings.downloadInstallBtn');
         downloadButton.disabled = isCatalogActionPending;
+        downloadButton.setAttribute('aria-disabled', String(isCatalogActionPending));
+        if (isActiveDownload) {
+          downloadButton.setAttribute('aria-busy', 'true');
+        }
         downloadButton.addEventListener('click', () => downloadOllamaModel(model.id));
         actions.appendChild(downloadButton);
       }

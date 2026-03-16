@@ -74,6 +74,24 @@
   background: var(--primary-hover);
 }
 
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.btn-primary.is-loading,
+.btn-primary:disabled.is-loading {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0%, rgba(124, 77, 255, 0.92) 100%);
+  color: white;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(124, 77, 255, 0.18);
+  opacity: 1;
+}
+
 .btn-secondary {
   background: transparent;
   border: 1px solid var(--border-color);
@@ -1092,6 +1110,36 @@
 .ollama-model-description {
   margin: 0.75rem 0 1rem;
   color: var(--text-muted);
+}
+
+.ollama-model-hardware {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ollama-model-hardware-title {
+  margin-bottom: 0.55rem;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ollama-model-hardware-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+}
+
+.ollama-model-hardware-list li + li {
+  margin-top: 0.35rem;
+}
+
+.ollama-model-hardware-list strong {
+  color: var(--text-main);
+  font-weight: 600;
 }
 
 .ollama-model-actions {
