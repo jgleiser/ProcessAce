@@ -98,6 +98,8 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
 ProcessAce keeps bundled Docker Ollama as the default, but the endpoint is environment-driven so you can switch deployment modes without changing application code.
 
+For the full setup and troubleshooting guide, see [docs/ollama_guide.md](./docs/ollama_guide.md).
+
 ### Bundled CPU Ollama
 
 This remains the default path:
@@ -154,6 +156,12 @@ Bundled or host Ollama:
 - Open `/app-settings.html`
 - Select `Ollama (Local)`
 - Use `Load Models` or `Check Status` to verify connectivity
+- Manage curated local generation models in `2.1 Local Model Manager`
+
+Important:
+
+- Ollama is supported for artifact generation
+- transcription remains on OpenAI-compatible STT providers
 
 Linux AMD Docker:
 
