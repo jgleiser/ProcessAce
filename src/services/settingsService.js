@@ -18,7 +18,12 @@ class SettingsService {
     };
 
     if (!ENCRYPTION_KEY) {
-      logger.warn('ENCRYPTION_KEY is not set. API keys will not be encrypted securely.');
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        logger.fatal('ENCRYPTION_KEY environment variable is required in production.');
+        throw new Error('ENCRYPTION_KEY environment variable is required in production.');
+      }
+      logger.warn('ENCRYPTION_KEY is not set. API keys will be stored in PLAINTEXT (dev only).');
     }
   }
 

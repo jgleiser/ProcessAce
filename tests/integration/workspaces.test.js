@@ -13,6 +13,7 @@ const app = require('../../src/app');
 describe('Workspace API Integration Tests', () => {
   let server;
   let agent; // Persistent agent (carries auth cookie)
+  let secondAgent;
   let workspaceId;
 
   const testUser = {
@@ -30,14 +31,15 @@ describe('Workspace API Integration Tests', () => {
   before(async () => {
     server = app.listen(0);
     agent = request.agent(server);
+    secondAgent = request.agent(server);
 
     // Register and login the owner user
     await agent.post('/api/auth/register').send(testUser).expect(201);
     await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
 
     // Register second user (we'll use a fresh agent for their actions)
-    const secondAgent = request.agent(server);
     await secondAgent.post('/api/auth/register').send(secondUser).expect(201);
+    await secondAgent.post('/api/auth/login').send({ email: secondUser.email, password: secondUser.password }).expect(200);
   });
 
   after(() => {
@@ -74,6 +76,10 @@ describe('Workspace API Integration Tests', () => {
     const owner = res.body.find((m) => m.email === testUser.email);
     assert.ok(owner);
     assert.strictEqual(owner.role, 'owner');
+  });
+
+  it('should return 403 when a non-member lists workspace members', async () => {
+    await secondAgent.get(`/api/workspaces/${workspaceId}/members`).expect(403);
   });
 
   // --- POST /api/workspaces/:id/invite ---

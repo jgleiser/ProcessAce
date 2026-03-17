@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const keyManagedProviders = ['openai', 'google', 'anthropic'];
   const generationProviders = [...keyManagedProviders, 'ollama'];
-  const transcriptionProviders = ['openai'];
   const providerDisplayNames = {
     openai: 'OpenAI',
     google: 'Google GenAI',
@@ -82,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     message.className = `settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}`;
     messageText.className = 'settings-message-content';
-    messageText.textContent = displayText;
 
     dismissButton.type = 'button';
     dismissButton.className = 'notification-dismiss';
@@ -1297,7 +1295,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(data.error || t('appSettings.uninstallModelFailed'));
       }
 
-      allTranscriptionModels = filterInstalledTranscriptionModels(data.installedModels || []).map((model) => ({ id: model.id, name: model.name || model.id }));
+      allTranscriptionModels = filterInstalledTranscriptionModels(data.installedModels || []).map((model) => ({
+        id: model.id,
+        name: model.name || model.id,
+      }));
       syncInstalledOllamaTranscriptionModels(allTranscriptionModels);
       renderTranscriptionModelCatalog();
       sttCombobox.render('');

@@ -7,23 +7,54 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./api/auth');
 const { authenticateToken } = require('./middleware/auth');
+const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
+const { sendErrorResponse } = require('./utils/errorResponse');
 
 const app = express();
 
-// Middleware
+// CORS Configuration
+const parseCorsOrigins = () => {
+  const envOrigins = process.env.CORS_ALLOWED_ORIGINS;
+
+  if (envOrigins) {
+    const parsedOrigins = envOrigins
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
+    if (parsedOrigins.length > 0) {
+      return parsedOrigins;
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('CORS_ALLOWED_ORIGINS must be set in production and contain at least one allowed origin.');
+  }
+
+  return ['http://localhost:3000', 'http://processace.local:3000'];
+};
+
+app.use(
+  cors({
+    origin: parseCorsOrigins(),
+    credentials: true,
+  }),
+);
+
+// Security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         'script-src': ["'self'", 'https://unpkg.com', 'https://esm.sh', "'unsafe-inline'"],
-        'img-src': ["'self'", 'data:', 'blob:'], // Allow blob: for SVG download
-        'connect-src': ["'self'", 'https://unpkg.com', 'https://esm.sh'], // Allow source maps from unpkg/esm.sh
+        'img-src': ["'self'", 'data:', 'blob:'],
+        'connect-src': ["'self'", 'https://unpkg.com', 'https://esm.sh'],
       },
     },
   }),
 );
-app.use(cors());
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -50,6 +81,13 @@ const adminRoutes = require('./api/admin');
 
 // Routes
 app.use('/health', healthRoutes);
+
+// Auth routes with rate limiting
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
+// General API rate limit
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 
 // Protected Routes
@@ -67,10 +105,9 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Error handler
+// Global error handler — do NOT expose internal error messages to clients
 app.use((err, req, res, _next) => {
-  logger.error({ err }, 'Unhandled exception');
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  sendErrorResponse(res, err, req);
 });
 
 module.exports = app;

@@ -211,10 +211,7 @@ describe('SettingsService', () => {
       settingsService.updateSetting('transcription.provider', 'ollama');
       settingsService.updateSetting('transcription.model', 'karanchopda333/whisper');
 
-      assert.throws(
-        () => settingsService.getTranscriptionConfig(),
-        /Ollama transcription is not supported by the current runtime/,
-      );
+      assert.throws(() => settingsService.getTranscriptionConfig(), /Ollama transcription is not supported by the current runtime/);
 
       settingsService.updateSetting('transcription.provider', 'openai');
       settingsService.updateSetting('transcription.model', 'whisper-1');

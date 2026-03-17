@@ -15,6 +15,7 @@ const { Artifact, saveArtifact } = require('../../src/models/artifact');
 describe('Artifacts API Integration Tests', () => {
   let server;
   let agent;
+  let otherAgent;
   let docArtifactId;
   let bpmnArtifactId;
   let testUserId;
@@ -25,15 +26,24 @@ describe('Artifacts API Integration Tests', () => {
     password: 'Password123',
   };
 
+  const otherUser = {
+    name: 'Artifacts Outsider',
+    email: `artifacts_outsider_${Date.now()}@test.com`,
+    password: 'Password123',
+  };
+
   before(async () => {
     server = app.listen(0);
     agent = request.agent(server);
+    otherAgent = request.agent(server);
 
     // Register — the endpoint returns the user object directly at the body root
     const reg = await agent.post('/api/auth/register').send(testUser).expect(201);
     testUserId = reg.body.id;
 
     await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
+    await otherAgent.post('/api/auth/register').send(otherUser).expect(201);
+    await otherAgent.post('/api/auth/login').send({ email: otherUser.email, password: otherUser.password }).expect(200);
 
     // Seed a doc artifact owned by the test user
     const docArtifact = new Artifact({
@@ -80,6 +90,10 @@ describe('Artifacts API Integration Tests', () => {
   it('should return 400 when trying to export a non-doc artifact', async () => {
     const res = await agent.get(`/api/artifacts/${bpmnArtifactId}/export/docx`).expect(400);
     assert.ok(res.body.error, 'Should return an error message');
+  });
+
+  it('should return 403 when a non-member tries to fetch artifact content', async () => {
+    await otherAgent.get(`/api/artifacts/${docArtifactId}/content`).expect(403);
   });
 
   it('should return 404 for a non-existent artifact', async () => {

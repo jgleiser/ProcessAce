@@ -4,6 +4,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const logger = require('../logging/logger');
 const db = require('../services/db');
+const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
 
@@ -309,8 +310,7 @@ router.patch('/users/:id', (req, res) => {
     if (error.message.includes('Invalid')) {
       return res.status(400).json({ error: error.message });
     }
-    logger.error({ err: error }, 'Error updating user');
-    res.status(500).json({ error: 'Failed to update user' });
+    return sendErrorResponse(res, error, req);
   }
 });
 

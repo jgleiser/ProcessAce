@@ -201,20 +201,20 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Settings (`/api/settings`) — Admin Only
 
-| Method   | Path                            | Auth  | Description                         |
-| -------- | ------------------------------- | ----- | ----------------------------------- |
-| `GET`    | `/api/settings`                 | Admin | Get all application settings        |
-| `PUT`    | `/api/settings`                 | Admin | Create or update a setting by key   |
-| `DELETE` | `/api/settings`                 | Admin | Delete a setting by key             |
-| `POST`   | `/api/settings/verify-provider` | Admin | Verify LLM provider and list models |
-| `GET`    | `/api/settings/llm/catalog`     | Admin | Get the curated Ollama model catalog |
-| `POST`   | `/api/settings/llm/pull`        | Admin | Start an Ollama generation model download |
-| `DELETE` | `/api/settings/llm/model`       | Admin | Remove an installed Ollama generation model |
-| `GET`    | `/api/settings/llm/pull/:jobId` | Admin | Get generation model pull status |
-| `GET`    | `/api/settings/transcription/catalog` | Admin | Get the local transcription catalog metadata |
-| `POST`   | `/api/settings/transcription/pull` | Admin | Start a transcription model download job |
-| `DELETE` | `/api/settings/transcription/model` | Admin | Remove an installed transcription model |
-| `GET`    | `/api/settings/transcription/pull/:jobId` | Admin | Get transcription model pull status |
+| Method   | Path                                      | Auth  | Description                                  |
+| -------- | ----------------------------------------- | ----- | -------------------------------------------- |
+| `GET`    | `/api/settings`                           | Admin | Get all application settings                 |
+| `PUT`    | `/api/settings`                           | Admin | Create or update a setting by key            |
+| `DELETE` | `/api/settings`                           | Admin | Delete a setting by key                      |
+| `POST`   | `/api/settings/verify-provider`           | Admin | Verify LLM provider and list models          |
+| `GET`    | `/api/settings/llm/catalog`               | Admin | Get the curated Ollama model catalog         |
+| `POST`   | `/api/settings/llm/pull`                  | Admin | Start an Ollama generation model download    |
+| `DELETE` | `/api/settings/llm/model`                 | Admin | Remove an installed Ollama generation model  |
+| `GET`    | `/api/settings/llm/pull/:jobId`           | Admin | Get generation model pull status             |
+| `GET`    | `/api/settings/transcription/catalog`     | Admin | Get the local transcription catalog metadata |
+| `POST`   | `/api/settings/transcription/pull`        | Admin | Start a transcription model download job     |
+| `DELETE` | `/api/settings/transcription/model`       | Admin | Remove an installed transcription model      |
+| `GET`    | `/api/settings/transcription/pull/:jobId` | Admin | Get transcription model pull status          |
 
 ### `PUT /api/settings`
 

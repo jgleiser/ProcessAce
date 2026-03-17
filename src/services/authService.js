@@ -5,7 +5,22 @@ const db = require('./db');
 const logger = require('../logging/logger');
 
 const SALT_ROUNDS = 10;
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-key-change-in-prod';
+const resolveJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    logger.fatal('JWT_SECRET environment variable is required in production.');
+    throw new Error('JWT_SECRET environment variable is required in production.');
+  }
+
+  const devSecret = require('crypto').randomBytes(32).toString('hex');
+  logger.warn('JWT_SECRET is not set. Using a random per-process secret (dev only). Sessions will not survive restarts.');
+  return devSecret;
+};
+
+const JWT_SECRET = resolveJwtSecret();
+
 const JWT_EXPIRES_IN = '24h';
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const PASSWORD_ERROR_MSG = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';

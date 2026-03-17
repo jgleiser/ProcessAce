@@ -1,7 +1,7 @@
 const express = require('express');
 const authService = require('../services/authService');
 const { authenticateToken } = require('../middleware/auth');
-const logger = require('../logging/logger');
+const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     if (error.message.startsWith('Password must be')) {
       return res.status(400).json({ error: error.message });
     }
-    res.status(500).json({ error: 'Registration failed' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -42,13 +42,22 @@ router.post('/login', async (req, res) => {
     // Set HTTP-only cookie
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({ message: 'Login successful', user });
-  } catch {
-    res.status(401).json({ error: 'Invalid credentials' });
+  } catch (error) {
+    if (error.message === 'Invalid email or password') {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (error.message === 'Account is deactivated') {
+      return res.status(403).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -57,7 +66,11 @@ router.post('/login', async (req, res) => {
  * Clear auth cookie and end session.
  */
 router.post('/logout', (req, res) => {
-  res.clearCookie('auth_token');
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -72,8 +85,8 @@ router.get('/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json(user);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch user' });
+  } catch (error) {
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -91,8 +104,19 @@ router.put('/me', authenticateToken, async (req, res) => {
     });
     res.json(updatedUser);
   } catch (error) {
-    logger.error({ err: error }, 'Failed to update profile');
-    res.status(500).json({ error: 'Failed to update profile' });
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+
+    if (
+      error.message === 'Current password is required to set a new password' ||
+      error.message === 'Incorrect current password' ||
+      error.message.startsWith('Password must be')
+    ) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -109,8 +133,7 @@ router.get('/users/search', authenticateToken, (req, res) => {
     const users = authService.searchUsers(q);
     res.json(users);
   } catch (error) {
-    logger.error({ err: error }, 'Failed to search users');
-    res.status(500).json({ error: 'Failed to search users' });
+    return sendErrorResponse(res, error, req);
   }
 });
 

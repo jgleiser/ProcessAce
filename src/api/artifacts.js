@@ -17,7 +17,22 @@ router.get('/:id/content', async (req, res) => {
     return res.status(404).json({ error: 'Artifact not found' });
   }
 
-  // Set headers for file download
+  // Authorization Check
+  let canView = false;
+  if (artifact.user_id && artifact.user_id === req.user.id) {
+    canView = true;
+  }
+  if (!canView && artifact.workspace_id) {
+    const workspaceService = require('../services/workspaceService');
+    const role = workspaceService.getMemberRole(artifact.workspace_id, req.user.id);
+    if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+      canView = true;
+    }
+  }
+  if (!canView) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
   // Infer mime type
   let mimeType = 'text/plain';
   if (artifact.type === 'bpmn') mimeType = 'text/xml';
@@ -28,8 +43,6 @@ router.get('/:id/content', async (req, res) => {
 
   const downloadName = artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
 
-  // If ?view=true is present, do NOT set Content-Disposition attachment
-  // This allows the browser/fetch to read it inline
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
   }

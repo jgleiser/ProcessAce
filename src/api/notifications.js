@@ -1,6 +1,6 @@
 const express = require('express');
 const notificationService = require('../services/notificationService');
-const logger = require('../logging/logger');
+const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
 
@@ -17,8 +17,7 @@ router.get('/', async (req, res) => {
     const unreadCount = notificationService.getUnreadCount(req.user.id);
     res.json({ notifications, unreadCount });
   } catch (error) {
-    logger.error({ err: error }, 'Error fetching notifications');
-    res.status(500).json({ error: 'Failed to fetch notifications' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -29,11 +28,13 @@ router.get('/', async (req, res) => {
 router.put('/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
-    notificationService.markAsRead(id);
+    const updated = notificationService.markAsRead(id, req.user.id);
+    if (!updated) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error marking notification as read');
-    res.status(500).json({ error: 'Failed to update notification' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -49,8 +50,7 @@ router.put('/read-all', async (req, res) => {
     notificationService.markAllAsRead(req.user.id);
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error marking all as read');
-    res.status(500).json({ error: 'Failed to update notifications' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -61,11 +61,13 @@ router.put('/read-all', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    notificationService.deleteNotification(id);
+    const deleted = notificationService.deleteNotification(id, req.user.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error deleting notification');
-    res.status(500).json({ error: 'Failed to delete notification' });
+    return sendErrorResponse(res, error, req);
   }
 });
 

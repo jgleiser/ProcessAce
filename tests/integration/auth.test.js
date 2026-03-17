@@ -1,6 +1,12 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
+
+process.env.DB_PATH = ':memory:';
+process.env.JWT_SECRET = 'test-jwt-secret';
+process.env.NODE_ENV = 'test';
+process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
+
 const app = require('../../src/app');
 const db = require('../../src/services/db');
 
@@ -96,6 +102,11 @@ describe('Auth API Integration Tests', () => {
       true,
       'Should set auth_token cookie',
     );
+    assert.strictEqual(
+      res.header['set-cookie'].some((cookie) => cookie.includes('SameSite=Strict')),
+      true,
+      'Should set SameSite=Strict on auth cookies',
+    );
   });
 
   it('should fail login with invalid password', async () => {
@@ -137,7 +148,12 @@ describe('Auth API Integration Tests', () => {
       })
       .expect(200);
 
-    await agent.post('/api/auth/logout').expect(200);
+    const res = await agent.post('/api/auth/logout').expect(200);
+    assert.strictEqual(
+      res.header['set-cookie'].some((cookie) => cookie.includes('SameSite=Strict')),
+      true,
+      'Should clear auth cookie with SameSite=Strict',
+    );
 
     // Verify logout by trying to access protected route
     await agent.get('/api/auth/me').expect(401);
