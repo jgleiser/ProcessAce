@@ -16,12 +16,22 @@ Transcription remains on OpenAI-compatible speech-to-text providers. Ollama's cu
 
 ## Deployment Modes
 
-### 1. Bundled CPU Ollama
+### 1. Cloud-Only Base Stack
 
-Use this when you want the simplest default setup.
+Use this when you do not want local models and only plan to use cloud providers.
 
 ```bash
 docker compose up -d --build
+```
+
+This starts only the application and Redis. No bundled `ollama` container is created.
+
+### 2. Bundled CPU Ollama
+
+Use this when you want local generation models through a bundled Ollama container.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml up -d --build
 ```
 
 Default container-to-container routing:
@@ -31,7 +41,7 @@ Default container-to-container routing:
 
 This mode works on any machine that can run the ProcessAce Docker stack, but generation speed depends entirely on CPU performance and available RAM.
 
-### 2. Windows Host Ollama
+### 3. Windows Host Ollama
 
 Use this when you run Docker Desktop on Windows and want Ollama to use host hardware directly.
 
@@ -59,14 +69,14 @@ docker compose up -d --build
 
 In this mode, the app container talks to the host Ollama instance through `host.docker.internal`.
 
-### 3. Linux AMD GPU Docker Mode
+### 4. Linux AMD GPU Docker Mode
 
 Use this when the Docker host is Linux and the machine has a ROCm-capable AMD GPU.
 
 Start with:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.ollama-amd.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml -f docker-compose.ollama-amd.yml up -d --build
 ```
 
 This switches the Ollama service to `ollama/ollama:rocm` and passes through:
@@ -156,10 +166,16 @@ docker compose exec ollama ollama ps
 
 ### The settings page still shows `http://ollama:11434/v1`
 
-If `.env` defines `OLLAMA_BASE_URL_DEFAULT`, the settings page should show that value after the app container is rebuilt. Rebuild with:
+That value is expected only when the Ollama Docker override is enabled. If `.env` defines `OLLAMA_BASE_URL_DEFAULT`, the settings page should show that value after the app container is rebuilt. Rebuild with:
 
 ```bash
 docker compose up -d --build
+```
+
+If you want bundled Ollama instead, start the stack with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml up -d --build
 ```
 
 ### Model downloads work but generation is slow

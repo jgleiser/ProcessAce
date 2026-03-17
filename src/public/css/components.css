@@ -1431,6 +1431,25 @@
   width: 100%;
 }
 
+.settings-message-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.16rem;
+  font-weight: 600;
+}
+
+.settings-message-link:hover {
+  opacity: 0.92;
+}
+
+.settings-message-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}
+
 .notification-dismiss {
   position: absolute;
   top: 0.55rem;

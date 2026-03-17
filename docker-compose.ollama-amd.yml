@@ -1,4 +1,11 @@
 services:
+  app:
+    environment:
+      - OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1
+      - OLLAMA_PULL_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+
   ollama:
     image: ollama/ollama:rocm
     devices:

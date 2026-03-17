@@ -96,22 +96,32 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
 ## Ollama Deployment Modes
 
-ProcessAce keeps bundled Docker Ollama as the default, but the endpoint is environment-driven so you can switch deployment modes without changing application code.
+The base Docker stack is cloud-only by default. Bundled Ollama is now opt-in through a Compose override, and host-native Ollama remains supported through environment variables.
 
 For the full setup and troubleshooting guide, see [docs/ollama_guide.md](./docs/ollama_guide.md).
 
 ### Bundled CPU Ollama
 
-This remains the default path:
+Use the dedicated Ollama override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml up -d --build
+```
+
+In this mode, the app container uses:
+
+- `OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1`
+- `OLLAMA_PULL_HOST=http://ollama:11434`
+
+### Cloud-Only Providers
+
+If you only want OpenAI, Google GenAI, or Anthropic, the default stack stays lean:
 
 ```bash
 docker compose up -d --build
 ```
 
-The app container uses:
-
-- `OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1`
-- `OLLAMA_PULL_HOST=http://ollama:11434`
+No bundled `ollama` container is started in this mode.
 
 ### Windows + AMD GPU Fallback
 
@@ -135,10 +145,10 @@ The App Settings page and Ollama model manager will use the host Ollama instance
 
 ### Linux AMD GPU Docker Mode
 
-For Linux hosts with ROCm-capable AMD GPUs, use the bundled Ollama container with the AMD override:
+For Linux hosts with ROCm-capable AMD GPUs, use both the Ollama override and the AMD override:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.ollama-amd.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml -f docker-compose.ollama-amd.yml up -d --build
 ```
 
 This override switches the Ollama image to `ollama/ollama:rocm` and passes through `/dev/kfd` and `/dev/dri`.
@@ -176,7 +186,8 @@ Windows host fallback:
 ### Troubleshooting
 
 - If the Linux AMD container cannot see `/dev/kfd` or `/dev/dri`, the host ROCm or graphics stack is not exposed to Docker correctly.
-- If model pulls still hit the bundled CPU container, check `OLLAMA_BASE_URL_DEFAULT` and `OLLAMA_PULL_HOST` in `.env`.
+- If you expected bundled Ollama but no `ollama` container exists, start the stack with `docker-compose.ollama.yml`.
+- If model pulls still hit the wrong Ollama endpoint, check `OLLAMA_BASE_URL_DEFAULT` and `OLLAMA_PULL_HOST` in `.env`.
 - If Ollama is unreachable from Docker in host mode, confirm the host Ollama service is listening on port `11434` and reachable through `host.docker.internal`.
 
 ---

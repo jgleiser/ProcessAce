@@ -1,7 +1,8 @@
 /* global showConfirmModal, showToast */
 document.addEventListener('DOMContentLoaded', async () => {
   const t = window.i18n ? window.i18n.t : (key) => key;
-  const DEFAULT_OLLAMA_URL = 'http://ollama:11434/v1';
+  const DEFAULT_OLLAMA_URL = 'http://localhost:11434/v1';
+  const OLLAMA_GUIDE_URL = 'https://github.com/jgleiser/ProcessAce/blob/feat/ollama-integration/docs/ollama_guide.md';
   const ACTIVE_PULL_JOB_STORAGE_KEY = 'ollamaModelPullJobId';
   const ACTIVE_PULL_MODEL_STORAGE_KEY = 'ollamaModelPullModelId';
   const ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY = 'ollamaTranscriptionModelPullJobId';
@@ -74,9 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activeTranscriptionPullJobId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY);
   let activeTranscriptionPullModelId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY);
 
-  const showMessage = (type, text) => {
-    const maxLength = 180;
-    const displayText = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  const renderMessage = (type, renderContent, toastText) => {
     const message = document.createElement('div');
     const messageText = document.createElement('div');
     const dismissButton = document.createElement('button');
@@ -91,13 +90,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     dismissButton.innerHTML = '&times;';
     dismissButton.addEventListener('click', () => message.remove());
 
+    renderContent(messageText);
     message.append(messageText, dismissButton);
     messageContainer.innerHTML = '';
     messageContainer.appendChild(message);
 
     if (typeof showToast === 'function') {
-      showToast(text, type === 'error' ? 'error' : 'success');
+      showToast(toastText, type === 'error' ? 'error' : 'success');
     }
+  };
+
+  const showMessage = (type, text) => {
+    const maxLength = 180;
+    const displayText = text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+
+    renderMessage(
+      type,
+      (messageText) => {
+        messageText.textContent = displayText;
+      },
+      text,
+    );
+  };
+
+  const showOllamaUnavailableMessage = (details = '') => {
+    const summary = t('appSettings.ollamaUnavailableMessage');
+    const detailText = details ? `${t('appSettings.ollamaUnavailableDetailsLabel')} ${details}` : '';
+
+    renderMessage(
+      'error',
+      (messageText) => {
+        const summaryLine = document.createElement('div');
+        summaryLine.textContent = summary;
+
+        const guideLink = document.createElement('a');
+        guideLink.href = OLLAMA_GUIDE_URL;
+        guideLink.target = '_blank';
+        guideLink.rel = 'noopener noreferrer';
+        guideLink.className = 'settings-message-link';
+        guideLink.textContent = t('appSettings.ollamaGuideLinkLabel');
+
+        messageText.appendChild(summaryLine);
+        messageText.appendChild(guideLink);
+
+        if (detailText) {
+          const detailsLine = document.createElement('div');
+          detailsLine.className = 'mt-2';
+          detailsLine.textContent = detailText;
+          messageText.appendChild(detailsLine);
+        }
+      },
+      detailText ? `${summary} ${detailText}` : summary,
+    );
   };
 
   const notifyModelChange = (message, type = 'success') => {
@@ -1003,7 +1047,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     } catch (err) {
       console.error(err);
-      showMessage('error', `Error: ${err.message}`);
+      if (provider === 'ollama' && isLlm) {
+        showOllamaUnavailableMessage(err.message);
+      } else {
+        showMessage('error', `Error: ${err.message}`);
+      }
     } finally {
       btn.disabled = false;
       btn.textContent = originalText;
