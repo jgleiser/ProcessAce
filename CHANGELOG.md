@@ -2,6 +2,28 @@
 
 All notable changes to ProcessAce will be documented in this file.
 
+## [1.2.0] - 2026-03-17
+
+### Added
+
+- First-class Ollama support for local artifact generation through the existing LLM provider flow.
+- Curated local model manager in App Settings with install, use, uninstall, and progress tracking for Ollama generation models.
+- Optional bundled Ollama Docker deployment via `docker-compose.ollama.yml`, plus AMD ROCm override support.
+- Dedicated Ollama setup and troubleshooting guide in `docs/ollama_guide.md`.
+- GitHub-linked Ollama configuration guidance in App Settings when local model verification fails.
+
+### Changed
+
+- The default Docker stack is now cloud-only; bundled Ollama is opt-in instead of always installed.
+- Ollama generation now uses provider-scoped base URL handling and environment-driven deployment defaults.
+- Documentation set updated to reflect the new Ollama deployment modes, settings flow, and API surface.
+
+### Fixed
+
+- Ollama model detection now normalizes repo-style model IDs such as `:latest` so installed models refresh correctly in the UI.
+- Failed Ollama generation jobs now explicitly unload the active model instead of leaving it resident after errors.
+- Unsupported Ollama transcription configurations now fail fast instead of reaching a broken runtime path.
+
 ## [1.1.0] - 2026-03-15
 
 ### Added

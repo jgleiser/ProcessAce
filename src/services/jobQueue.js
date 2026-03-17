@@ -29,6 +29,7 @@ class JobQueue {
       user_id: metadata.userId,
       workspace_id: metadata.workspaceId,
       process_name: processName, // Persist to column
+      progress: 0,
     });
     saveJob(jobRecord);
 
@@ -101,6 +102,22 @@ class JobQueue {
               data: bullJob.data,
               user_id: jobRecord?.user_id,
               workspace_id: jobRecord?.workspace_id,
+              reportProgress: async (percent, message = null) => {
+                const currentJob = getJob(jobId);
+                if (!currentJob) {
+                  return;
+                }
+
+                currentJob.progress = Math.max(0, Math.min(100, Number(percent) || 0));
+                currentJob.progress_message = message || null;
+                saveJob(currentJob);
+
+                try {
+                  await bullJob.updateProgress(currentJob.progress);
+                } catch (err) {
+                  logger.warn({ err, jobId, queue: this.name }, 'Failed to sync BullMQ progress');
+                }
+              },
             };
             const result = await mappedHandler(jobContext);
 
@@ -108,6 +125,8 @@ class JobQueue {
             jobRecord = getJob(jobId);
             if (jobRecord) {
               jobRecord.status = 'completed';
+              jobRecord.progress = 100;
+              jobRecord.progress_message = null;
               jobRecord.result = result;
               saveJob(jobRecord);
 

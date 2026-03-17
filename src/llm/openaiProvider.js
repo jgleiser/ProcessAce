@@ -4,15 +4,84 @@ const OpenAI = require('openai');
 const { toFile } = require('openai');
 const LlmProvider = require('./provider');
 const logger = require('../logging/logger');
+const { normalizeOllamaModelId } = require('../services/ollamaModelUtils');
+
+const OLLAMA_ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'host.docker.internal']);
+
+const normalizeBaseURL = (value) => {
+  if (!value) {
+    return undefined;
+  }
+
+  const trimmed = String(value).trim();
+  return trimmed === '' ? undefined : trimmed;
+};
+
+const getConfiguredOllamaHosts = () => {
+  const configuredHosts = new Set(OLLAMA_ALLOWED_HOSTS);
+  const configuredUrls = [process.env.OLLAMA_BASE_URL_DEFAULT, process.env.OLLAMA_PULL_HOST];
+
+  configuredUrls.forEach((value) => {
+    const normalizedValue = normalizeBaseURL(value);
+    if (!normalizedValue) {
+      return;
+    }
+
+    try {
+      const parsed = new URL(normalizedValue);
+      if (parsed.protocol === 'http:' && !parsed.username && !parsed.password) {
+        configuredHosts.add(parsed.hostname);
+      }
+    } catch {
+      logger.warn({ value: normalizedValue }, 'Ignoring invalid configured Ollama host');
+    }
+  });
+
+  return configuredHosts;
+};
+
+const validateOllamaBaseURL = (baseURL) => {
+  let parsed;
+  try {
+    parsed = new URL(baseURL);
+  } catch {
+    throw new Error('Invalid Ollama base URL.');
+  }
+
+  if (parsed.protocol !== 'http:') {
+    throw new Error('Invalid Ollama base URL. Only http:// local URLs are allowed.');
+  }
+
+  if (parsed.username || parsed.password) {
+    throw new Error('Invalid Ollama base URL. Embedded credentials are not allowed.');
+  }
+
+  if (!getConfiguredOllamaHosts().has(parsed.hostname)) {
+    throw new Error('Invalid Ollama base URL. Only approved local hosts are allowed.');
+  }
+
+  return parsed.toString().replace(/\/$/, '');
+};
 
 class OpenAIProvider extends LlmProvider {
   constructor(config = {}) {
     super(config);
-    if (!config.apiKey) {
+    const providerName = (config.provider || 'openai').toLowerCase();
+    this.providerName = providerName;
+    const normalizedBaseURL = normalizeBaseURL(config.baseURL);
+
+    if (providerName === 'ollama') {
+      config.baseURL = validateOllamaBaseURL(normalizedBaseURL || process.env.OLLAMA_BASE_URL_DEFAULT || 'http://localhost:11434/v1');
+    } else {
+      config.baseURL = normalizedBaseURL;
+    }
+
+    if (!config.apiKey && providerName !== 'ollama') {
       throw new Error('OpenAI API key is not configured. Please set it in App Settings.');
     }
+
     this.client = new OpenAI({
-      apiKey: config.apiKey,
+      apiKey: config.apiKey || 'ollama-local-placeholder',
       baseURL: config.baseURL, // Optional, for compatible endpoints like LocalAI
     });
     this.model = config.model || 'gpt-5-nano-2025-08-07';
@@ -162,8 +231,8 @@ class OpenAIProvider extends LlmProvider {
     try {
       const list = await this.client.models.list();
       return list.data.map((model) => ({
-        id: model.id,
-        name: model.id, // OpenAI models usually don't have separate display names
+        id: this.providerName === 'ollama' ? normalizeOllamaModelId(model.id) : model.id,
+        name: this.providerName === 'ollama' ? normalizeOllamaModelId(model.id) : model.id,
       }));
     } catch (err) {
       logger.error({ err }, 'Failed to list OpenAI models');
@@ -173,3 +242,4 @@ class OpenAIProvider extends LlmProvider {
 }
 
 module.exports = OpenAIProvider;
+module.exports.validateOllamaBaseURL = validateOllamaBaseURL;

@@ -171,9 +171,14 @@ You can edit generated artifacts directly within the browser.
 1. Go to **App Settings** (`/app-settings.html`).
 2. Configure the default LLM provider and model.
 3. Manage API keys for each provider (stored encrypted).
-4. Optional: Set a custom base URL for self-hosted LLM endpoints.
-5. Configure transcription settings: provider, STT model, and max file size before chunking.
-6. Use **Load Transcription Models** to fetch supported STT models for OpenAI.
+4. For **Ollama (Local)**, configure the provider-specific base URL for your deployment mode.
+5. Use **2.1 Local Model Manager** to install, remove, and select curated local generation models.
+6. Configure transcription settings separately: provider, STT model, and max file size before chunking.
+7. Use **Load Transcription Models** to fetch supported STT models for OpenAI.
+
+Ollama-specific setup depends on the host OS and hardware. Use the dedicated guide for deployment choices, hardware guidance, and troubleshooting:
+
+- [Ollama Guide](./ollama_guide.md)
 
 ## User Settings
 
@@ -187,3 +192,4 @@ You can edit generated artifacts directly within the browser.
 - **Save Errors**: Check that the backend service is running and the database is accessible.
 - **401 Unauthorized**: Your session may have expired. Refresh the page to be redirected to login.
 - **LLM Errors**: Verify your API key is correct in App Settings. Use the **Verify & Load Models** button to test connectivity.
+- **Ollama Issues**: Confirm the base URL matches your deployment mode and review the [Ollama Guide](./ollama_guide.md).

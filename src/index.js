@@ -2,13 +2,7 @@ require('dotenv').config();
 const app = require('./app');
 const logger = require('./logging/logger');
 
-const { processEvidence } = require('./workers/evidenceWorker');
-const { evidenceQueue } = require('./services/queueInstance');
-
 const PORT = process.env.PORT || 3000;
-
-// Register worker using shared queue instance
-evidenceQueue.registerWorker('process_evidence', processEvidence);
 
 const server = app.listen(PORT, () => {
   logger.info({ port: PORT, env: process.env.NODE_ENV }, 'ProcessAce Server started');

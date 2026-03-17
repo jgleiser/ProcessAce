@@ -279,21 +279,38 @@ async function saveAllChanges() {
  */
 function showError(message) {
   const container = document.getElementById('errorContainer');
-  container.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+  const dismissLabel = t('common.close');
+
+  container.innerHTML = `
+    <div class="settings-message settings-message-error">
+      <div class="settings-message-content">${escapeHtml(message)}</div>
+      <button type="button" class="notification-dismiss" aria-label="${escapeHtml(dismissLabel)}">&times;</button>
+    </div>
+  `;
+
+  const dismissButton = container.querySelector('.notification-dismiss');
+  dismissButton?.addEventListener('click', () => {
+    container.innerHTML = '';
+  });
+
+  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
+    globalThis.showToast(message, 'error');
+  }
 }
 
 /**
  * Show toast notification
  */
 function showToast(message, type = 'success') {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
+  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
+    globalThis.showToast(message, type);
+    return;
+  }
 
   const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
+  toast.className = `toast ${type} is-visible`;
   toast.textContent = message;
   document.body.appendChild(toast);
-
   setTimeout(() => toast.remove(), 3000);
 }
 

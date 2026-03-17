@@ -12,6 +12,13 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = process.env.DB_PATH || path.join(dataDir, 'processAce.db');
 const db = new Database(dbPath /*, { verbose: console.log } */);
 
+const ensureColumn = (tableName, columnName, definition) => {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (!columns.some((column) => column.name === columnName)) {
+    db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
+  }
+};
+
 // Enable WAL for better concurrency, but check for explicit disable (e.g. for Docker on Windows)
 if (process.env.DISABLE_SQLITE_WAL !== 'true') {
   try {
@@ -147,10 +154,15 @@ try {
             updatedAt TEXT,
             user_id TEXT,
             workspace_id TEXT,
-            process_name TEXT
+            process_name TEXT,
+            progress INTEGER DEFAULT 0,
+            progress_message TEXT
         )
     `,
   ).run();
+
+  ensureColumn('jobs', 'progress', 'INTEGER DEFAULT 0');
+  ensureColumn('jobs', 'progress_message', 'TEXT');
 
   // App Settings Table
   db.prepare(

@@ -204,22 +204,47 @@ All API endpoints are served under `http://localhost:3000` (default).
 | Method   | Path                            | Auth  | Description                         |
 | -------- | ------------------------------- | ----- | ----------------------------------- |
 | `GET`    | `/api/settings`                 | Admin | Get all application settings        |
-| `PUT`    | `/api/settings/:key`            | Admin | Create or update a setting          |
-| `DELETE` | `/api/settings/:key`            | Admin | Delete a setting                    |
+| `PUT`    | `/api/settings`                 | Admin | Create or update a setting by key   |
+| `DELETE` | `/api/settings`                 | Admin | Delete a setting by key             |
 | `POST`   | `/api/settings/verify-provider` | Admin | Verify LLM provider and list models |
+| `GET`    | `/api/settings/llm/catalog`     | Admin | Get the curated Ollama model catalog |
+| `POST`   | `/api/settings/llm/pull`        | Admin | Start an Ollama generation model download |
+| `DELETE` | `/api/settings/llm/model`       | Admin | Remove an installed Ollama generation model |
+| `GET`    | `/api/settings/llm/pull/:jobId` | Admin | Get generation model pull status |
+| `GET`    | `/api/settings/transcription/catalog` | Admin | Get the local transcription catalog metadata |
+| `POST`   | `/api/settings/transcription/pull` | Admin | Start a transcription model download job |
+| `DELETE` | `/api/settings/transcription/model` | Admin | Remove an installed transcription model |
+| `GET`    | `/api/settings/transcription/pull/:jobId` | Admin | Get transcription model pull status |
 
-### `PUT /api/settings/:key`
+### `PUT /api/settings`
 
-**Body**: `{ "value": "string" }`
+**Body**: `{ "key": "string", "value": "string" }`
 
-- Known keys: `llm_provider`, `llm_model`, `llm_api_key`, `llm_base_url`.
-- `llm_api_key` is encrypted before storage.
+- Generation settings include keys such as `llm.provider`, `llm.model`, `openai.baseUrl`, and `ollama.baseUrl`.
+- Transcription settings include `transcription.provider`, `transcription.model`, and `transcription.maxFileSizeMB`.
+- API keys such as `openai.apiKey`, `google.apiKey`, and `anthropic.apiKey` are encrypted before storage.
+
+### `DELETE /api/settings`
+
+**Body**: `{ "key": "string" }`
 
 ### `POST /api/settings/verify-provider`
 
-**Body**: `{ "provider": "string", "apiKey": "string", "baseURL"?: "string" }`
+**Body**: `{ "provider": "string", "apiKey": "string", "baseUrl"?: "string" }`
 
 - Tests the connection and returns `{ models: [...] }`.
+- For Ollama, this uses the OpenAI-compatible `/v1/models` path against the selected local base URL.
+
+### `POST /api/settings/llm/pull`
+
+**Body**: `{ "modelName": "string", "baseUrl"?: "string" }`
+
+- Enqueues a background generation model download job.
+- Returns `202 Accepted` with `{ jobId, status }`.
+
+### `GET /api/settings/llm/pull/:jobId`
+
+- Returns persisted model pull progress, status text, completion result, or failure details.
 
 ---
 

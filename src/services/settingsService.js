@@ -11,6 +11,7 @@ class SettingsService {
     this.defaultSettings = {
       'llm.provider': 'openai',
       'llm.model': 'gpt-5-nano-2025-08-07',
+      'ollama.baseUrl': process.env.OLLAMA_BASE_URL_DEFAULT || 'http://localhost:11434/v1',
       'transcription.provider': 'openai',
       'transcription.model': 'whisper-1',
       'transcription.maxFileSizeMB': '25',
@@ -19,6 +20,10 @@ class SettingsService {
     if (!ENCRYPTION_KEY) {
       logger.warn('ENCRYPTION_KEY is not set. API keys will not be encrypted securely.');
     }
+  }
+
+  getConfiguredOllamaBaseUrl() {
+    return this.normalizeValue(process.env.OLLAMA_BASE_URL_DEFAULT);
   }
 
   encrypt(text) {
@@ -69,6 +74,12 @@ class SettingsService {
         }
         settings[row.key] = value;
       });
+
+      const configuredOllamaBaseUrl = this.getConfiguredOllamaBaseUrl();
+      if (configuredOllamaBaseUrl) {
+        settings['ollama.baseUrl'] = configuredOllamaBaseUrl;
+      }
+
       return settings;
     } catch (error) {
       logger.error({ err: error }, 'Failed to get settings');
@@ -94,6 +105,51 @@ class SettingsService {
       logger.error({ err: error, key }, 'Failed to get encrypted setting');
       return null;
     }
+  }
+
+  hasSetting(key) {
+    try {
+      const row = db.prepare('SELECT 1 FROM app_settings WHERE key = ?').get(key);
+      return Boolean(row);
+    } catch (error) {
+      logger.error({ err: error, key }, 'Failed to check setting presence');
+      return false;
+    }
+  }
+
+  normalizeValue(value) {
+    if (value === undefined || value === null) {
+      return null;
+    }
+
+    const text = String(value).trim();
+    return text === '' ? null : text;
+  }
+
+  getProviderApiKey(provider) {
+    if (provider === 'ollama') {
+      return null;
+    }
+
+    return this.getEncryptedSetting(`${provider}.apiKey`);
+  }
+
+  getProviderBaseUrl(provider) {
+    if (provider === 'ollama') {
+      return (
+        this.getConfiguredOllamaBaseUrl() || this.normalizeValue(this.getEncryptedSetting('ollama.baseUrl')) || this.defaultSettings['ollama.baseUrl']
+      );
+    }
+
+    if (provider === 'openai') {
+      if (this.hasSetting('openai.baseUrl')) {
+        return this.normalizeValue(this.getEncryptedSetting('openai.baseUrl'));
+      }
+
+      return this.normalizeValue(this.getEncryptedSetting('llm.baseUrl'));
+    }
+
+    return null;
   }
 
   /**
@@ -152,20 +208,30 @@ class SettingsService {
    * @returns {Object} { provider, model, apiKey, baseUrl }
    */
   getLLMConfig() {
-    const settings = this.getSettings(); // Gets general settings (masked)
+    const settings = this.getSettings();
     const provider = settings['llm.provider'];
     const model = settings['llm.model'];
-    const baseUrl = settings['llm.baseUrl'];
-
-    // Get decrypted API key for the selected provider
-    const apiKeyKey = `${provider}.apiKey`;
-    const apiKey = this.getEncryptedSetting(apiKeyKey);
+    const apiKey = this.getProviderApiKey(provider);
+    const baseUrl = this.getProviderBaseUrl(provider);
 
     return {
       provider,
       model,
       apiKey,
       baseUrl,
+    };
+  }
+
+  resolveProviderConfig(provider, overrides = {}) {
+    const normalizedProvider = this.normalizeValue(provider || this.getSettings()['llm.provider'] || 'openai') || 'openai';
+    const normalizedBaseUrl = this.normalizeValue(overrides.baseUrl);
+    const normalizedApiKey = this.normalizeValue(overrides.apiKey);
+
+    return {
+      provider: normalizedProvider,
+      model: this.normalizeValue(overrides.model) || this.getSettings()['llm.model'],
+      apiKey: normalizedApiKey || this.getProviderApiKey(normalizedProvider),
+      baseUrl: normalizedBaseUrl || this.getProviderBaseUrl(normalizedProvider),
     };
   }
 
@@ -179,6 +245,10 @@ class SettingsService {
     const model = settings['transcription.model'];
     const maxFileSizeMB = parseInt(settings['transcription.maxFileSizeMB'], 10) || 25;
 
+    if (provider === 'ollama') {
+      throw new Error('Ollama transcription is not supported by the current runtime. Switch the transcription provider to OpenAI.');
+    }
+
     // Transcription uses the same API key logic based on the provider
     const apiKeyKey = `${provider}.apiKey`;
     const apiKey = this.getEncryptedSetting(apiKeyKey);
@@ -187,6 +257,7 @@ class SettingsService {
       provider,
       model,
       apiKey,
+      baseUrl: this.getProviderBaseUrl(provider),
       maxFileSizeMB,
     };
   }

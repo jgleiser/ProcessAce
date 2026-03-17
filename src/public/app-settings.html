@@ -195,24 +195,24 @@
         <div class="card-content mt-4">
           <form id="appSettingsForm">
             <div class="form-group">
-              <label class="form-label" data-i18n="appSettings.configuredProvider">Configured Provider</label>
+              <label class="form-label" data-i18n="appSettings.llmProviderLabel">LLM Provider</label>
               <select id="providerSelect" class="form-select">
                 <option value="" data-i18n="appSettings.selectProvider">-- Select a Provider --</option>
                 <!-- Options populated dynamically -->
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" data-i18n="appSettings.baseUrlLabel">Base URL (Optional)</label>
+            <div class="form-group" id="baseUrlGroup">
+              <label class="form-label" id="baseUrlLabel" data-i18n="appSettings.baseUrlLabelOpenai">Base URL (OpenAI-Compatible, Optional)</label>
               <input
                 type="text"
                 id="baseUrlInput"
                 class="form-input"
-                data-i18n-placeholder="appSettings.baseUrlPlaceholder"
+                data-i18n-placeholder="appSettings.baseUrlPlaceholderOpenai"
                 placeholder="e.g., http://localhost:11434/v1 for Ollama"
               />
-              <small class="text-muted mt-1 block" data-i18n="appSettings.baseUrlHelp"
-                >Leave empty for default provider URLs. Use for local LLMs like Ollama or LocalAI.</small
+              <small class="text-muted mt-1 block" id="baseUrlHelp" data-i18n="appSettings.baseUrlHelpOpenai"
+                >Optional override for trusted OpenAI-compatible endpoints.</small
               >
             </div>
 
@@ -245,6 +245,63 @@
               <button type="submit" class="btn-primary" id="saveBtn" data-i18n="appSettings.saveDefaultModel">Save Default Model</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- SECTION 2.1: Ollama Model Manager -->
+      <div class="card app-settings-card collapsed hidden" id="localModelManagerCard">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="appSettings.sectionOllamaTitle">2.1 Local Model Manager</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content mt-4">
+          <p class="text-muted mt-0" data-i18n="appSettings.modelManagerDescription">
+            Review the recommended Ollama catalog, install the models you want to use, and uninstall local models you no longer need.
+          </p>
+
+          <div class="form-group mt-4 mb-4">
+            <button type="button" id="checkModelStatusBtn" class="btn-secondary" data-i18n="appSettings.checkModelStatusBtn">Check Status</button>
+            <small class="text-muted mt-1 block" data-i18n="appSettings.checkModelStatusHelp"
+              >Click "Check Status" to refresh installed status and available actions for the Ollama catalog.</small
+            >
+          </div>
+
+          <div class="form-group">
+            <div class="text-muted mt-0 mb-4" id="modelCatalogSummary" data-i18n="appSettings.modelCatalogSummary">
+              Click "Check Status" to refresh installed status and available actions.
+            </div>
+            <div id="modelCatalogList" class="ollama-model-list"></div>
+          </div>
+
+          <div id="downloadProgressContainer" class="model-pull-progress hidden mt-4">
+            <div class="text-muted" id="modelDownloadStatus" data-i18n="appSettings.modelPullIdle">Select a model to begin the download.</div>
+            <div class="settings-progress-track mt-2" aria-hidden="true">
+              <div
+                id="modelDownloadProgressBar"
+                class="settings-progress-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                0%
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -317,6 +374,72 @@
         </div>
       </div>
 
+      <!-- SECTION 3.1: Local Transcription Model Manager -->
+      <div class="card app-settings-card collapsed hidden" id="localTranscriptionModelManagerCard">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="appSettings.sectionTranscriptionOllamaTitle">3.1 Local Transcription Model Manager</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content mt-4">
+          <p class="text-muted mt-0" data-i18n="appSettings.transcriptionModelManagerDescription">
+            Review the recommended local transcription catalog, install the models you want to use, and uninstall local models you no longer need.
+          </p>
+
+          <div class="form-group mt-4 mb-4">
+            <button
+              type="button"
+              id="checkTranscriptionModelStatusBtn"
+              class="btn-secondary"
+              data-i18n="appSettings.checkTranscriptionModelStatusBtn"
+            >
+              Check Status
+            </button>
+            <small class="text-muted mt-1 block" data-i18n="appSettings.checkTranscriptionModelStatusHelp"
+              >Click "Check Status" to refresh installed status and available actions for the transcription catalog.</small
+            >
+          </div>
+
+          <div class="form-group">
+            <div class="text-muted mt-0 mb-4" id="transcriptionModelCatalogSummary" data-i18n="appSettings.transcriptionModelCatalogSummary">
+              Click "Check Status" to refresh installed status and available actions.
+            </div>
+            <div id="transcriptionModelCatalogList" class="ollama-model-list"></div>
+          </div>
+
+          <div id="transcriptionDownloadProgressContainer" class="model-pull-progress hidden mt-4">
+            <div class="text-muted" id="transcriptionModelDownloadStatus" data-i18n="appSettings.modelPullIdle">
+              Select a model to begin the download.
+            </div>
+            <div class="settings-progress-track mt-2" aria-hidden="true">
+              <div
+                id="transcriptionModelDownloadProgressBar"
+                class="settings-progress-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                0%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SECTION 4: Information -->
       <div class="card app-settings-card collapsed">
         <div class="card-header-collapsible" title="Click to collapse/expand">
@@ -380,9 +503,8 @@
             <div class="mt-4">
               <h3 data-i18n="appSettings.localModelsTitle">Local / Custom Models (Ollama, LocalAI, etc.)</h3>
               <p class="text-muted mt-2" data-i18n="appSettings.localModelsDesc">
-                You can connect to a local or custom LLM by overriding the Base URL above. For instance, if you run Ollama locally, you can configure
-                a dummy API key for OpenAI, select OpenAI as the provider, and set the Base URL to
-                <code>http://localhost:11434/v1</code>.
+                Ollama is now available as a first-class provider in the selector above. OpenAI-compatible custom endpoints remain available through
+                the optional OpenAI base URL override when you need to connect to a trusted compatible server.
               </p>
             </div>
           </div>
@@ -392,6 +514,7 @@
     <script src="js/api-client.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/modal-utils.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/header.js"></script>
     <script src="js/app-settings.js"></script>
   </body>

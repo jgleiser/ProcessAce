@@ -28,11 +28,12 @@ const transcribeEvidence = async (job) => {
       throw new Error(`Evidence not found: ${evidenceId}`);
     }
 
-    const { provider, model, apiKey, maxFileSizeMB } = settingsService.getTranscriptionConfig();
+    const { provider, model, apiKey, baseUrl, maxFileSizeMB } = settingsService.getTranscriptionConfig();
     const llm = getLlmProvider({
       provider,
       model,
       apiKey,
+      baseURL: baseUrl,
     });
 
     // Check if provider supports transcribe

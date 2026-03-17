@@ -94,6 +94,106 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
 ## 🔑 Bring Your Own LLM
 
+## Ollama Deployment Modes
+
+The base Docker stack is cloud-only by default. Bundled Ollama is now opt-in through a Compose override, and host-native Ollama remains supported through environment variables.
+
+For the full setup and troubleshooting guide, see [docs/ollama_guide.md](./docs/ollama_guide.md).
+
+### Bundled CPU Ollama
+
+Use the dedicated Ollama override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml up -d --build
+```
+
+In this mode, the app container uses:
+
+- `OLLAMA_BASE_URL_DEFAULT=http://ollama:11434/v1`
+- `OLLAMA_PULL_HOST=http://ollama:11434`
+
+### Cloud-Only Providers
+
+If you only want OpenAI, Google GenAI, or Anthropic, the default stack stays lean:
+
+```bash
+docker compose up -d --build
+```
+
+No bundled `ollama` container is started in this mode.
+
+### Windows + AMD GPU Fallback
+
+Docker Desktop on Windows does not currently provide a stable AMD passthrough path for the bundled Ollama container. For Windows hosts with AMD GPUs, run Ollama on the host and point the app container to it:
+
+1. Install and start Ollama on Windows.
+2. Set the following in `.env`:
+
+   ```bash
+   OLLAMA_BASE_URL_DEFAULT=http://host.docker.internal:11434/v1
+   OLLAMA_PULL_HOST=http://host.docker.internal:11434
+   ```
+
+3. Start the stack normally:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+The App Settings page and Ollama model manager will use the host Ollama instance.
+
+### Linux AMD GPU Docker Mode
+
+For Linux hosts with ROCm-capable AMD GPUs, use both the Ollama override and the AMD override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ollama.yml -f docker-compose.ollama-amd.yml up -d --build
+```
+
+This override switches the Ollama image to `ollama/ollama:rocm` and passes through `/dev/kfd` and `/dev/dri`.
+
+Host prerequisites:
+
+- Linux host running Docker Engine
+- ROCm-capable AMD GPU with a working host driver stack
+- Docker access to `/dev/kfd` and `/dev/dri`
+
+### Validation
+
+Bundled or host Ollama:
+
+- Open `/app-settings.html`
+- Select `Ollama (Local)`
+- Use `Load Models` or `Check Status` to verify connectivity
+- Manage curated local generation models in `2.1 Local Model Manager`
+
+Important:
+
+- Ollama is supported for artifact generation
+- transcription remains on OpenAI-compatible STT providers
+
+Linux AMD Docker:
+
+- `docker compose exec ollama ls /dev/kfd /dev/dri`
+- Run a model and verify `docker compose exec ollama ollama ps`
+
+Windows host fallback:
+
+- Confirm the settings page loads models through `http://host.docker.internal:11434/v1`
+- Verify GPU activity on the Windows host while Ollama runs
+
+### Troubleshooting
+
+- If the Linux AMD container cannot see `/dev/kfd` or `/dev/dri`, the host ROCm or graphics stack is not exposed to Docker correctly.
+- If you expected bundled Ollama but no `ollama` container exists, start the stack with `docker-compose.ollama.yml`.
+- If model pulls still hit the wrong Ollama endpoint, check `OLLAMA_BASE_URL_DEFAULT` and `OLLAMA_PULL_HOST` in `.env`.
+- If Ollama is unreachable from Docker in host mode, confirm the host Ollama service is listening on port `11434` and reachable through `host.docker.internal`.
+
+---
+
+## Bring Your Own LLM
+
 ProcessAce does **not** bundle or resell any LLM. You configure your own provider and keys via the App Settings page. The application natively supports:
 
 - **OpenAI** (default: `gpt-5-nano-2025-08-07`)

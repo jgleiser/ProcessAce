@@ -74,6 +74,24 @@
   background: var(--primary-hover);
 }
 
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.btn-primary.is-loading,
+.btn-primary:disabled.is-loading {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0%, rgba(124, 77, 255, 0.92) 100%);
+  color: white;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(124, 77, 255, 0.18);
+  opacity: 1;
+}
+
 .btn-secondary {
   background: transparent;
   border: 1px solid var(--border-color);
@@ -1027,6 +1045,144 @@
   border: 1px solid var(--error);
 }
 
+.model-pull-progress {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ollama-model-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.ollama-model-card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ollama-model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.ollama-model-title {
+  margin: 0;
+}
+
+.ollama-model-meta {
+  margin-top: 0.35rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.ollama-model-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.ollama-model-badge.is-installed {
+  border-color: rgba(0, 230, 118, 0.45);
+  color: var(--success);
+  background: rgba(0, 230, 118, 0.1);
+}
+
+.ollama-model-badge.is-available {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ollama-model-description {
+  margin: 0.75rem 0 1rem;
+  color: var(--text-muted);
+}
+
+.ollama-model-hardware {
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.ollama-model-hardware-title {
+  margin-bottom: 0.55rem;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ollama-model-hardware-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+}
+
+.ollama-model-hardware-list li + li {
+  margin-top: 0.35rem;
+}
+
+.ollama-model-hardware-list strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.ollama-model-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.settings-progress-track {
+  width: 100%;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.settings-progress-bar {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.9) 68%, rgba(124, 77, 255, 0.92) 100%);
+  color: #0f1115;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 18px rgba(255, 255, 255, 0.08);
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
+}
+
+.settings-progress-bar.is-complete {
+  background: linear-gradient(90deg, var(--success) 0%, rgba(0, 230, 118, 0.65) 100%);
+}
+
+.settings-progress-bar.is-error {
+  background: linear-gradient(90deg, var(--error) 0%, rgba(255, 82, 82, 0.65) 100%);
+  color: white;
+}
+
 /* ── Pagination Ellipsis ── */
 .pagination-ellipsis {
   color: var(--text-muted);
@@ -1170,4 +1326,158 @@
 
 .auth-lang-option:hover {
   background: rgba(124, 77, 255, 0.1);
+}
+
+/* Notification overrides */
+.toast-container {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-end;
+  width: min(24rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  box-sizing: border-box;
+}
+
+.toast {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.95rem 2.75rem 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(18, 21, 27, 0.96);
+  color: var(--text-main);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  font-weight: 500;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.is-leaving {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.toast-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  line-height: 1.45;
+  width: 100%;
+}
+
+.toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toast.success {
+  border-color: rgba(0, 230, 118, 0.45);
+  color: var(--success);
+  background: rgba(0, 230, 118, 0.12);
+}
+
+.toast.error {
+  border-color: rgba(255, 82, 82, 0.45);
+  color: #ffb3ad;
+  background: rgba(255, 82, 82, 0.13);
+}
+
+.toast.info {
+  border-color: rgba(124, 77, 255, 0.4);
+  color: #d6c6ff;
+  background: rgba(124, 77, 255, 0.16);
+}
+
+.settings-message {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-right: 2.75rem;
+}
+
+.settings-message-content {
+  line-height: 1.5;
+  width: 100%;
+}
+
+.settings-message-link {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.16rem;
+  font-weight: 600;
+}
+
+.settings-message-link:hover {
+  opacity: 0.92;
+}
+
+.settings-message-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}
+
+.notification-dismiss {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.6rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0.75;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease;
+}
+
+.notification-dismiss:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.notification-dismiss:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }

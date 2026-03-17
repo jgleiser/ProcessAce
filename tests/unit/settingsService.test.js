@@ -49,6 +49,25 @@ describe('SettingsService', () => {
       assert.ok(settings['llm.provider'], 'Should have default provider');
       assert.ok(settings['llm.model'], 'Should have default model');
     });
+
+    it('should prefer OLLAMA_BASE_URL_DEFAULT over a saved Ollama URL', () => {
+      const previousBaseUrl = process.env.OLLAMA_BASE_URL_DEFAULT;
+
+      try {
+        process.env.OLLAMA_BASE_URL_DEFAULT = 'http://host.docker.internal:11434/v1';
+        settingsService.updateSetting('ollama.baseUrl', 'http://ollama:11434/v1');
+
+        const settings = settingsService.getSettings();
+        assert.strictEqual(settings['ollama.baseUrl'], 'http://host.docker.internal:11434/v1');
+      } finally {
+        if (previousBaseUrl === undefined) {
+          delete process.env.OLLAMA_BASE_URL_DEFAULT;
+        } else {
+          process.env.OLLAMA_BASE_URL_DEFAULT = previousBaseUrl;
+        }
+        settingsService.deleteSetting('ollama.baseUrl');
+      }
+    });
   });
 
   // --- updateSetting ---
@@ -127,6 +146,48 @@ describe('SettingsService', () => {
       assert.strictEqual(config.apiKey, 'sk-test-config');
       assert.strictEqual(config.baseUrl, 'https://api.custom.com');
     });
+
+    it('should return provider-scoped Ollama config without an API key', () => {
+      settingsService.updateSetting('llm.provider', 'ollama');
+      settingsService.updateSetting('llm.model', 'llama3.2');
+      settingsService.updateSetting('ollama.baseUrl', 'http://localhost:11434/v1');
+
+      const config = settingsService.getLLMConfig();
+      assert.strictEqual(config.provider, 'ollama');
+      assert.strictEqual(config.model, 'llama3.2');
+      assert.strictEqual(config.apiKey, null);
+      assert.strictEqual(config.baseUrl, 'http://localhost:11434/v1');
+    });
+
+    it('should prefer OLLAMA_BASE_URL_DEFAULT for Ollama runtime config when present', () => {
+      const previousBaseUrl = process.env.OLLAMA_BASE_URL_DEFAULT;
+
+      try {
+        process.env.OLLAMA_BASE_URL_DEFAULT = 'http://host.docker.internal:11434/v1';
+        settingsService.updateSetting('llm.provider', 'ollama');
+        settingsService.updateSetting('llm.model', 'phi3:mini');
+        settingsService.updateSetting('ollama.baseUrl', 'http://ollama:11434/v1');
+
+        const config = settingsService.getLLMConfig();
+        assert.strictEqual(config.baseUrl, 'http://host.docker.internal:11434/v1');
+      } finally {
+        if (previousBaseUrl === undefined) {
+          delete process.env.OLLAMA_BASE_URL_DEFAULT;
+        } else {
+          process.env.OLLAMA_BASE_URL_DEFAULT = previousBaseUrl;
+        }
+        settingsService.deleteSetting('ollama.baseUrl');
+      }
+    });
+
+    it('should prefer openai.baseUrl over legacy llm.baseUrl when present', () => {
+      settingsService.updateSetting('llm.provider', 'openai');
+      settingsService.updateSetting('openai.baseUrl', 'https://scoped.example.com/v1');
+      settingsService.updateSetting('llm.baseUrl', 'https://legacy.example.com/v1');
+
+      const config = settingsService.getLLMConfig();
+      assert.strictEqual(config.baseUrl, 'https://scoped.example.com/v1');
+    });
   });
 
   // --- getTranscriptionConfig ---
@@ -144,6 +205,19 @@ describe('SettingsService', () => {
       assert.strictEqual(config.model, 'whisper-1');
       assert.strictEqual(config.maxFileSizeMB, 15);
       assert.strictEqual(config.apiKey, 'sk-transcription-test');
+    });
+
+    it('should reject unsupported Ollama transcription runtime config', () => {
+      settingsService.updateSetting('transcription.provider', 'ollama');
+      settingsService.updateSetting('transcription.model', 'karanchopda333/whisper');
+
+      assert.throws(
+        () => settingsService.getTranscriptionConfig(),
+        /Ollama transcription is not supported by the current runtime/,
+      );
+
+      settingsService.updateSetting('transcription.provider', 'openai');
+      settingsService.updateSetting('transcription.model', 'whisper-1');
     });
   });
 });

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "processace",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "AI-powered process discovery and documentation engine – from recordings and docs to BPMN 2.0, SIPOC and RACI. Self-hosted with bring-your-own LLM.",
   "author": "jgleiser",
   "license": "SEE LICENSE IN LICENSE.md",
