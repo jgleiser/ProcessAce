@@ -294,6 +294,7 @@ Recommended practices for production:
 
 - Deploy behind TLS (reverse proxy).
 - Set `JWT_SECRET` and `ENCRYPTION_KEY` to strong, unique values.
+- Set `CORS_ALLOWED_ORIGINS` to the exact allowed frontend origin list.
 - Set `NODE_ENV=production` for secure cookies.
 - Keep all dependencies and base images updated.
 

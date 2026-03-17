@@ -71,8 +71,13 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
    ```bash
    cp .env.example .env
-   # Edit .env and set ENCRYPTION_KEY (required for secure API key storage)
+   # Edit .env and set JWT_SECRET, ENCRYPTION_KEY, and CORS_ALLOWED_ORIGINS
    ```
+
+   Required for Docker startup:
+   - `JWT_SECRET`: signing secret for auth cookies
+   - `ENCRYPTION_KEY`: 32-byte hex key for encrypting stored provider API keys
+   - `CORS_ALLOWED_ORIGINS`: comma-separated allowed origins, for example `http://localhost:3000`
 
 3. **Run with Docker Compose**:
 
@@ -123,6 +128,12 @@ docker compose up -d --build
 
 No bundled `ollama` container is started in this mode.
 
+The base stack still requires the standard security variables in `.env`:
+
+- `JWT_SECRET`
+- `ENCRYPTION_KEY`
+- `CORS_ALLOWED_ORIGINS`
+
 ### Windows + AMD GPU Fallback
 
 Docker Desktop on Windows does not currently provide a stable AMD passthrough path for the bundled Ollama container. For Windows hosts with AMD GPUs, run Ollama on the host and point the app container to it:
@@ -131,6 +142,7 @@ Docker Desktop on Windows does not currently provide a stable AMD passthrough pa
 2. Set the following in `.env`:
 
    ```bash
+   CORS_ALLOWED_ORIGINS=http://localhost:3000
    OLLAMA_BASE_URL_DEFAULT=http://host.docker.internal:11434/v1
    OLLAMA_PULL_HOST=http://host.docker.internal:11434
    ```
