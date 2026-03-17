@@ -54,8 +54,9 @@ Because ProcessAce is a **self-hosted** and **BYO-LLM** tool, you are responsibl
 - Running ProcessAce behind proper authentication and HTTPS.
 - Limiting network exposure (e.g. via firewalls, VPN, reverse proxies).
 - Restricting access to admin interfaces and configuration.
-- Setting strong deployment secrets for `JWT_SECRET` and `ENCRYPTION_KEY`.
+- Setting strong deployment secrets for `JWT_SECRET`, `ENCRYPTION_KEY`, and `REDIS_PASSWORD`.
 - Restricting browser access with an explicit `CORS_ALLOWED_ORIGINS` value.
+- Ensuring Docker bind mounts such as `data/` and `uploads/` are writable by the unprivileged container user.
 - Keeping dependencies and the base OS up to date.
 - Treating LLM credentials and other API keys as secrets.
 

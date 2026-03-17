@@ -9,6 +9,7 @@ process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
 
 const request = require('supertest');
 const app = require('../../src/app');
+const db = require('../../src/services/db');
 
 describe('Workspace API Integration Tests', () => {
   let server;
@@ -39,6 +40,8 @@ describe('Workspace API Integration Tests', () => {
 
     // Register second user (we'll use a fresh agent for their actions)
     await secondAgent.post('/api/auth/register').send(secondUser).expect(201);
+    const secondUserRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(secondUser.email);
+    db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(secondUserRecord.id);
     await secondAgent.post('/api/auth/login').send({ email: secondUser.email, password: secondUser.password }).expect(200);
   });
 

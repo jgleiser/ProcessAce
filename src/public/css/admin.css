@@ -160,6 +160,26 @@
   border-color: var(--primary);
 }
 
+.user-row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.user-row-muted {
+  color: var(--text-muted);
+}
+
+.status-badge-pending {
+  background: rgba(255, 193, 7, 0.18);
+  color: #ffca28;
+}
+
+.status-badge-rejected {
+  background: rgba(244, 67, 54, 0.18);
+  color: #ff8a80;
+}
+
 .status-active {
   color: var(--success);
 }

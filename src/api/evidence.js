@@ -7,8 +7,33 @@ const { evidenceQueue } = require('../services/queueInstance');
 const settingsService = require('../services/settingsService');
 const workspaceService = require('../services/workspaceService');
 const authService = require('../services/authService');
+const { AppError, sendErrorResponse } = require('../utils/errorResponse');
+const { sanitizeFilename } = require('../utils/sanitizeFilename');
 
 const router = express.Router();
+const parsedMaxUploadSizeMb = Number.parseInt(process.env.MAX_UPLOAD_SIZE_MB || '100', 10);
+const MAX_UPLOAD_SIZE_MB = Number.isFinite(parsedMaxUploadSizeMb) && parsedMaxUploadSizeMb > 0 ? parsedMaxUploadSizeMb : 100;
+const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
+const ALLOWED_UPLOAD_EXTENSIONS = new Set([
+  '.mp3',
+  '.m4a',
+  '.wav',
+  '.mp4',
+  '.webm',
+  '.ogg',
+  '.flac',
+  '.mpeg',
+  '.mpga',
+  '.oga',
+  '.txt',
+  '.md',
+  '.pdf',
+  '.doc',
+  '.docx',
+]);
+
+const isWithinUploadsDir = (absolutePath) => absolutePath === UPLOADS_DIR || absolutePath.startsWith(`${UPLOADS_DIR}${path.sep}`);
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -21,7 +46,24 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_UPLOAD_SIZE_BYTES },
+  fileFilter: (_req, file, cb) => {
+    const extension = path.extname(file.originalname || '').toLowerCase();
+
+    if (!ALLOWED_UPLOAD_EXTENSIONS.has(extension)) {
+      return cb(
+        new AppError(
+          415,
+          'Unsupported media type. Allowed file types: .mp3, .m4a, .wav, .mp4, .webm, .ogg, .flac, .mpeg, .mpga, .oga, .txt, .md, .pdf, .doc, .docx.',
+        ),
+      );
+    }
+
+    return cb(null, true);
+  },
+});
 
 // Initialize JobQueue (ideally simulated dependency injection)
 // const evidenceQueue = new JobQueue('evidence-queue'); // REPLACED WITH SINGLETON
@@ -151,10 +193,14 @@ router.get('/:id/file', async (req, res) => {
     }
 
     const absolutePath = path.resolve(evidence.path);
+    if (!isWithinUploadsDir(absolutePath)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     const stat = await fs.promises.stat(absolutePath);
     const fileSize = stat.size;
 
-    const downloadName = evidence.originalName || evidence.filename || `evidence-${id}`;
+    const downloadName = sanitizeFilename(evidence.originalName || evidence.filename, `evidence-${id}`);
     res.setHeader('Content-Type', evidence.mimeType || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
     res.setHeader('Accept-Ranges', 'bytes');
@@ -268,5 +314,17 @@ router.post('/:id/process-text', async (req, res) => {
 
 // Expose queue instance for worker registration (hacky for Phase 1)
 // router.queue = evidenceQueue; // REMOVED
+
+router.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+    return sendErrorResponse(res, new AppError(413, `File too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB}MB.`), req);
+  }
+
+  if (error instanceof AppError) {
+    return sendErrorResponse(res, error, req);
+  }
+
+  return next(error);
+});
 
 module.exports = router;

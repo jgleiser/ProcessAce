@@ -17,8 +17,12 @@ RUN npm rebuild better-sqlite3
 
 COPY . .
 
+# Create an unprivileged runtime user and ensure writable app directories
+RUN adduser -D -h /app appuser && mkdir -p /app/uploads /app/data && chown -R appuser:appuser /app
+
+USER appuser
+
 # Create volume mount point for database and uploads
-RUN mkdir -p uploads
 VOLUME /app/uploads
 VOLUME /app/data
 

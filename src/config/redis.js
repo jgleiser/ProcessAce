@@ -1,17 +1,12 @@
 const { Redis } = require('ioredis');
 const logger = require('../logging/logger');
+const { createRedisOptions } = require('./redisOptions');
 
-const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
-const REDIS_PORT = process.env.REDIS_PORT || 6379;
-
-const connection = new Redis({
-  host: REDIS_HOST,
-  port: REDIS_PORT,
-  maxRetriesPerRequest: null, // Required by BullMQ
-});
+const connection = new Redis(createRedisOptions());
 
 connection.on('connect', () => {
-  logger.info({ host: REDIS_HOST }, 'Connected to Redis');
+  const options = createRedisOptions();
+  logger.info({ host: options.host }, 'Connected to Redis');
 });
 
 connection.on('error', (err) => {
@@ -19,3 +14,4 @@ connection.on('error', (err) => {
 });
 
 module.exports = connection;
+module.exports.createRedisOptions = createRedisOptions;

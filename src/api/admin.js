@@ -4,6 +4,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const logger = require('../logging/logger');
 const db = require('../services/db');
+const notificationService = require('../services/notificationService');
 const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
@@ -308,6 +309,62 @@ router.patch('/users/:id', (req, res) => {
       return res.status(404).json({ error: error.message });
     }
     if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: error.message });
+    }
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/users/:id/approve', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedUser = authService.approveUser(id);
+
+    notificationService.createNotification(id, 'account_approved', 'Account approved', 'Your account has been approved. You can now sign in.');
+
+    logger.info(
+      {
+        event_type: 'admin_user_approved',
+        actor: req.user.id,
+        targetUserId: id,
+      },
+      'Admin approved user',
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending or rejected users can be approved') {
+      return res.status(400).json({ error: error.message });
+    }
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/users/:id/reject', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedUser = authService.rejectUser(id);
+
+    notificationService.createNotification(id, 'account_rejected', 'Registration not approved', 'Your registration was not approved.');
+
+    logger.info(
+      {
+        event_type: 'admin_user_rejected',
+        actor: req.user.id,
+        targetUserId: id,
+      },
+      'Admin rejected user',
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending users can be rejected') {
       return res.status(400).json({ error: error.message });
     }
     return sendErrorResponse(res, error, req);

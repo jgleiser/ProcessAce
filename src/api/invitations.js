@@ -36,10 +36,18 @@ router.get('/:token', async (req, res) => {
     }
 
     if (invitation.expired) {
-      return res.status(410).json({ error: 'Invitation expired' });
+      return res.status(410).json({
+        workspaceName: invitation.workspace_name,
+        status: invitation.status,
+        expired: true,
+      });
     }
 
-    res.json(invitation);
+    res.json({
+      workspaceName: invitation.workspace_name,
+      status: invitation.status,
+      expired: false,
+    });
   } catch (error) {
     logger.error({ err: error }, 'Error fetching invitation');
     res.status(500).json({ error: 'Failed to fetch invitation' });

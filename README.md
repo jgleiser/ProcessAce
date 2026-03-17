@@ -37,7 +37,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
   - **Narrative**: Download as Markdown or Print/Save as PDF.
 - **User Authentication & Workspaces**:
   - **Secure Login**: Email/password with JWT (HTTP-only cookies).
-  - **Role-Based Access**: Admin, Editor, and Viewer roles. First registered user becomes Admin.
+  - **Role-Based Access**: Admin, Editor, and Viewer roles. The first registered user becomes Admin; later self-registrations become pending Editors until approved by an Admin.
   - **Workspaces**: Create, switch, and share workspaces for organizing projects (Admin/Editor/Viewer roles).
   - **User Data Isolation**: Jobs and artifacts scoped per user and workspace.
 - **Multi-Provider LLM Support**:
@@ -71,13 +71,17 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
    ```bash
    cp .env.example .env
-   # Edit .env and set JWT_SECRET, ENCRYPTION_KEY, and CORS_ALLOWED_ORIGINS
+   # Edit .env and set JWT_SECRET, ENCRYPTION_KEY, CORS_ALLOWED_ORIGINS, and REDIS_PASSWORD
    ```
 
    Required for Docker startup:
    - `JWT_SECRET`: signing secret for auth cookies
    - `ENCRYPTION_KEY`: 32-byte hex key for encrypting stored provider API keys
    - `CORS_ALLOWED_ORIGINS`: comma-separated allowed origins, for example `http://localhost:3000`
+   - `REDIS_PASSWORD`: shared secret used by the app and Redis container
+
+   Optional:
+   - `MAX_UPLOAD_SIZE_MB`: maximum upload size in megabytes for evidence uploads (defaults to `100`)
 
 3. **Run with Docker Compose**:
 
@@ -86,10 +90,12 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
    ```
 
    > **Note (Windows/Mac/WSL2):** If you encounter `SQLITE_IOERR_SHMOPEN` errors, ensure the environment variable `DISABLE_SQLITE_WAL=true` is set in `docker-compose.yml` (it is by default).
+   >
+   > **Note (Linux bind mounts):** The host `data/` and `uploads/` directories must be writable by the container runtime user because the app now runs as a non-root `appuser`.
 
 4. **Open the Web UI**: Navigate to `http://localhost:3000`.
 
-5. **Create an Account**: Go to `/register.html` to create your first user account (becomes Admin), then login.
+5. **Create an Account**: Go to `/register.html` to create your first user account (it becomes the active Admin account). Later self-registrations stay pending until an Admin approves them.
 
 6. **Configure LLM Provider**: Go to **App Settings** (`/app-settings.html`) to set your LLM provider and API key.
 
@@ -133,6 +139,7 @@ The base stack still requires the standard security variables in `.env`:
 - `JWT_SECRET`
 - `ENCRYPTION_KEY`
 - `CORS_ALLOWED_ORIGINS`
+- `REDIS_PASSWORD`
 
 ### Windows + AMD GPU Fallback
 

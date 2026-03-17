@@ -5,6 +5,10 @@ const db = require('./db');
 const logger = require('../logging/logger');
 
 const SALT_ROUNDS = 10;
+const ACCOUNT_INACTIVE_ERROR = 'Account is deactivated';
+const ACCOUNT_PENDING_ERROR = 'Your account is pending administrator approval.';
+const ACCOUNT_REJECTED_ERROR = 'Your registration was not approved.';
+const APPROVABLE_STATUSES = new Set(['pending', 'rejected']);
 const resolveJwtSecret = () => {
   if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
 
@@ -54,7 +58,7 @@ class AuthService {
       // Determine role: first user becomes admin, others become editor
       const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
       const role = userCount.count === 0 ? 'admin' : 'editor';
-      const status = 'active';
+      const status = userCount.count === 0 ? 'active' : 'pending';
 
       // Insert user with role, status, and name
       const stmt = db.prepare('INSERT INTO users (id, name, email, password_hash, created_at, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
@@ -94,7 +98,15 @@ class AuthService {
 
       // Check if user is active
       if (user.status === 'inactive') {
-        throw new Error('Account is deactivated');
+        throw new Error(ACCOUNT_INACTIVE_ERROR);
+      }
+
+      if (user.status === 'pending') {
+        throw new Error(ACCOUNT_PENDING_ERROR);
+      }
+
+      if (user.status === 'rejected') {
+        throw new Error(ACCOUNT_REJECTED_ERROR);
       }
 
       // Generate Token (include role for frontend access control)
@@ -277,6 +289,39 @@ class AuthService {
     const likeQuery = `%${query}%`;
     return db.prepare('SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10').all(likeQuery, likeQuery);
   }
+
+  approveUser(id) {
+    const user = db.prepare('SELECT id, status FROM users WHERE id = ?').get(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!APPROVABLE_STATUSES.has(user.status)) {
+      throw new Error('Only pending or rejected users can be approved');
+    }
+
+    db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(id);
+    logger.info({ userId: id }, 'User approved');
+    return this.getUserById(id);
+  }
+
+  rejectUser(id) {
+    const user = db.prepare('SELECT id, status FROM users WHERE id = ?').get(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.status !== 'pending') {
+      throw new Error('Only pending users can be rejected');
+    }
+
+    db.prepare("UPDATE users SET status = 'rejected' WHERE id = ?").run(id);
+    logger.info({ userId: id }, 'User rejected');
+    return this.getUserById(id);
+  }
 }
 
 module.exports = new AuthService();
+module.exports.ACCOUNT_INACTIVE_ERROR = ACCOUNT_INACTIVE_ERROR;
+module.exports.ACCOUNT_PENDING_ERROR = ACCOUNT_PENDING_ERROR;
+module.exports.ACCOUNT_REJECTED_ERROR = ACCOUNT_REJECTED_ERROR;

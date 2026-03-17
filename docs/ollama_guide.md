@@ -25,12 +25,15 @@ Before starting the stack, configure the required base variables in `.env`:
 - `JWT_SECRET`
 - `ENCRYPTION_KEY`
 - `CORS_ALLOWED_ORIGINS`
+- `REDIS_PASSWORD`
 
 ```bash
 docker compose up -d --build
 ```
 
 This starts only the application and Redis. No bundled `ollama` container is created.
+
+If you use Linux bind mounts for `./data` and `./uploads`, make sure those host directories are writable by the container UID because the app runs as a non-root user.
 
 ### 2. Bundled CPU Ollama
 

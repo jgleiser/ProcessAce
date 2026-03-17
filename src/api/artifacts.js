@@ -4,6 +4,7 @@ const sanitizeHtml = require('sanitize-html');
 const { marked } = require('marked');
 const router = express.Router();
 const { getArtifact, getArtifactVersionHistory, getArtifactVersion } = require('../models/artifact');
+const { sanitizeFilename } = require('../utils/sanitizeFilename');
 
 /**
  * GET /api/artifacts/:id/content
@@ -41,7 +42,10 @@ router.get('/:id/content', async (req, res) => {
 
   res.setHeader('Content-Type', mimeType);
 
-  const downloadName = artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
+  const downloadName = sanitizeFilename(
+    artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`,
+    `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`,
+  );
 
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
@@ -185,7 +189,10 @@ router.get('/:id/versions/:version/content', async (req, res) => {
 
   res.setHeader('Content-Type', mimeType);
 
-  const downloadName = artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
+  const downloadName = sanitizeFilename(
+    artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`,
+    `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`,
+  );
 
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
@@ -264,7 +271,8 @@ router.get('/:id/export/docx', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="document-${id}.docx"`);
+    const docxFilename = sanitizeFilename(`document-${id}.docx`, `document-${id}.docx`);
+    res.setHeader('Content-Disposition', `attachment; filename="${docxFilename}"`);
     res.setHeader('Content-Length', docxBuffer.length);
     res.send(docxBuffer);
 

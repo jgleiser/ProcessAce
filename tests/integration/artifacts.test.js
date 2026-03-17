@@ -10,7 +10,8 @@ process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
 
 const request = require('supertest');
 const app = require('../../src/app');
-const { Artifact, saveArtifact } = require('../../src/models/artifact');
+const { Artifact, saveArtifact, updateArtifact } = require('../../src/models/artifact');
+const db = require('../../src/services/db');
 
 describe('Artifacts API Integration Tests', () => {
   let server;
@@ -18,6 +19,7 @@ describe('Artifacts API Integration Tests', () => {
   let otherAgent;
   let docArtifactId;
   let bpmnArtifactId;
+  let sanitizedArtifactId;
   let testUserId;
 
   const testUser = {
@@ -39,10 +41,12 @@ describe('Artifacts API Integration Tests', () => {
 
     // Register — the endpoint returns the user object directly at the body root
     const reg = await agent.post('/api/auth/register').send(testUser).expect(201);
-    testUserId = reg.body.id;
+    testUserId = reg.body.user.id;
 
     await agent.post('/api/auth/login').send({ email: testUser.email, password: testUser.password }).expect(200);
     await otherAgent.post('/api/auth/register').send(otherUser).expect(201);
+    const otherUserRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(otherUser.email);
+    db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(otherUserRecord.id);
     await otherAgent.post('/api/auth/login').send({ email: otherUser.email, password: otherUser.password }).expect(200);
 
     // Seed a doc artifact owned by the test user
@@ -65,6 +69,17 @@ describe('Artifacts API Integration Tests', () => {
     });
     await saveArtifact(bpmnArtifact);
     bpmnArtifactId = bpmnArtifact.id;
+
+    const sanitizedArtifact = new Artifact({
+      type: 'doc',
+      content: 'Version 1',
+      createdBy: 'test',
+      user_id: testUserId,
+      filename: 'phase2"\r\nartifact.md',
+    });
+    await saveArtifact(sanitizedArtifact);
+    await updateArtifact(sanitizedArtifact.id, 'Version 2');
+    sanitizedArtifactId = sanitizedArtifact.id;
   });
 
   after(() => {
@@ -94,6 +109,14 @@ describe('Artifacts API Integration Tests', () => {
 
   it('should return 403 when a non-member tries to fetch artifact content', async () => {
     await otherAgent.get(`/api/artifacts/${docArtifactId}/content`).expect(403);
+  });
+
+  it('should sanitize artifact download filenames for current and versioned downloads', async () => {
+    const latestRes = await agent.get(`/api/artifacts/${sanitizedArtifactId}/content`).expect(200);
+    const versionRes = await agent.get(`/api/artifacts/${sanitizedArtifactId}/versions/1/content`).expect(200);
+
+    assert.strictEqual(latestRes.headers['content-disposition'], 'attachment; filename="phase2artifact.md"');
+    assert.strictEqual(versionRes.headers['content-disposition'], 'attachment; filename="phase2artifact.md"');
   });
 
   it('should return 404 for a non-existent artifact', async () => {

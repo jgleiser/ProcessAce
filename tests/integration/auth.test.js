@@ -1,4 +1,4 @@
-const { describe, it, before, after } = require('node:test');
+const { after, before, describe, it } = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 
@@ -12,93 +12,62 @@ const db = require('../../src/services/db');
 
 describe('Auth API Integration Tests', () => {
   let server;
-  let testUser = {
-    email: `test_${Date.now()}@example.com`,
+  let adminAgent;
+  let secondUserAgent;
+  let thirdUserAgent;
+  let secondUserId;
+  let thirdUserId;
+
+  const adminUser = {
+    email: `test_admin_${Date.now()}@example.com`,
     password: 'Password123!',
-    name: 'Test User',
+    name: 'Test Admin',
   };
-  let agent;
+
+  const pendingUser = {
+    email: `test_pending_${Date.now()}@example.com`,
+    password: 'Password123!',
+    name: 'Pending User',
+  };
+
+  const rejectedUser = {
+    email: `test_rejected_${Date.now()}@example.com`,
+    password: 'Password123!',
+    name: 'Rejected User',
+  };
 
   before(async () => {
-    // Start server on a random port to avoid conflicts
     server = app.listen(0);
-    agent = request.agent(server);
+    adminAgent = request.agent(server);
+    secondUserAgent = request.agent(server);
+    thirdUserAgent = request.agent(server);
   });
 
   after(() => {
     server.close();
-    try {
-      const user = db.prepare('SELECT id FROM users WHERE email = ?').get(testUser.email);
-      if (user) {
-        // 1. Get workspaces owned by user
-        const workspaces = db.prepare('SELECT id FROM workspaces WHERE owner_id = ?').all(user.id);
-
-        // 2. Delete all members of those workspaces (clears FK to workspaces)
-        const deleteMembersStmt = db.prepare('DELETE FROM workspace_members WHERE workspace_id = ?');
-        for (const ws of workspaces) {
-          deleteMembersStmt.run(ws.id);
-        }
-
-        // 3. Delete the workspaces (clears FK to users.id via owner_id)
-        const deleteWorkspaceStmt = db.prepare('DELETE FROM workspaces WHERE id = ?');
-        for (const ws of workspaces) {
-          deleteWorkspaceStmt.run(ws.id);
-        }
-
-        // 4. Delete any other memberships this user has (clears FK to users.id via user_id)
-        db.prepare('DELETE FROM workspace_members WHERE user_id = ?').run(user.id);
-
-        // 4b. Delete notifications (clears FK to users.id)
-        try {
-          db.prepare('DELETE FROM notifications WHERE user_id = ?').run(user.id);
-        } catch {
-          /* ignore */
-        }
-
-        // 4c. Delete invitations (clears FK to users.id)
-        try {
-          db.prepare('DELETE FROM workspace_invitations WHERE inviter_id = ?').run(user.id);
-        } catch {
-          /* ignore */
-        }
-
-        // 5. Finally delete the user
-        db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
-      }
-    } catch (e) {
-      console.error('Cleanup failed:', e);
-    }
   });
 
-  it('should register a new user', async () => {
-    const res = await agent.post('/api/auth/register').send(testUser).expect('Content-Type', /json/).expect(201);
+  it('registers the first user as an active admin and returns a success message', async () => {
+    const res = await adminAgent.post('/api/auth/register').send(adminUser).expect('Content-Type', /json/).expect(201);
 
-    assert.ok(res.body.id, 'Response should contain user id');
-    assert.strictEqual(res.body.email, testUser.email);
-    // Token is NOT expected on register, client must login
+    assert.ok(res.body.user.id);
+    assert.strictEqual(res.body.user.email, adminUser.email);
+    assert.strictEqual(res.body.user.role, 'admin');
+    assert.strictEqual(res.body.user.status, 'active');
+    assert.strictEqual(res.body.message, 'Account created successfully. You can now sign in.');
   });
 
-  it('should not register user with duplicate email', async () => {
-    const res = await agent.post('/api/auth/register').send(testUser).expect(409);
-
-    assert.ok(res.body.error, 'Should return an error message');
+  it('does not register a duplicate email', async () => {
+    const res = await adminAgent.post('/api/auth/register').send(adminUser).expect(409);
+    assert.ok(res.body.error);
   });
 
-  it('should login with valid credentials', async () => {
-    const loginAgent = request.agent(server);
+  it('logs in the first user and sets SameSite=Strict on auth cookies', async () => {
+    const res = await adminAgent.post('/api/auth/login').send({ email: adminUser.email, password: adminUser.password }).expect(200);
 
-    const res = await loginAgent
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: testUser.password,
-      })
-      .expect(200);
-
-    // API uses HTTP-only cookies, no token in body
-    assert.ok(res.body.user, 'Response should contain user');
+    assert.ok(res.body.user);
     assert.strictEqual(
-      res.header['set-cookie'].some((c) => c.startsWith('auth_token=')),
+      res.header['set-cookie'].some((cookie) => cookie.startsWith('auth_token=')),
       true,
       'Should set auth_token cookie',
     );
@@ -109,53 +78,92 @@ describe('Auth API Integration Tests', () => {
     );
   });
 
-  it('should fail login with invalid password', async () => {
-    await request(server)
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: 'WrongPassword!',
-      })
-      .expect(401);
+  it('fails login with an invalid password', async () => {
+    await request(server).post('/api/auth/login').send({ email: adminUser.email, password: 'WrongPassword!' }).expect(401);
   });
 
-  it('should get current user profile (GET /api/auth/me)', async () => {
-    // We need to login first with 'agent' to persist cookie for this test
-    await agent
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: testUser.password,
-      })
-      .expect(200);
+  it('registers a later user as pending and notifies admins', async () => {
+    const res = await secondUserAgent.post('/api/auth/register').send(pendingUser).expect(201);
 
-    const res = await agent.get('/api/auth/me').expect(200);
+    secondUserId = res.body.user.id;
 
-    assert.strictEqual(res.body.email, testUser.email);
+    assert.strictEqual(res.body.user.role, 'editor');
+    assert.strictEqual(res.body.user.status, 'pending');
+    assert.strictEqual(res.body.message, 'Your account has been created and is pending administrator approval.');
+
+    const notificationsRes = await adminAgent.get('/api/notifications').expect(200);
+    const registrationRequest = notificationsRes.body.notifications.find((notification) => notification.type === 'registration_request');
+
+    assert.ok(registrationRequest);
+    assert.strictEqual(registrationRequest.data.userId, secondUserId);
+    assert.strictEqual(registrationRequest.data.email, pendingUser.email);
   });
 
-  it('should fail /api/auth/me without token', async () => {
-    await request(server).get('/api/auth/me').expect(401); // New agent without cookies
+  it('blocks login for pending users', async () => {
+    const res = await secondUserAgent.post('/api/auth/login').send({ email: pendingUser.email, password: pendingUser.password }).expect(403);
+    assert.strictEqual(res.body.error, 'Your account is pending administrator approval.');
   });
 
-  it('should logout successfully', async () => {
-    // Ensure we are logged in with agent
-    await agent
-      .post('/api/auth/login')
-      .send({
-        email: testUser.email,
-        password: testUser.password,
-      })
-      .expect(200);
+  it('approves a pending user, creates a notification, and allows login', async () => {
+    const approveRes = await adminAgent.post(`/api/admin/users/${secondUserId}/approve`).expect(200);
+    assert.strictEqual(approveRes.body.status, 'active');
 
-    const res = await agent.post('/api/auth/logout').expect(200);
+    const approvalNotification = db
+      .prepare("SELECT type, title, message FROM notifications WHERE user_id = ? AND type = 'account_approved'")
+      .get(secondUserId);
+
+    assert.ok(approvalNotification);
+    assert.strictEqual(approvalNotification.title, 'Account approved');
+
+    const loginRes = await secondUserAgent.post('/api/auth/login').send({ email: pendingUser.email, password: pendingUser.password }).expect(200);
+    assert.strictEqual(loginRes.body.user.email, pendingUser.email);
+  });
+
+  it('returns the authenticated user profile after approval', async () => {
+    const res = await secondUserAgent.get('/api/auth/me').expect(200);
+    assert.strictEqual(res.body.email, pendingUser.email);
+  });
+
+  it('rejects a pending user, blocks login, and allows later approval', async () => {
+    const registerRes = await thirdUserAgent.post('/api/auth/register').send(rejectedUser).expect(201);
+    thirdUserId = registerRes.body.user.id;
+    assert.strictEqual(registerRes.body.user.status, 'pending');
+
+    const rejectRes = await adminAgent.post(`/api/admin/users/${thirdUserId}/reject`).expect(200);
+    assert.strictEqual(rejectRes.body.status, 'rejected');
+
+    const rejectionNotification = db
+      .prepare("SELECT type, title, message FROM notifications WHERE user_id = ? AND type = 'account_rejected'")
+      .get(thirdUserId);
+
+    assert.ok(rejectionNotification);
+    assert.strictEqual(rejectionNotification.title, 'Registration not approved');
+
+    const rejectedLoginRes = await thirdUserAgent
+      .post('/api/auth/login')
+      .send({ email: rejectedUser.email, password: rejectedUser.password })
+      .expect(403);
+    assert.strictEqual(rejectedLoginRes.body.error, 'Your registration was not approved.');
+
+    const approveRes = await adminAgent.post(`/api/admin/users/${thirdUserId}/approve`).expect(200);
+    assert.strictEqual(approveRes.body.status, 'active');
+
+    await thirdUserAgent.post('/api/auth/login').send({ email: rejectedUser.email, password: rejectedUser.password }).expect(200);
+  });
+
+  it('fails /api/auth/me without a token', async () => {
+    await request(server).get('/api/auth/me').expect(401);
+  });
+
+  it('logs out successfully and clears the auth cookie with SameSite=Strict', async () => {
+    const res = await adminAgent.post('/api/auth/logout').expect(200);
+
     assert.strictEqual(
       res.header['set-cookie'].some((cookie) => cookie.includes('SameSite=Strict')),
       true,
       'Should clear auth cookie with SameSite=Strict',
     );
 
-    // Verify logout by trying to access protected route
-    await agent.get('/api/auth/me').expect(401);
+    await adminAgent.get('/api/auth/me').expect(401);
   });
 });

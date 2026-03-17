@@ -212,7 +212,7 @@ The processing pipeline is implemented inside the worker process and consists of
 
 - **Auth Service** (`src/services/authService.js`):
   - Registration with email/password (password validated: 8+ chars, uppercase, lowercase, numbers).
-  - First registered user automatically gets `admin` role; subsequent users get `viewer`.
+  - First registered user automatically gets `admin` role and `active` status; later self-registrations get `editor` role and `pending` status until approved by an admin.
   - Each new user gets a default workspace created automatically.
   - Login returns JWT token set as HTTP-only cookie (`auth_token`).
   - JWT expires in 24 hours; include user id, email, and role in payload.
@@ -220,9 +220,9 @@ The processing pipeline is implemented inside the worker process and consists of
   - `authenticateToken` – extracts and verifies JWT from cookies.
   - `requireAdmin` – checks for `admin` role on protected admin routes.
 - **Roles**:
-  - **System Roles**: `admin` (can manage system settings/users), `user` (regular access).
+  - **System Roles**: `admin` (can manage system settings/users), `editor`, `viewer`.
   - **Workspace Roles**: `owner` (full control), `editor` (can edit content), `viewer` (read-only).
-- **User Status**: `active`, `inactive` (inactive users cannot log in).
+- **User Status**: `active`, `inactive`, `pending`, `rejected`.
 - **Authorization**: Resources are scoped by `workspace_id`. Access is determined by the user's membership role in that workspace.
 
 ---
@@ -276,6 +276,8 @@ Key properties:
 - No LLM is bundled; API keys are configured via the App Settings page.
 - Can run fully on-premise.
 - Supports both single-tenant deployments and, with commercial licensing, multi-tenant setups.
+- The base Docker stack now runs the `app` container as a non-root `appuser`.
+- Redis uses password authentication and is not exposed on a public host port in the base Compose stack.
 
 ---
 
@@ -287,15 +289,17 @@ ProcessAce implements the following security measures:
 - **Password Security**: bcrypt hashing (10 salt rounds), complexity requirements enforced.
 - **API Key Encryption**: LLM API keys encrypted at rest with AES-256-CBC.
 - **Role-Based Access**: Admin-only endpoints for user management and settings.
-- **CSP Headers**: Helmet middleware with configured Content Security Policy.
+- **CSP Headers**: Helmet middleware with nonce-based Content Security Policy for inline scripts.
 - **Input Validation**: Server-side validation on all API endpoints.
+- **Upload Hardening**: Evidence uploads enforce an extension allowlist and a configurable maximum size.
 
 Recommended practices for production:
 
 - Deploy behind TLS (reverse proxy).
-- Set `JWT_SECRET` and `ENCRYPTION_KEY` to strong, unique values.
+- Set `JWT_SECRET`, `ENCRYPTION_KEY`, and `REDIS_PASSWORD` to strong, unique values.
 - Set `CORS_ALLOWED_ORIGINS` to the exact allowed frontend origin list.
 - Set `NODE_ENV=production` for secure cookies.
+- Ensure `data/` and `uploads/` bind mounts are writable by the container UID when running Docker on Linux hosts.
 - Keep all dependencies and base images updated.
 
 ---

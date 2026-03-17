@@ -147,6 +147,36 @@ function renderUsersTable(users) {
       originalUserData[user.id] = { status: user.status, role: user.role };
       const isCurrentUser = user.id === currentUserId;
       const createdDate = new Date(user.created_at).toLocaleDateString();
+      const statusLabelKey = user.status === 'rejected' ? 'common.rejected' : `common.${user.status}`;
+      const statusCell =
+        user.status === 'pending' || user.status === 'rejected'
+          ? `
+                <span class="status-badge status-badge-${user.status}">
+                    ${t(statusLabelKey)}
+                </span>
+            `
+          : `
+                <select class="status-select" data-field="status" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
+                    <option value="active" ${user.status === 'active' ? 'selected' : ''}>${t('common.active')}</option>
+                    <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
+                </select>
+            `;
+      const actionButtons = isCurrentUser
+        ? '<span class="user-row-muted">-</span>'
+        : user.status === 'pending'
+          ? `
+                <div class="user-row-actions">
+                    <button class="btn-primary btn-sm approve-user-btn" data-user-id="${user.id}">${t('adminUsers.approveUser')}</button>
+                    <button class="btn-secondary btn-sm reject-user-btn" data-user-id="${user.id}">${t('adminUsers.rejectUser')}</button>
+                </div>
+            `
+          : user.status === 'rejected'
+            ? `
+                <div class="user-row-actions">
+                    <button class="btn-primary btn-sm approve-user-btn" data-user-id="${user.id}">${t('adminUsers.approveUser')}</button>
+                </div>
+            `
+            : '<span class="user-row-muted">-</span>';
 
       return `
             <tr data-user-id="${user.id}">
@@ -156,10 +186,7 @@ function renderUsersTable(users) {
                 </td>
                 <td class="user-email">${escapeHtml(user.email)}</td>
                 <td>
-                    <select class="status-select" data-field="status" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
-                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>${t('common.active')}</option>
-                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
-                    </select>
+                    ${statusCell}
                 </td>
                 <td>
                     <select class="role-select" data-field="role" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
@@ -169,6 +196,7 @@ function renderUsersTable(users) {
                     </select>
                 </td>
                 <td class="user-date">${createdDate}</td>
+                <td>${actionButtons}</td>
             </tr>
         `;
     })
@@ -177,6 +205,18 @@ function renderUsersTable(users) {
   // Add change listeners to all selects
   document.querySelectorAll('.status-select, .role-select').forEach((select) => {
     select.addEventListener('change', updateSaveButton);
+  });
+
+  document.querySelectorAll('.approve-user-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      updateUserRegistrationStatus(button.dataset.userId, 'approve');
+    });
+  });
+
+  document.querySelectorAll('.reject-user-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      updateUserRegistrationStatus(button.dataset.userId, 'reject');
+    });
   });
 }
 
@@ -191,12 +231,12 @@ function getPendingChanges() {
     const statusSelect = row.querySelector('.status-select');
     const roleSelect = row.querySelector('.role-select');
 
-    if (!statusSelect || !roleSelect) return;
+    if (!roleSelect) return;
 
     const original = originalUserData[userId];
     const updates = {};
 
-    if (statusSelect.value !== original.status) {
+    if (statusSelect && statusSelect.value !== original.status) {
       updates.status = statusSelect.value;
     }
     if (roleSelect.value !== original.role) {
@@ -209,6 +249,26 @@ function getPendingChanges() {
   });
 
   return changes;
+}
+
+async function updateUserRegistrationStatus(userId, action) {
+  try {
+    const response = await fetch(`/api/admin/users/${userId}/${action}`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || t('adminUsers.statusActionFailed'));
+    }
+
+    showToast(action === 'approve' ? t('adminUsers.userApproved') : t('adminUsers.userRejected'), 'success');
+    await loadUsers(currentPage, currentLimit);
+    updateSaveButton();
+  } catch (error) {
+    console.error(`Error executing ${action} for user ${userId}:`, error);
+    showToast(error.message || t('adminUsers.statusActionFailed'), 'error');
+  }
 }
 
 /**

@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const fs = require('fs');
 const logger = require('./logging/logger');
 const healthRoutes = require('./api/health');
 const path = require('path');
+const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./api/auth');
 const { authenticateToken } = require('./middleware/auth');
@@ -11,6 +13,40 @@ const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
 const { sendErrorResponse } = require('./utils/errorResponse');
 
 const app = express();
+const publicDir = path.join(__dirname, 'public');
+
+const attachCspNonce = (_req, res, next) => {
+  res.locals.cspNonce = crypto.randomUUID().replace(/-/g, '');
+  next();
+};
+
+const serveHtmlWithNonce = async (req, res, next) => {
+  if (!['GET', 'HEAD'].includes(req.method)) {
+    return next();
+  }
+
+  const requestedPath = req.path === '/' ? 'index.html' : req.path.replace(/^\/+/, '');
+  if (!requestedPath.endsWith('.html')) {
+    return next();
+  }
+
+  const absolutePath = path.resolve(publicDir, requestedPath);
+  const indexPath = path.join(publicDir, 'index.html');
+  if (!absolutePath.startsWith(`${publicDir}${path.sep}`) && absolutePath !== indexPath) {
+    return next();
+  }
+
+  try {
+    const html = await fs.promises.readFile(absolutePath, 'utf8');
+    res.type('html');
+    return res.send(html.replaceAll('__CSP_NONCE__', res.locals.cspNonce));
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return next();
+    }
+    return next(error);
+  }
+};
 
 // CORS Configuration
 const parseCorsOrigins = () => {
@@ -41,13 +77,15 @@ app.use(
   }),
 );
 
+app.use(attachCspNonce);
+
 // Security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        'script-src': ["'self'", 'https://unpkg.com', 'https://esm.sh', "'unsafe-inline'"],
+        'script-src': [(_req, res) => `'nonce-${res.locals.cspNonce}'`, "'self'", 'https://unpkg.com', 'https://esm.sh'],
         'img-src': ["'self'", 'data:', 'blob:'],
         'connect-src': ["'self'", 'https://unpkg.com', 'https://esm.sh'],
       },
@@ -57,9 +95,6 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
-
-// Serve frontend
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -72,6 +107,10 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Serve frontend
+app.use(serveHtmlWithNonce);
+app.use(express.static(publicDir));
 
 const evidenceRoutes = require('./api/evidence');
 const jobsRoutes = require('./api/jobs');

@@ -29,8 +29,8 @@ All API endpoints are served under `http://localhost:3000` (default).
 **Body**: `{ "name": "string", "email": "string", "password": "string" }`
 
 - Password: 8+ chars, uppercase, lowercase, numbers.
-- First user becomes `admin`; subsequent users get `viewer` role.
-- Returns `201` with user object.
+- First user becomes an active `admin`; subsequent users become pending `editor` accounts until approved.
+- Returns `201` with `{ user, message }`.
 
 ### `POST /api/auth/login`
 
@@ -38,6 +38,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Sets `auth_token` HTTP-only cookie (24h expiry).
 - Returns `200` with `{ message, user }`.
+- Returns `403` for `pending`, `rejected`, or `inactive` accounts.
 
 ### `PUT /api/auth/me`
 
@@ -64,6 +65,8 @@ All API endpoints are served under `http://localhost:3000` (default).
 - `processName` (optional): Custom process name.
 - `uploadType` (optional): Use `audio` to force audio/video handling.
 - Provider/model from app settings are used automatically.
+- Allowed upload extensions: `.mp3`, `.m4a`, `.wav`, `.mp4`, `.webm`, `.ogg`, `.flac`, `.mpeg`, `.mpga`, `.oga`, `.txt`, `.md`, `.pdf`, `.doc`, `.docx`.
+- Oversized uploads return `413`; unsupported upload types return `415`.
 - Audio/video uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "transcription", statusUrl }`.
 - Text/document uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "processing", statusUrl }`.
 
@@ -250,11 +253,13 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Admin (`/api/admin`) — Admin Only
 
-| Method  | Path                   | Auth  | Description                          |
-| ------- | ---------------------- | ----- | ------------------------------------ |
-| `GET`   | `/api/admin/users`     | Admin | List all users (paginated)           |
-| `PATCH` | `/api/admin/users/:id` | Admin | Update a user's role and/or status   |
-| `GET`   | `/api/admin/jobs`      | Admin | List all jobs (paginated, all users) |
+| Method  | Path                           | Auth  | Description                          |
+| ------- | ------------------------------ | ----- | ------------------------------------ |
+| `GET`   | `/api/admin/users`             | Admin | List all users (paginated)           |
+| `PATCH` | `/api/admin/users/:id`         | Admin | Update a user's role and/or status   |
+| `POST`  | `/api/admin/users/:id/approve` | Admin | Approve a pending or rejected user   |
+| `POST`  | `/api/admin/users/:id/reject`  | Admin | Reject a pending user                |
+| `GET`   | `/api/admin/jobs`              | Admin | List all jobs (paginated, all users) |
 
 ### `GET /api/admin/users`
 
@@ -268,6 +273,17 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Updates one or both fields.
 - Cannot modify your own user.
+- `pending` and `rejected` registration states are managed through the dedicated approval endpoints.
+
+### `POST /api/admin/users/:id/approve`
+
+- Promotes a `pending` or `rejected` user to `active`.
+- Creates an in-app notification for the target user.
+
+### `POST /api/admin/users/:id/reject`
+
+- Changes a `pending` user to `rejected`.
+- Creates an in-app notification for the target user.
 
 ### `GET /api/admin/jobs`
 
@@ -305,6 +321,11 @@ All API endpoints are served under `http://localhost:3000` (default).
 | `POST` | `/api/invitations/:token/accept`  | Yes  | Accept an invitation            |
 | `POST` | `/api/invitations/:token/decline` | Yes  | Decline an invitation           |
 
+### `GET /api/invitations/:token`
+
+- Returns only `{ workspaceName, status, expired }`.
+- Returns `410 Gone` with the same shape when the invitation is expired.
+
 ### `POST /api/invitations/:token/accept`
 
 - Adds the user to the workspace with the invited role.
@@ -322,6 +343,8 @@ All endpoints return errors in the format:
 ```json
 { "error": "Error message description" }
 ```
+
+Some operational error responses also include a `correlationId` field for support and audit tracing.
 
 Common HTTP status codes:
 

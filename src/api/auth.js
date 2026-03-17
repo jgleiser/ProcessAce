@@ -1,9 +1,12 @@
 const express = require('express');
 const authService = require('../services/authService');
+const notificationService = require('../services/notificationService');
 const { authenticateToken } = require('../middleware/auth');
 const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
+const ACCOUNT_CREATED_MESSAGE = 'Account created successfully. You can now sign in.';
+const ACCOUNT_PENDING_MESSAGE = 'Your account has been created and is pending administrator approval.';
 
 /**
  * POST /api/auth/register
@@ -17,7 +20,29 @@ router.post('/register', async (req, res) => {
     }
 
     const user = await authService.registerUser(name, email, password);
-    res.status(201).json(user);
+
+    if (user.status === 'pending') {
+      const adminUsers = authService.getAllUsers().filter((adminUser) => adminUser.role === 'admin' && adminUser.status === 'active');
+
+      adminUsers.forEach((adminUser) => {
+        notificationService.createNotification(
+          adminUser.id,
+          'registration_request',
+          'New registration request',
+          `${user.name} (${user.email}) is waiting for administrator approval.`,
+          {
+            userId: user.id,
+            name: user.name,
+            email: user.email,
+          },
+        );
+      });
+    }
+
+    res.status(201).json({
+      user,
+      message: user.status === 'pending' ? ACCOUNT_PENDING_MESSAGE : ACCOUNT_CREATED_MESSAGE,
+    });
   } catch (error) {
     if (error.message === 'User already exists') {
       return res.status(409).json({ error: 'User already exists' });
@@ -53,7 +78,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    if (error.message === 'Account is deactivated') {
+    if (
+      error.message === authService.ACCOUNT_INACTIVE_ERROR ||
+      error.message === authService.ACCOUNT_PENDING_ERROR ||
+      error.message === authService.ACCOUNT_REJECTED_ERROR
+    ) {
       return res.status(403).json({ error: error.message });
     }
 

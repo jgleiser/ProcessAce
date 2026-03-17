@@ -39,7 +39,7 @@ describe('Settings API Integration Tests', () => {
     const adminUser = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
     const editorUser = db.prepare('SELECT id FROM users WHERE email = ?').get(editorEmail);
     db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(adminUser.id);
-    db.prepare("UPDATE users SET role = 'editor' WHERE id = ?").run(editorUser.id);
+    db.prepare("UPDATE users SET role = 'editor', status = 'active' WHERE id = ?").run(editorUser.id);
 
     await login(adminAgent, adminEmail);
     await login(editorAgent, editorEmail);

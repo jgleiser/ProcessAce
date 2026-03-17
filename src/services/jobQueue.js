@@ -5,11 +5,17 @@ const { v4: uuidv4 } = require('uuid');
 const { Job, saveJob, getJob, deleteJob } = require('../models/job');
 const { getEvidence, saveEvidence } = require('../models/evidence');
 
+const isTestEnvironment = process.env.NODE_ENV === 'test';
+
 class JobQueue {
   constructor(name) {
     this.name = name;
-    this.queue = new Queue(name, { connection });
     this.workers = [];
+    this.handlers = new Map();
+
+    if (!isTestEnvironment) {
+      this.queue = new Queue(name, { connection });
+    }
   }
 
   async add(type, data, metadata = {}) {
@@ -33,18 +39,21 @@ class JobQueue {
     });
     saveJob(jobRecord);
 
-    // 2. Add to BullMQ
-    await this.queue.add(
-      type,
-      { ...data, jobId },
-      {
-        jobId: jobId, // Use same ID
-        removeOnComplete: 100, // Keep last 100 in Redis
-        removeOnFail: 200,
-      },
-    );
+    if (!isTestEnvironment) {
+      // 2. Add to BullMQ
+      await this.queue.add(
+        type,
+        { ...data, jobId },
+        {
+          jobId: jobId, // Use same ID
+          removeOnComplete: 100, // Keep last 100 in Redis
+          removeOnFail: 200,
+        },
+      );
 
-    logger.info({ event_type: 'job_queued', jobId, queue: this.name }, 'Job added to queue');
+      logger.info({ event_type: 'job_queued', jobId, queue: this.name }, 'Job added to queue');
+    }
+
     return jobRecord;
   }
 
@@ -55,6 +64,10 @@ class JobQueue {
   async delete(jobId) {
     // Remove from SQLite
     const deleted = deleteJob(jobId);
+    if (isTestEnvironment || !this.queue) {
+      return deleted;
+    }
+
     // Try remove from BullMQ (best effort)
     try {
       const bullJob = await this.queue.getJob(jobId);
@@ -67,11 +80,11 @@ class JobQueue {
 
   registerWorker(type, handler) {
     logger.info({ queue: this.name, type }, 'Registering worker handler');
-
-    if (!this.handlers) {
-      this.handlers = new Map();
-    }
     this.handlers.set(type, handler);
+
+    if (isTestEnvironment) {
+      return;
+    }
 
     if (!this.worker) {
       logger.info({ queue: this.name }, 'Starting BullMQ Worker dispatcher');

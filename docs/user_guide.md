@@ -10,9 +10,11 @@ ProcessAce helps you document and analyze processes by uploading evidence (text 
 
 1. Navigate to `/register.html` to create a new account.
 2. Enter your **name**, **email**, and **password** (must be 8+ characters with uppercase, lowercase, and numbers).
-3. Click **Register**. The first registered user automatically becomes an **Admin**.
-4. Go to `/login.html` and sign in.
-5. You'll be redirected to the main dashboard.
+3. Click **Register**.
+4. The first registered user automatically becomes an **Admin** and can sign in immediately.
+5. Later self-registrations are created as **pending** accounts and must be approved by an Admin before login.
+6. Go to `/login.html` and sign in once the account is active.
+7. You'll be redirected to the main dashboard.
 
 ### 2. Configure LLM Provider (Admin Only)
 
@@ -155,6 +157,7 @@ You can edit generated artifacts directly within the browser.
 2. View all registered users with their name, email, role, and status.
 3. **Change Role**: Select Admin, Editor, or Viewer from the role dropdown.
 4. **Change Status**: Toggle between Active and Inactive. Inactive users cannot log in.
+5. **Approve / Reject Registrations**: Pending users show dedicated approval actions. Rejected users remain visible and can be approved later if access is restored.
 
 > **Note**: Admins cannot change their own role or deactivate their own account.
 
@@ -191,5 +194,6 @@ Ollama-specific setup depends on the host OS and hardware. Use the dedicated gui
 - **"Marked not defined"**: Ensure your browser can access external scripts (CDN) or rebuild the application if running locally.
 - **Save Errors**: Check that the backend service is running and the database is accessible.
 - **401 Unauthorized**: Your session may have expired. Refresh the page to be redirected to login.
+- **403 Pending Approval**: A newly created account may still need administrator approval before it can log in.
 - **LLM Errors**: Verify your API key is correct in App Settings. Use the **Verify & Load Models** button to test connectivity.
 - **Ollama Issues**: Confirm the base URL matches your deployment mode and review the [Ollama Guide](./ollama_guide.md).
