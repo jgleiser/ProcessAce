@@ -38,6 +38,16 @@ class WorkspaceService {
     stmt.run(workspaceId, userId, role);
   }
 
+  ensureMemberRole(workspaceId, userId, role = 'admin') {
+    db.prepare(
+      `
+        INSERT INTO workspace_members (workspace_id, user_id, role)
+        VALUES (?, ?, ?)
+        ON CONFLICT(workspace_id, user_id) DO UPDATE SET role = excluded.role
+      `,
+    ).run(workspaceId, userId, role);
+  }
+
   /**
    * Get workspaces for a user
    * @param {string} userId
@@ -353,6 +363,21 @@ class WorkspaceService {
       db.prepare('DELETE FROM workspaces WHERE id = ?').run(workspaceId);
     });
     dbTx();
+  }
+
+  transferOwnedWorkspaces(fromUserId, toUserId) {
+    const transferTransaction = db.transaction(() => {
+      const ownedWorkspaces = db.prepare('SELECT id FROM workspaces WHERE owner_id = ?').all(fromUserId);
+
+      ownedWorkspaces.forEach(({ id }) => {
+        db.prepare('UPDATE workspaces SET owner_id = ? WHERE id = ?').run(toUserId, id);
+        this.ensureMemberRole(id, toUserId, 'admin');
+      });
+
+      return ownedWorkspaces.length;
+    });
+
+    return transferTransaction();
   }
 }
 

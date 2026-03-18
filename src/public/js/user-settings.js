@@ -2,12 +2,27 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const t = window.i18n ? window.i18n.t : (k) => k;
   const form = document.getElementById('userSettingsForm');
+  const deactivateForm = document.getElementById('deactivateAccountForm');
   const nameInput = document.getElementById('nameInput');
   const currentPasswordInput = document.getElementById('currentPasswordInput');
   const passwordInput = document.getElementById('passwordInput');
   const confirmPasswordInput = document.getElementById('confirmPasswordInput');
   const saveBtn = document.getElementById('saveBtn');
   const messageContainer = document.getElementById('messageContainer');
+  const accountCreatedValue = document.getElementById('accountCreatedValue');
+  const lastLoginValue = document.getElementById('lastLoginValue');
+  const consentHistoryList = document.getElementById('consentHistoryList');
+  const exportDataBtn = document.getElementById('exportDataBtn');
+  const deactivateBtn = document.getElementById('deactivateBtn');
+  const deactivatePasswordInput = document.getElementById('deactivatePasswordInput');
+
+  const formatDate = (value) => {
+    if (!value) {
+      return t('userSettings.neverLoggedIn');
+    }
+
+    return new Date(value).toLocaleString();
+  };
 
   function showMessage(type, text) {
     const message = document.createElement('div');
@@ -33,17 +48,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Load current user data
-  try {
-    const res = await fetch('/api/auth/me');
-    if (res.ok) {
-      const user = await res.json();
-      nameInput.value = user.name || '';
-    } else {
-      window.location.href = '/login.html';
+  function renderConsentHistory(consentHistory = []) {
+    if (!consentHistory.length) {
+      consentHistoryList.textContent = t('userSettings.noConsentHistory');
+      return;
     }
+
+    consentHistoryList.innerHTML = consentHistory
+      .map((record) => {
+        const consentTypeLabel = t(`userSettings.consentTypes.${record.consent_type}`);
+        const grantedLabel = record.granted ? t('userSettings.consentGranted') : t('userSettings.consentRevoked');
+        const ipAddress = record.ip_address || t('userSettings.ipUnavailable');
+
+        return `
+          <div class="settings-message settings-message-success">
+            <div class="settings-message-content">
+              <strong>${escapeHtml(consentTypeLabel)}</strong><br />
+              ${escapeHtml(grantedLabel)}<br />
+              ${escapeHtml(formatDate(record.timestamp))}<br />
+              ${escapeHtml(ipAddress)}
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function loadPrivacyData() {
+    const [profileRes, consentRes] = await Promise.all([fetch('/api/auth/me'), fetch('/api/auth/me/consent')]);
+
+    if (!profileRes.ok) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    if (!consentRes.ok) {
+      throw new Error(t('userSettings.consentLoadFailed'));
+    }
+
+    const user = await profileRes.json();
+    const consentData = await consentRes.json();
+
+    nameInput.value = user.name || '';
+    accountCreatedValue.textContent = formatDate(user.created_at);
+    lastLoginValue.textContent = formatDate(user.last_login_at);
+    renderConsentHistory(consentData.consentHistory || []);
+  }
+
+  try {
+    await loadPrivacyData();
   } catch (err) {
     console.error(err);
+    showMessage('error', err.message || t('common.errorOccurred'));
   }
 
   form.addEventListener('submit', async (e) => {
@@ -54,7 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
 
-    // Validation
     if (password) {
       if (!currentPassword) {
         showMessage('error', t('userSettings.currentPasswordRequired'));
@@ -74,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
+    saveBtn.textContent = t('common.saving');
 
     try {
       const body = {};
@@ -95,15 +156,87 @@ document.addEventListener('DOMContentLoaded', async () => {
         passwordInput.value = '';
         confirmPasswordInput.value = '';
         currentPasswordInput.value = '';
+        await loadPrivacyData();
       } else {
         const errorData = await res.json();
         showMessage('error', errorData.error || t('userSettings.updateFailed'));
       }
     } catch {
-      showMessage('error', 'An error occurred');
+      showMessage('error', t('common.errorOccurred'));
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Changes';
+      saveBtn.textContent = t('userSettings.saveChanges');
+    }
+  });
+
+  exportDataBtn?.addEventListener('click', async () => {
+    exportDataBtn.disabled = true;
+    exportDataBtn.textContent = t('common.loading');
+
+    try {
+      const res = await fetch('/api/auth/me/data-export');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || t('userSettings.exportFailed'));
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const disposition = res.headers.get('content-disposition') || '';
+      const filenameMatch = /filename="?([^"]+)"?/.exec(disposition);
+
+      link.href = url;
+      link.download = filenameMatch ? filenameMatch[1] : 'processace-data-export.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showMessage('success', t('userSettings.exportReady'));
+    } catch (error) {
+      showMessage('error', error.message || t('userSettings.exportFailed'));
+    } finally {
+      exportDataBtn.disabled = false;
+      exportDataBtn.textContent = t('userSettings.exportDataBtn');
+    }
+  });
+
+  deactivateForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const currentPassword = deactivatePasswordInput.value;
+    if (!currentPassword) {
+      showMessage('error', t('userSettings.deactivatePasswordRequired'));
+      deactivatePasswordInput.focus();
+      return;
+    }
+
+    if (!window.confirm(t('userSettings.deactivateConfirm'))) {
+      return;
+    }
+
+    deactivateBtn.disabled = true;
+    deactivateBtn.textContent = t('common.saving');
+
+    try {
+      const res = await fetch('/api/auth/me/deactivate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || t('userSettings.deactivateFailed'));
+      }
+
+      window.location.href = '/login.html';
+    } catch (error) {
+      showMessage('error', error.message || t('userSettings.deactivateFailed'));
+    } finally {
+      deactivateBtn.disabled = false;
+      deactivateBtn.textContent = t('userSettings.deactivateBtn');
     }
   });
 });

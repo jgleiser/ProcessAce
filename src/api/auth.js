@@ -4,6 +4,7 @@ const notificationService = require('../services/notificationService');
 const logger = require('../logging/logger');
 const { authenticateToken } = require('../middleware/auth');
 const { sendErrorResponse } = require('../utils/errorResponse');
+const { isAdminRole } = require('../utils/roles');
 
 const router = express.Router();
 const ACCOUNT_CREATED_MESSAGE = 'Account created successfully. You can now sign in.';
@@ -11,7 +12,7 @@ const ACCOUNT_PENDING_MESSAGE = 'Your account has been created and is pending ad
 
 /**
  * POST /api/auth/register
- * Register a new user account. First user becomes admin.
+ * Register a new user account. First user becomes superadmin.
  */
 router.post('/register', async (req, res) => {
   try {
@@ -20,10 +21,12 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
 
-    const user = await authService.registerUser(name, email, password);
+    const user = await authService.registerUser(name, email, password, {
+      ipAddress: req.ip,
+    });
 
     if (user.status === 'pending') {
-      const adminUsers = authService.getAllUsers().filter((adminUser) => adminUser.role === 'admin' && adminUser.status === 'active');
+      const adminUsers = authService.getAllUsers().filter((adminUser) => isAdminRole(adminUser.role) && adminUser.status === 'active');
 
       adminUsers.forEach((adminUser) => {
         notificationService.createNotification(
@@ -134,6 +137,31 @@ router.get('/me', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/me/consent', authenticateToken, (req, res) => {
+  try {
+    res.json({ consentHistory: authService.getConsentHistory(req.user.id) });
+  } catch (error) {
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.get('/me/data-export', authenticateToken, (req, res) => {
+  try {
+    const exportPayload = authService.exportUserData(req.user.id);
+    const exportDate = new Date().toISOString().slice(0, 10);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="processace-data-export-${exportDate}.json"`);
+    res.json(exportPayload);
+  } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
+  }
+});
+
 /**
  * PUT /api/auth/me
  * Update the current user's name and/or password.
@@ -158,6 +186,46 @@ router.put('/me', authenticateToken, async (req, res) => {
       error.message.startsWith('Password must be')
     ) {
       return res.status(400).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/me/deactivate', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword } = req.body || {};
+    const token = req.cookies['auth_token'];
+
+    await authService.deactivateUserAccount(req.user.id, currentPassword);
+
+    if (token) {
+      try {
+        await authService.revokeToken(token);
+      } catch (error) {
+        (req.log || logger).warn({ err: error }, 'Failed to revoke auth token during account deactivation');
+      }
+    }
+
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.json({ message: 'Account deactivated successfully' });
+  } catch (error) {
+    if (
+      error.message === authService.CURRENT_PASSWORD_REQUIRED_DEACTIVATE_ERROR ||
+      error.message === authService.INCORRECT_CURRENT_PASSWORD_ERROR ||
+      error.message === authService.LAST_SUPERADMIN_DEACTIVATION_ERROR ||
+      error.message === authService.NO_PRIMARY_SUPERADMIN_ERROR
+    ) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
     }
 
     return sendErrorResponse(res, error, req);

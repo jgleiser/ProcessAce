@@ -274,24 +274,22 @@ router.get('/jobs', (req, res) => {
 
 /**
  * PATCH /api/admin/users/:id
- * Update user role and/or status (admin only)
+ * Update user role and/or status (admin or superadmin)
  */
 router.patch('/users/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { role, status } = req.body;
 
-    // Prevent admin from demoting themselves
-    if (id === req.user.id && role && role !== 'admin') {
-      return res.status(400).json({ error: 'Cannot change your own admin role' });
+    if (id === req.user.id && role && role !== req.user.role) {
+      return res.status(400).json({ error: 'Cannot change your own role' });
     }
 
-    // Prevent admin from deactivating themselves
     if (id === req.user.id && status === 'inactive') {
       return res.status(400).json({ error: 'Cannot deactivate your own account' });
     }
 
-    const updatedUser = authService.updateUser(id, { role, status });
+    const updatedUser = authService.updateUser(id, { role, status }, req.user);
 
     logger.info(
       {
@@ -309,6 +307,12 @@ router.patch('/users/:id', (req, res) => {
       return res.status(404).json({ error: error.message });
     }
     if (error.message.includes('Invalid')) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.message === authService.SUPERADMIN_ROLE_REQUIRED_ERROR || error.message === authService.SUPERADMIN_ACCOUNT_MANAGEMENT_ERROR) {
+      return res.status(403).json({ error: error.message });
+    }
+    if (error.message === authService.LAST_SUPERADMIN_DEACTIVATION_ERROR || error.message === authService.LAST_SUPERADMIN_ROLE_CHANGE_ERROR) {
       return res.status(400).json({ error: error.message });
     }
     return sendErrorResponse(res, error, req);

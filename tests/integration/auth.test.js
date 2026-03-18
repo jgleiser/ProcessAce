@@ -49,12 +49,12 @@ describe('Auth API Integration Tests', () => {
     server.close();
   });
 
-  it('registers the first user as an active admin and returns a success message', async () => {
+  it('registers the first user as an active superadmin and returns a success message', async () => {
     const res = await adminAgent.post('/api/auth/register').send(adminUser).expect('Content-Type', /json/).expect(201);
 
     assert.ok(res.body.user.id);
     assert.strictEqual(res.body.user.email, adminUser.email);
-    assert.strictEqual(res.body.user.role, 'admin');
+    assert.strictEqual(res.body.user.role, 'superadmin');
     assert.strictEqual(res.body.user.status, 'active');
     assert.strictEqual(res.body.message, 'Account created successfully. You can now sign in.');
   });

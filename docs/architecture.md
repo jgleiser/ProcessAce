@@ -62,10 +62,10 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
 - Pages:
   - `index.html` – Main dashboard (upload, job list, artifact viewer/editor).
   - `login.html` / `register.html` – Authentication.
-  - `admin-users.html` – Admin panel for user management (roles, status).
+  - `admin-users.html` – Admin/Superadmin panel for user management (roles, status, approvals).
   - `admin-jobs.html` – Admin view of all jobs across workspaces.
-  - `app-settings.html` – Application settings (LLM providers, API keys).
-  - `user-settings.html` – User profile (name, password).
+  - `app-settings.html` – Application settings plus superadmin-only reset controls.
+  - `user-settings.html` – User profile, privacy export, consent history, and self-deactivation.
 - Shared modules:
   - `js/header.js` – Header with user menu and workspace switcher.
   - `js/modal-utils.js` – Reusable confirmation modals.
@@ -87,8 +87,9 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `/api/jobs` – Job CRUD, process name update (authenticated).
   - `/api/artifacts` – Artifact retrieval and content updates (authenticated).
   - `/api/workspaces` – Workspace CRUD (authenticated).
-  - `/api/settings` – App settings management (admin only, `src/api/settings.js`).
-  - `/api/admin` – User management, all-jobs overview (admin only, `src/api/admin-users.js`).
+  - `/api/settings` – App settings management (admin/superadmin only, `src/api/settings.js`).
+  - `/api/admin` – User management, approvals, all-jobs overview (admin/superadmin only, `src/api/admin.js`).
+  - `/api/superadmin` – Superadmin-only instance reset operations.
 
 The backend **does not perform heavy work synchronously**.  
 Instead, it:
@@ -192,7 +193,7 @@ The processing pipeline is implemented inside the worker process and consists of
   - Development/test: `better-sqlite3` with `data/processAce-dev.db` by default.
   - Production: SQLCipher-compatible encrypted SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
   - Tables:
-    - `users` – id, name, email, password_hash, role, status, created_at.
+    - `users` – id, name, email, password_hash, role, status, created_at, last_login_at.
     - `workspaces` – id, name, owner_id, created_at.
     - `workspace_members` – workspace_id, user_id, role.
     - `workspace_invitations` – id, workspace_id, recipient_email, role, token, status, expires_at.
@@ -200,6 +201,7 @@ The processing pipeline is implemented inside the worker process and consists of
     - `artifacts` – id, type, version, content, metadata, filename, user_id, workspace_id, llm_provider, llm_model.
     - `jobs` – id, type, data, status, result, error, process_name, user_id, workspace_id.
     - `app_settings` – key-value store for application configuration.
+    - `consent_records` – user consent type, granted flag, timestamp, and IP address.
   - Schema managed via initialization checks and ALTER TABLE migrations in `src/services/db.js`.
 - **File Storage**:
   - Local filesystem (`./uploads`) for raw evidence files.
@@ -214,15 +216,18 @@ The processing pipeline is implemented inside the worker process and consists of
 
 - **Auth Service** (`src/services/authService.js`):
   - Registration with email/password (password validated: 8+ chars, uppercase, lowercase, numbers).
-  - First registered user automatically gets `admin` role and `active` status; later self-registrations get `editor` role and `pending` status until approved by an admin.
-  - Each new user gets a default workspace created automatically.
-  - Login returns JWT token set as HTTP-only cookie (`auth_token`).
-  - JWT expires in 24 hours; include user id, email, and role in payload.
+  - First registered user automatically gets `superadmin` role and `active` status; later self-registrations get `editor` role and `pending` status until approved.
+  - Each new user gets a default workspace created automatically and required consent records stored at registration time.
+  - Login returns JWT token set as HTTP-only cookie (`auth_token`) and updates `last_login_at`.
+  - JWT expires in 24 hours; include user id, email, role, and `jti` in payload.
+  - Users can self-export their personal data and self-deactivate. Self-deactivation preserves organizational data and transfers owned workspaces to the primary active superadmin.
+  - Superadmins can reset the full installation back to an empty bootstrap state.
 - **Middleware** (`src/middleware/auth.js`, `src/middleware/requireAdmin.js`):
   - `authenticateToken` – extracts and verifies JWT from cookies.
-  - `requireAdmin` – checks for `admin` role on protected admin routes.
+  - `requireAdmin` – checks for `admin` or `superadmin` role on protected admin routes.
+  - `requireSuperAdmin` – checks for `superadmin` role on destructive organizational controls.
 - **Roles**:
-  - **System Roles**: `admin` (can manage system settings/users), `editor`, `viewer`.
+  - **System Roles**: `superadmin` (can manage privileged roles and reset the installation), `admin`, `editor`, `viewer`.
   - **Workspace Roles**: `owner` (full control), `editor` (can edit content), `viewer` (read-only).
 - **User Status**: `active`, `inactive`, `pending`, `rejected`.
 - **Authorization**: Resources are scoped by `workspace_id`. Access is determined by the user's membership role in that workspace.

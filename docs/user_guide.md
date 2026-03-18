@@ -11,14 +11,14 @@ ProcessAce helps you document and analyze processes by uploading evidence (text 
 1. Navigate to `/register.html` to create a new account.
 2. Enter your **name**, **email**, and **password** (must be 8+ characters with uppercase, lowercase, and numbers).
 3. Click **Register**.
-4. The first registered user automatically becomes an **Admin** and can sign in immediately.
-5. Later self-registrations are created as **pending** accounts and must be approved by an Admin before login.
+4. The first registered user automatically becomes a **Superadmin** and can sign in immediately.
+5. Later self-registrations are created as **pending** accounts and must be approved by an Admin or Superadmin before login.
 6. Go to `/login.html` and sign in once the account is active.
 7. You'll be redirected to the main dashboard.
 
-### 2. Configure LLM Provider (Admin Only)
+### 2. Configure LLM Provider (Admin / Superadmin)
 
-Before processing files, an Admin must configure the LLM provider:
+Before processing files, an Admin or Superadmin must configure the LLM provider:
 
 1. Go to **App Settings** (`/app-settings.html`).
 2. Select a **Provider** (OpenAI, Google GenAI, or Anthropic).
@@ -149,17 +149,19 @@ You can edit generated artifacts directly within the browser.
 5. **To Delete Rows**: Click the **×** button at the end of the row.
 6. Click **Save Changes** to save.
 
-## Administration (Admin Only)
+## Administration
 
 ### User Management
 
 1. Go to **Admin** (`/admin-users.html`).
 2. View all registered users with their name, email, role, and status.
-3. **Change Role**: Select Admin, Editor, or Viewer from the role dropdown.
+3. **Change Role**:
+   - Superadmins can assign **Superadmin**, **Admin**, **Editor**, or **Viewer**.
+   - Regular Admins can manage non-privileged users and keep operational admin tasks, but they cannot assign or revoke Admin/Superadmin roles.
 4. **Change Status**: Toggle between Active and Inactive. Inactive users cannot log in.
 5. **Approve / Reject Registrations**: Pending users show dedicated approval actions. Rejected users remain visible and can be approved later if access is restored.
 
-> **Note**: Admins cannot change their own role or deactivate their own account.
+> **Note**: Users cannot change their own role from the admin page, and the last active Superadmin cannot be deactivated or demoted.
 
 ### Admin Jobs Dashboard
 
@@ -178,6 +180,10 @@ You can edit generated artifacts directly within the browser.
 5. Use **2.1 Local Model Manager** to install, remove, and select curated local generation models.
 6. Configure transcription settings separately: provider, STT model, and max file size before chunking.
 7. Use **Load Transcription Models** to fetch supported STT models for OpenAI.
+8. Superadmins also see the destructive **Delete All Data** section:
+   - Type `DELETE ALL`
+   - Enter the current password
+   - Confirm the reset to return the instance to an empty bootstrap state
 
 Ollama-specific setup depends on the host OS and hardware. Use the dedicated guide for deployment choices, hardware guidance, and troubleshooting:
 
@@ -188,6 +194,14 @@ Ollama-specific setup depends on the host OS and hardware. Use the dedicated gui
 1. Go to **User Settings** (`/user-settings.html`) or click your name in the header.
 2. Update your **display name**.
 3. Change your **password** (requires current password confirmation).
+4. Review your **Privacy & Data** section:
+   - Account creation date
+   - Last login date
+   - Consent history
+5. Use **Export My Data** to download your JSON data export.
+6. Use **Deactivate My Account** if you should no longer access the installation.
+   - Deactivation preserves organizational data.
+   - Any workspaces you own are transferred to the primary Superadmin.
 
 ## Troubleshooting
 

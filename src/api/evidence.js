@@ -10,6 +10,7 @@ const authService = require('../services/authService');
 const { auditMiddleware } = require('../middleware/auditMiddleware');
 const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 const { sanitizeFilename } = require('../utils/sanitizeFilename');
+const { isAdminRole } = require('../utils/roles');
 
 const router = express.Router();
 const parsedMaxUploadSizeMb = Number.parseInt(process.env.MAX_UPLOAD_SIZE_MB || '100', 10);
@@ -202,7 +203,7 @@ router.get(
 
       if (!canView) {
         const user = authService.getUserById(req.user.id);
-        if (!user || user.role !== 'admin') {
+        if (!user || !isAdminRole(user.role)) {
           return res.status(403).json({ error: 'Access denied' });
         }
       }

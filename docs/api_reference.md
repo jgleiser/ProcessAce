@@ -16,20 +16,23 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Authentication (`/api/auth`)
 
-| Method | Path                 | Auth | Description                          |
-| ------ | -------------------- | ---- | ------------------------------------ |
-| `POST` | `/api/auth/register` | No   | Register a new user                  |
-| `POST` | `/api/auth/login`    | No   | Authenticate and receive JWT cookie  |
-| `POST` | `/api/auth/logout`   | No   | Clear the auth cookie                |
-| `GET`  | `/api/auth/me`       | Yes  | Get current user profile             |
-| `PUT`  | `/api/auth/me`       | Yes  | Update current user (name, password) |
+| Method | Path                       | Auth | Description                             |
+| ------ | -------------------------- | ---- | --------------------------------------- |
+| `POST` | `/api/auth/register`       | No   | Register a new user                     |
+| `POST` | `/api/auth/login`          | No   | Authenticate and receive JWT cookie     |
+| `POST` | `/api/auth/logout`         | No   | Clear the auth cookie                   |
+| `GET`  | `/api/auth/me`             | Yes  | Get current user profile                |
+| `GET`  | `/api/auth/me/consent`     | Yes  | Get current user's consent history      |
+| `GET`  | `/api/auth/me/data-export` | Yes  | Download the current user's data export |
+| `POST` | `/api/auth/me/deactivate`  | Yes  | Deactivate the current user's account   |
+| `PUT`  | `/api/auth/me`             | Yes  | Update current user (name, password)    |
 
 ### `POST /api/auth/register`
 
 **Body**: `{ "name": "string", "email": "string", "password": "string" }`
 
 - Password: 8+ chars, uppercase, lowercase, numbers.
-- First user becomes an active `admin`; subsequent users become pending `editor` accounts until approved.
+- First user becomes an active `superadmin`; subsequent users become pending `editor` accounts until approved.
 - Returns `201` with `{ user, message }`.
 
 ### `POST /api/auth/login`
@@ -51,6 +54,28 @@ All API endpoints are served under `http://localhost:3000` (default).
 **Body**: `{ "name"?: "string", "password"?: "string", "currentPassword"?: "string" }`
 
 - `currentPassword` required when changing password.
+
+### `GET /api/auth/me`
+
+- Returns the current profile including `created_at` and nullable `last_login_at`.
+
+### `GET /api/auth/me/consent`
+
+- Returns `{ consentHistory: [...] }`.
+- Consent records include `consent_type`, `granted`, `timestamp`, and `ip_address`.
+
+### `GET /api/auth/me/data-export`
+
+- Returns an `application/json` attachment with the authenticated user's profile metadata, workspace memberships, owned-workspace metadata, evidence metadata, artifacts, jobs, notifications, and consent history.
+- Excludes password hashes, auth tokens, encrypted provider keys, internal filesystem paths, and other users' personal data.
+
+### `POST /api/auth/me/deactivate`
+
+**Body**: `{ "currentPassword": "string" }`
+
+- Marks the current account as `inactive`.
+- Transfers any owned workspaces to the primary active `superadmin`.
+- Revokes the current JWT and clears the auth cookie.
 
 ---
 
@@ -208,7 +233,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ---
 
-## Settings (`/api/settings`) — Admin Only
+## Settings (`/api/settings`) — Admin or Superadmin Only
 
 | Method   | Path                                      | Auth  | Description                                  |
 | -------- | ----------------------------------------- | ----- | -------------------------------------------- |
@@ -257,7 +282,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ---
 
-## Admin (`/api/admin`) — Admin Only
+## Admin (`/api/admin`) — Admin or Superadmin Only
 
 | Method  | Path                           | Auth  | Description                          |
 | ------- | ------------------------------ | ----- | ------------------------------------ |
@@ -275,10 +300,11 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ### `PATCH /api/admin/users/:id`
 
-**Body**: `{ "role"?: "admin" | "editor" | "viewer", "status"?: "active" | "inactive" }`
+**Body**: `{ "role"?: "superadmin" | "admin" | "editor" | "viewer", "status"?: "active" | "inactive" }`
 
 - Updates one or both fields.
 - Cannot modify your own user.
+- Only superadmins can assign or revoke `admin` / `superadmin` roles.
 - `pending` and `rejected` registration states are managed through the dedicated approval endpoints.
 
 ### `POST /api/admin/users/:id/approve`
@@ -341,6 +367,22 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Marks the invitation as declined.
 - Returns `200` with the updated invitation.
+
+---
+
+## Superadmin (`/api/superadmin`) — Superadmin Only
+
+| Method | Path                             | Auth       | Description                                  |
+| ------ | -------------------------------- | ---------- | -------------------------------------------- |
+| `POST` | `/api/superadmin/reset-instance` | Superadmin | Delete all application data and re-bootstrap |
+
+### `POST /api/superadmin/reset-instance`
+
+**Body**: `{ "currentPassword": "string", "confirmationText": "DELETE ALL" }`
+
+- Deletes all users, workspaces, evidence, artifacts, notifications, consent records, login-attempt records, app settings, and uploaded files.
+- Clears the current auth cookie and revokes the current JWT.
+- Leaves the schema and binaries intact so the next registration bootstraps a fresh `superadmin`.
 
 ## Error Responses
 

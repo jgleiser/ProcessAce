@@ -7,19 +7,10 @@ const { getLlmProvider } = require('../llm');
 const { deleteModel, listInstalledModels } = require('../services/ollamaService');
 const { modelQueue } = require('../services/queueInstance');
 const { auditMiddleware } = require('../middleware/auditMiddleware');
+const { requireAdmin } = require('../middleware/requireAdmin');
 const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
-
-/**
- * Middleware to restrict access to admin users only.
- */
-const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Access denied. Admins only.' });
-  }
-  next();
-};
 
 /**
  * GET /api/settings

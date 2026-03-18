@@ -125,6 +125,7 @@ const jobsRoutes = require('./api/jobs');
 const artifactsRoutes = require('./api/artifacts');
 const workspacesRoutes = require('./api/workspaces');
 const adminRoutes = require('./api/admin');
+const superadminRoutes = require('./api/superadmin');
 
 // Routes
 app.use('/health', healthRoutes);
@@ -146,6 +147,7 @@ app.use('/api/settings', authenticateToken, require('./api/settings'));
 app.use('/api/invitations', require('./api/invitations')); // Public (for token check) + Protected (for accept)
 app.use('/api/notifications', authenticateToken, require('./api/notifications'));
 app.use('/api/admin', adminRoutes); // Admin routes handle their own auth + admin check
+app.use('/api/superadmin', superadminRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -159,11 +159,14 @@ const initializeSchema = (database) => {
             role TEXT DEFAULT 'editor',
             status TEXT DEFAULT 'active',
             name TEXT,
-            created_at TEXT
+            created_at TEXT,
+            last_login_at TEXT
         )
     `,
       )
       .run();
+
+    ensureColumn(database, 'users', 'last_login_at', 'TEXT');
 
     database
       .prepare(
@@ -306,6 +309,22 @@ const initializeSchema = (database) => {
             data TEXT,
             is_read INTEGER DEFAULT 0,
             created_at TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    `,
+      )
+      .run();
+
+    database
+      .prepare(
+        `
+        CREATE TABLE IF NOT EXISTS consent_records (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            consent_type TEXT,
+            granted INTEGER DEFAULT 1,
+            timestamp TEXT,
+            ip_address TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     `,
