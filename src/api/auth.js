@@ -1,3 +1,4 @@
+const { EOL } = require('os');
 const express = require('express');
 const authService = require('../services/authService');
 const notificationService = require('../services/notificationService');
@@ -149,10 +150,11 @@ router.get('/me/data-export', authenticateToken, (req, res) => {
   try {
     const exportPayload = authService.exportUserData(req.user.id);
     const exportDate = new Date().toISOString().slice(0, 10);
+    const serializedExport = `${JSON.stringify(exportPayload, null, 2)}${EOL}`;
 
-    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="processace-data-export-${exportDate}.json"`);
-    res.json(exportPayload);
+    res.send(serializedExport);
   } catch (error) {
     if (error.message === 'User not found') {
       return res.status(404).json({ error: error.message });

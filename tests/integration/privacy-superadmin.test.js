@@ -94,14 +94,17 @@ describe('Privacy and Superadmin Integration Tests', () => {
 
     const consentRes = await editorAgent.get('/api/auth/me/consent').expect(200);
     const exportRes = await editorAgent.get('/api/auth/me/data-export').expect(200);
+    const parsedExport = JSON.parse(exportRes.text);
 
     assert.strictEqual(consentRes.body.consentHistory.length, 2);
     assert.match(exportRes.header['content-disposition'], /processace-data-export/);
-    assert.strictEqual(exportRes.body.user.email, editorUser.email);
-    assert.ok(exportRes.body.user.createdAt);
-    assert.ok(exportRes.body.user.lastLoginAt);
-    assert.strictEqual(exportRes.body.user.password_hash, undefined);
-    assert.strictEqual(exportRes.body.consentHistory.length, 2);
+    assert.match(exportRes.text, /\r?\n {2}"user": \{/);
+    assert.ok(exportRes.text.endsWith('\n') || exportRes.text.endsWith('\r\n'));
+    assert.strictEqual(parsedExport.user.email, editorUser.email);
+    assert.ok(parsedExport.user.createdAt);
+    assert.ok(parsedExport.user.lastLoginAt);
+    assert.strictEqual(parsedExport.user.password_hash, undefined);
+    assert.strictEqual(parsedExport.consentHistory.length, 2);
   });
 
   it('deactivates the current user, transfers workspace ownership, revokes the session, and blocks future login', async () => {
