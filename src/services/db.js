@@ -21,7 +21,7 @@ const resolveDatabaseConfig = (env = process.env) => {
     isProduction,
     isInMemory: dbPath === ':memory:',
     usesSqlCipher,
-    driverModuleName: usesSqlCipher ? '@journeyapps/sqlcipher' : 'better-sqlite3',
+    driverModuleName: usesSqlCipher ? 'better-sqlite3-multiple-ciphers' : 'better-sqlite3',
     sqliteEncryptionKey: env.SQLITE_ENCRYPTION_KEY,
   };
 };
@@ -66,10 +66,10 @@ const loadDatabaseDriver = (config) => {
     if (config.usesSqlCipher) {
       logger.fatal(
         { err: error },
-        'SQLCipher driver is unavailable. Rebuild the production image so @journeyapps/sqlcipher compiles against the container OpenSSL/SQLCipher libraries.',
+        'Encrypted SQLite driver is unavailable. Rebuild the production image so the production database module compiles for the target runtime.',
       );
       throw new Error(
-        'SQLCipher driver is required in production. Rebuild the production image so @journeyapps/sqlcipher compiles against the container OpenSSL/SQLCipher libraries before starting ProcessAce.',
+        'Encrypted SQLite driver is required in production. Rebuild the production image so the production database module compiles for the target runtime before starting ProcessAce.',
         {
           cause: error,
         },
@@ -80,9 +80,31 @@ const loadDatabaseDriver = (config) => {
   }
 };
 
+const resolveDatabaseConstructor = (driverModule) => {
+  if (typeof driverModule === 'function') {
+    return driverModule;
+  }
+
+  if (driverModule && typeof driverModule.Database === 'function') {
+    return driverModule.Database;
+  }
+
+  if (driverModule && typeof driverModule.default === 'function') {
+    return driverModule.default;
+  }
+
+  if (driverModule && driverModule.default && typeof driverModule.default.Database === 'function') {
+    return driverModule.default.Database;
+  }
+
+  throw new TypeError('Database driver did not export a constructor.');
+};
+
 const escapePragmaValue = (value) => String(value).replace(/'/g, "''");
 
 const applyDatabaseEncryptionKey = (database, encryptionKey) => {
+  database.pragma("cipher = 'sqlcipher'");
+  database.pragma('legacy = 4');
   database.pragma(`key = '${escapePragmaValue(encryptionKey)}'`);
 };
 
@@ -318,10 +340,10 @@ const createDatabaseConnection = (options = {}) => {
   ensureDataDirectory(config.dataDir, fileSystem);
   validateProductionDatabaseFile(config, fileSystem);
 
-  const Database = options.Database || loadDatabaseDriver(config);
+  const Database = resolveDatabaseConstructor(options.Database || loadDatabaseDriver(config));
   const database = new Database(config.dbPath);
 
-  if (config.usesSqlCipher) {
+  if (config.usesSqlCipher && !config.isInMemory) {
     applyDatabaseEncryptionKey(database, config.sqliteEncryptionKey);
     validateEncryptedDatabase(database);
   }
@@ -339,6 +361,7 @@ const dbHelpers = {
   createDatabaseConnection,
   applyDatabaseEncryptionKey,
   isPlaintextSqliteFile,
+  resolveDatabaseConstructor,
   validateProductionDatabaseFile,
 };
 

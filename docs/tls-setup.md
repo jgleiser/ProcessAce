@@ -33,7 +33,7 @@ When the overlay is active:
 - `app` is reachable only on the internal Compose network
 - Redis remains internal-only and still requires `REDIS_PASSWORD`
 
-Docker operators do not need to install SQLCipher separately on the host. The container image compiles the production SQLCipher module against the container's own system libraries during the build.
+Docker operators do not need to install SQLCipher separately on the host. The container image compiles the production encrypted SQLite module during the build.
 
 ## Caddy behavior
 
@@ -45,7 +45,7 @@ The shipped Caddyfile:
 
 ## Existing production database migration
 
-Production now expects SQLCipher. Existing plaintext production SQLite files are not auto-migrated.
+Production now expects encrypted SQLite in SQLCipher-compatible mode. Existing plaintext production SQLite files are not auto-migrated.
 
 Use this migration pattern before enabling the new runtime:
 
@@ -60,7 +60,7 @@ If ProcessAce detects a plaintext production database, startup fails intentional
 
 ## Non-Docker production installs
 
-If you deploy without Docker, install SQLCipher and the matching OpenSSL development libraries on the target machine before running `npm ci` or `npm rebuild`. The native `@journeyapps/sqlcipher` module compiles against the local system libraries in that mode.
+If you deploy without Docker, install the normal native Node.js build prerequisites for `better-sqlite3` modules on the target machine before running `npm ci` or `npm rebuild` when your platform does not have a prebuilt binary available.
 
 ## Alternatives
 

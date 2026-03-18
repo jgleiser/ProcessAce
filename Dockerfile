@@ -3,7 +3,7 @@ FROM node:24-alpine
 WORKDIR /app
 
 # Install build/runtime dependencies for native SQLite drivers and ffmpeg.
-RUN apk add --no-cache python3 make g++ ffmpeg sqlcipher-dev openssl-dev pkgconfig
+RUN apk add --no-cache python3 make g++ ffmpeg pkgconfig
 
 COPY package*.json ./
 
@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm_config_build_from_source=true npm ci --omit=dev
 
 # Rebuild native modules for the container architecture
-RUN npm rebuild better-sqlite3 --build-from-source && npm rebuild @journeyapps/sqlcipher --build-from-source
+RUN npm rebuild better-sqlite3 --build-from-source && npm rebuild better-sqlite3-multiple-ciphers --build-from-source
 
 COPY . .
 

@@ -190,7 +190,7 @@ The processing pipeline is implemented inside the worker process and consists of
 
 - **Database**: **SQLite** with environment-specific drivers (`src/services/db.js`).
   - Development/test: `better-sqlite3` with `data/processAce-dev.db` by default.
-  - Production: SQLCipher-backed SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
+  - Production: SQLCipher-compatible encrypted SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
   - Tables:
     - `users` – id, name, email, password_hash, role, status, created_at.
     - `workspaces` – id, name, owner_id, created_at.

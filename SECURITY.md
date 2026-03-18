@@ -59,8 +59,8 @@ Because ProcessAce is a **self-hosted** and **BYO-LLM** tool, you are responsibl
 - Restricting browser access with an explicit `CORS_ALLOWED_ORIGINS` value.
 - Ensuring Docker bind mounts such as `data/` and `uploads/` are writable by the unprivileged container user.
 - Planning a one-time SQLCipher migration before upgrading any existing plaintext production database file.
-- Rebuilding the Docker image after SQLCipher-related dependency changes so the native module is compiled against the container libraries.
-- Installing SQLCipher and the matching OpenSSL development libraries first when deploying without Docker.
+- Rebuilding the Docker image after encrypted-database dependency changes so the native module is compiled for the container runtime.
+- Installing the native Node.js build prerequisites first when deploying without Docker if your platform does not have a prebuilt binary for the encrypted SQLite module.
 - Keeping dependencies and the base OS up to date.
 - Treating LLM credentials and other API keys as secrets.
 

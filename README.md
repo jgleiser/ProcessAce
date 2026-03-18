@@ -46,7 +46,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 - **Robust Architecture**:
   - **Dockerized**: Easy deployment with Docker Compose (App + Redis).
   - **Async Processing**: Redis-backed job queue (BullMQ) for long-running generative tasks.
-  - **Persistence**: SQLite (`better-sqlite3` in dev/test, SQLCipher-encrypted SQLite in production).
+  - **Persistence**: SQLite (`better-sqlite3` in dev/test, SQLCipher-compatible encrypted SQLite in production).
 
 ---
 
@@ -95,7 +95,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
    >
    > **Note (Linux bind mounts):** The host `data/` and `uploads/` directories must be writable by the container runtime user because the app now runs as a non-root `appuser`.
    >
-   > **Note (SQLCipher build in Docker):** You do not need to install SQLCipher manually on your Windows, macOS, or Linux host just to use Docker Compose. The image builds `@journeyapps/sqlcipher` inside the container against the container's OpenSSL/SQLCipher libraries. If you see SQLCipher load errors after updating, rebuild the image with `docker compose build --no-cache app` and then restart the stack.
+   > **Note (encrypted DB build in Docker):** You do not need to install SQLCipher manually on your Windows, macOS, or Linux host just to use Docker Compose. The image builds the production encrypted SQLite module inside the container. If you see encrypted-database load errors after updating, rebuild the image with `docker compose build --no-cache app` and then restart the stack.
    >
    > **Note (production DB encryption):** Production now expects SQLCipher and a `SQLITE_ENCRYPTION_KEY`. Existing plaintext production databases are not auto-migrated; follow the documented export/import migration flow before switching an existing instance.
 
@@ -122,7 +122,7 @@ Set these additional variables in `.env` before using the overlay:
 
 When the TLS overlay is enabled, only Caddy publishes `80/443`; the app and Redis stay on the internal Compose network. See [docs/tls-setup.md](./docs/tls-setup.md) for the full setup, migration notes, and nginx/Traefik alternatives.
 
-For non-Docker production installs, you must install SQLCipher and the matching OpenSSL development libraries on the target machine before running `npm ci`, because the native SQLCipher module compiles against the host system libraries in that setup.
+For non-Docker production installs, you need the normal native Node.js build toolchain required by `better-sqlite3` modules on the target machine before running `npm ci` if no prebuilt binary is available for your platform.
 
 ---
 

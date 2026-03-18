@@ -36,8 +36,20 @@ describe('db configuration', () => {
     });
 
     assert.match(config.dbPath, /processAce\.db$/);
-    assert.strictEqual(config.driverModuleName, '@journeyapps/sqlcipher');
+    assert.strictEqual(config.driverModuleName, 'better-sqlite3-multiple-ciphers');
     assert.strictEqual(config.usesSqlCipher, true);
+  });
+
+  it('accepts direct constructor exports for better-sqlite3 style drivers', () => {
+    function FakeDatabase() {}
+
+    assert.strictEqual(dbModule.resolveDatabaseConstructor(FakeDatabase), FakeDatabase);
+  });
+
+  it('accepts named Database exports for sqlcipher style drivers', () => {
+    function FakeDatabase() {}
+
+    assert.strictEqual(dbModule.resolveDatabaseConstructor({ Database: FakeDatabase }), FakeDatabase);
   });
 
   it('applies the SQLCipher key pragma to the database connection', () => {
@@ -50,7 +62,7 @@ describe('db configuration', () => {
 
     dbModule.applyDatabaseEncryptionKey(fakeDatabase, "phase3'key");
 
-    assert.deepStrictEqual(pragmaCalls, ["key = 'phase3''key'"]);
+    assert.deepStrictEqual(pragmaCalls, ["cipher = 'sqlcipher'", 'legacy = 4', "key = 'phase3''key'"]);
   });
 
   it('rejects plaintext production database files', () => {
