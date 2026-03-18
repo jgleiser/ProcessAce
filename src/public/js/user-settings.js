@@ -239,4 +239,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       deactivateBtn.textContent = t('userSettings.deactivateBtn');
     }
   });
+
+  document.querySelectorAll('.card-header-collapsible').forEach((header) => {
+    header.addEventListener('click', () => {
+      const card = header.closest('.card');
+      if (card) {
+        card.classList.toggle('collapsed');
+      }
+    });
+  });
 });

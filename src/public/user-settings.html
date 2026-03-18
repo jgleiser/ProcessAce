@@ -21,116 +21,154 @@
 
       <div id="messageContainer"></div>
 
-      <div class="card">
-        <form id="userSettingsForm">
+      <div class="card app-settings-card collapsed">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="userSettings.pageTitle">User Settings</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content">
+          <form id="userSettingsForm">
+            <div class="form-group">
+              <label class="form-label" data-i18n="userSettings.nameLabel">Name</label>
+              <input type="text" id="nameInput" class="form-input" data-i18n-placeholder="userSettings.namePlaceholder" placeholder="Your Name" />
+            </div>
+
+            <hr class="divider" />
+            <h3 class="section-title" data-i18n="userSettings.changePassword">Change Password</h3>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="userSettings.currentPasswordLabel">Current Password (Required to change password)</label>
+              <input
+                type="password"
+                id="currentPasswordInput"
+                class="form-input"
+                data-i18n-placeholder="userSettings.currentPasswordPlaceholder"
+                placeholder="Current Password"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="userSettings.newPasswordLabel">New Password</label>
+              <input
+                type="password"
+                id="passwordInput"
+                class="form-input"
+                data-i18n-placeholder="userSettings.newPasswordPlaceholder"
+                placeholder="New Password"
+              />
+              <small class="text-muted mt-1 block" data-i18n="userSettings.passwordHelp">
+                Must be at least 8 characters, with lowercase, uppercase, and numbers.
+              </small>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="userSettings.confirmPasswordLabel">Confirm New Password</label>
+              <input
+                type="password"
+                id="confirmPasswordInput"
+                class="form-input"
+                data-i18n-placeholder="userSettings.confirmPasswordPlaceholder"
+                placeholder="Confirm New Password"
+              />
+            </div>
+            <div class="text-right">
+              <button type="submit" class="btn-primary" id="saveBtn" data-i18n="userSettings.saveChanges">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card app-settings-card collapsed">
+        <div class="card-header-collapsible" title="Click to collapse/expand">
+          <h2 class="section-title mb-0" data-i18n="userSettings.privacySectionTitle">Privacy &amp; Data</h2>
+          <button type="button" class="btn-icon collapse-btn" aria-label="Toggle section">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="collapse-icon"
+            >
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div class="card-content">
           <div class="form-group">
-            <label class="form-label" data-i18n="userSettings.nameLabel">Name</label>
-            <input type="text" id="nameInput" class="form-input" data-i18n-placeholder="userSettings.namePlaceholder" placeholder="Your Name" />
+            <label class="form-label" data-i18n="userSettings.accountCreatedLabel">Account Created</label>
+            <div id="accountCreatedValue" class="text-muted">-</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" data-i18n="userSettings.lastLoginLabel">Last Login</label>
+            <div id="lastLoginValue" class="text-muted">-</div>
           </div>
 
           <hr class="divider" />
-          <h3 class="section-title" data-i18n="userSettings.changePassword">Change Password</h3>
 
           <div class="form-group">
-            <label class="form-label" data-i18n="userSettings.currentPasswordLabel">Current Password (Required to change password)</label>
-            <input
-              type="password"
-              id="currentPasswordInput"
-              class="form-input"
-              data-i18n-placeholder="userSettings.currentPasswordPlaceholder"
-              placeholder="Current Password"
-            />
-          </div>
-          <div class="form-group">
-            <label class="form-label" data-i18n="userSettings.newPasswordLabel">New Password</label>
-            <input
-              type="password"
-              id="passwordInput"
-              class="form-input"
-              data-i18n-placeholder="userSettings.newPasswordPlaceholder"
-              placeholder="New Password"
-            />
-            <small class="text-muted mt-1 block" data-i18n="userSettings.passwordHelp">
-              Must be at least 8 characters, with lowercase, uppercase, and numbers.
+            <label class="form-label" data-i18n="userSettings.exportSectionTitle">Export My Data</label>
+            <small class="text-muted mt-1 block" data-i18n="userSettings.exportHelp">
+              Download a JSON export of your account profile, workspace memberships, artifacts, jobs, notifications, and consent history.
             </small>
+            <div class="mt-4">
+              <button type="button" class="btn-secondary" id="exportDataBtn" data-i18n="userSettings.exportDataBtn">Export My Data</button>
+            </div>
           </div>
+
+          <hr class="divider" />
+
           <div class="form-group">
-            <label class="form-label" data-i18n="userSettings.confirmPasswordLabel">Confirm New Password</label>
-            <input
-              type="password"
-              id="confirmPasswordInput"
-              class="form-input"
-              data-i18n-placeholder="userSettings.confirmPasswordPlaceholder"
-              placeholder="Confirm New Password"
-            />
+            <label class="form-label" data-i18n="userSettings.consentHistoryTitle">Consent History</label>
+            <small class="text-muted mt-1 block" data-i18n="userSettings.consentHistoryHelp">
+              Required service consents are recorded when your account is created and shown here for audit purposes.
+            </small>
+            <div id="consentHistoryList" class="mt-4 text-muted" data-i18n="common.loading">Loading...</div>
           </div>
-          <div class="text-right">
-            <button type="submit" class="btn-primary" id="saveBtn" data-i18n="userSettings.saveChanges">Save Changes</button>
-          </div>
-        </form>
-      </div>
 
-      <div class="card">
-        <h3 class="section-title" data-i18n="userSettings.privacySectionTitle">Privacy &amp; Data</h3>
+          <hr class="divider" />
 
-        <div class="form-group">
-          <label class="form-label" data-i18n="userSettings.accountCreatedLabel">Account Created</label>
-          <div id="accountCreatedValue" class="text-muted">-</div>
+          <form id="deactivateAccountForm">
+            <h3 class="section-title" data-i18n="userSettings.deactivateSectionTitle">Deactivate My Account</h3>
+            <small class="text-muted mt-1 block" data-i18n="userSettings.deactivateHelp">
+              Your account will be marked inactive and your owned workspaces will be transferred to the primary superadmin.
+            </small>
+            <small class="text-muted mt-1 block" data-i18n="userSettings.deactivateWarning">
+              This signs you out immediately. Organizational workspaces, evidence, jobs, and artifacts are preserved.
+            </small>
+
+            <div class="form-group mt-4">
+              <label class="form-label" data-i18n="userSettings.deactivatePasswordLabel">Current Password</label>
+              <input
+                type="password"
+                id="deactivatePasswordInput"
+                class="form-input"
+                data-i18n-placeholder="userSettings.deactivatePasswordPlaceholder"
+                placeholder="Enter your current password"
+              />
+            </div>
+
+            <div class="text-right">
+              <button type="submit" class="btn-secondary" id="deactivateBtn" data-i18n="userSettings.deactivateBtn">Deactivate My Account</button>
+            </div>
+          </form>
         </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="userSettings.lastLoginLabel">Last Login</label>
-          <div id="lastLoginValue" class="text-muted">-</div>
-        </div>
-
-        <hr class="divider" />
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="userSettings.exportSectionTitle">Export My Data</label>
-          <small class="text-muted mt-1 block" data-i18n="userSettings.exportHelp">
-            Download a JSON export of your account profile, workspace memberships, artifacts, jobs, notifications, and consent history.
-          </small>
-          <div class="mt-4">
-            <button type="button" class="btn-secondary" id="exportDataBtn" data-i18n="userSettings.exportDataBtn">Export My Data</button>
-          </div>
-        </div>
-
-        <hr class="divider" />
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="userSettings.consentHistoryTitle">Consent History</label>
-          <small class="text-muted mt-1 block" data-i18n="userSettings.consentHistoryHelp">
-            Required service consents are recorded when your account is created and shown here for audit purposes.
-          </small>
-          <div id="consentHistoryList" class="mt-4 text-muted" data-i18n="common.loading">Loading...</div>
-        </div>
-
-        <hr class="divider" />
-
-        <form id="deactivateAccountForm">
-          <h3 class="section-title" data-i18n="userSettings.deactivateSectionTitle">Deactivate My Account</h3>
-          <small class="text-muted mt-1 block" data-i18n="userSettings.deactivateHelp">
-            Your account will be marked inactive and your owned workspaces will be transferred to the primary superadmin.
-          </small>
-          <small class="text-muted mt-1 block" data-i18n="userSettings.deactivateWarning">
-            This signs you out immediately. Organizational workspaces, evidence, jobs, and artifacts are preserved.
-          </small>
-
-          <div class="form-group mt-4">
-            <label class="form-label" data-i18n="userSettings.deactivatePasswordLabel">Current Password</label>
-            <input
-              type="password"
-              id="deactivatePasswordInput"
-              class="form-input"
-              data-i18n-placeholder="userSettings.deactivatePasswordPlaceholder"
-              placeholder="Enter your current password"
-            />
-          </div>
-
-          <div class="text-right">
-            <button type="submit" class="btn-secondary" id="deactivateBtn" data-i18n="userSettings.deactivateBtn">Deactivate My Account</button>
-          </div>
-        </form>
       </div>
     </div>
     <script src="js/api-client.js"></script>
