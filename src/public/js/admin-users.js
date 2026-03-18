@@ -261,12 +261,12 @@ async function updateUserRegistrationStatus(userId, action) {
       throw new Error(data.error || t('adminUsers.statusActionFailed'));
     }
 
-    showToast(action === 'approve' ? t('adminUsers.userApproved') : t('adminUsers.userRejected'), 'success');
+    notifyToast(action === 'approve' ? t('adminUsers.userApproved') : t('adminUsers.userRejected'), 'success');
     await loadUsers(currentPage, currentLimit);
     updateSaveButton();
   } catch (error) {
     console.error(`Error executing ${action} for user ${userId}:`, error);
-    showToast(error.message || t('adminUsers.statusActionFailed'), 'error');
+    notifyToast(error.message || t('adminUsers.statusActionFailed'), 'error');
   }
 }
 
@@ -321,9 +321,9 @@ async function saveAllChanges() {
   updateSaveButton();
 
   if (errorMessages.length > 0) {
-    showToast(`${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`, 'error');
+    notifyToast(`${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`, 'error');
   } else {
-    showToast(t('adminUsers.changesSaved'), 'success');
+    notifyToast(t('adminUsers.changesSaved'), 'success');
   }
 
   await loadUsers(currentPage, currentLimit);
@@ -345,22 +345,18 @@ function showError(message) {
     container.innerHTML = '';
   });
 
-  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
+  if (typeof window.showToast === 'function') {
     globalThis.showToast(message, 'error');
   }
 }
 
-function showToast(message, type = 'success') {
-  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
-    globalThis.showToast(message, type);
+function notifyToast(message, type = 'success') {
+  if (typeof window.showToast === 'function') {
+    window.showToast(message, type);
     return;
   }
 
-  const toast = document.createElement('div');
-  toast.className = `toast ${type} is-visible`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  showError(message);
 }
 
 function escapeHtml(text) {
