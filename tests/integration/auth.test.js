@@ -17,6 +17,8 @@ describe('Auth API Integration Tests', () => {
   let thirdUserAgent;
   let secondUserId;
   let thirdUserId;
+  let secondUserCookie;
+  let adminCookie;
 
   const adminUser = {
     email: `test_admin_${Date.now()}@example.com`,
@@ -65,12 +67,10 @@ describe('Auth API Integration Tests', () => {
   it('logs in the first user and sets SameSite=Strict on auth cookies', async () => {
     const res = await adminAgent.post('/api/auth/login').send({ email: adminUser.email, password: adminUser.password }).expect(200);
 
+    adminCookie = res.header['set-cookie'].find((cookie) => cookie.startsWith('auth_token=')).split(';')[0];
+
     assert.ok(res.body.user);
-    assert.strictEqual(
-      res.header['set-cookie'].some((cookie) => cookie.startsWith('auth_token=')),
-      true,
-      'Should set auth_token cookie',
-    );
+    assert.ok(adminCookie, 'Should set auth_token cookie');
     assert.strictEqual(
       res.header['set-cookie'].some((cookie) => cookie.includes('SameSite=Strict')),
       true,
@@ -116,12 +116,22 @@ describe('Auth API Integration Tests', () => {
     assert.strictEqual(approvalNotification.title, 'Account approved');
 
     const loginRes = await secondUserAgent.post('/api/auth/login').send({ email: pendingUser.email, password: pendingUser.password }).expect(200);
+    secondUserCookie = loginRes.header['set-cookie'].find((cookie) => cookie.startsWith('auth_token=')).split(';')[0];
+
     assert.strictEqual(loginRes.body.user.email, pendingUser.email);
+    assert.ok(secondUserCookie);
   });
 
   it('returns the authenticated user profile after approval', async () => {
     const res = await secondUserAgent.get('/api/auth/me').expect(200);
     assert.strictEqual(res.body.email, pendingUser.email);
+  });
+
+  it('removes access immediately when an active user is deactivated', async () => {
+    await adminAgent.patch(`/api/admin/users/${secondUserId}`).send({ status: 'inactive' }).expect(200);
+
+    const res = await request(server).get('/api/auth/me').set('Cookie', secondUserCookie).expect(403);
+    assert.strictEqual(res.body.error, 'Account is deactivated');
   });
 
   it('rejects a pending user, blocks login, and allows later approval', async () => {
@@ -151,11 +161,29 @@ describe('Auth API Integration Tests', () => {
     await thirdUserAgent.post('/api/auth/login').send({ email: rejectedUser.email, password: rejectedUser.password }).expect(200);
   });
 
+  it('returns 423 after repeated failed logins for the same account', async () => {
+    const lockoutUser = {
+      email: `test_lockout_${Date.now()}@example.com`,
+      password: 'Password123!',
+      name: 'Lockout User',
+    };
+
+    const registerRes = await request(server).post('/api/auth/register').send(lockoutUser).expect(201);
+    await adminAgent.post(`/api/admin/users/${registerRes.body.user.id}/approve`).expect(200);
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await request(server).post('/api/auth/login').send({ email: lockoutUser.email, password: 'WrongPassword!' }).expect(401);
+    }
+
+    const res = await request(server).post('/api/auth/login').send({ email: lockoutUser.email, password: 'WrongPassword!' }).expect(423);
+    assert.strictEqual(res.body.error, 'Too many failed login attempts. Try again later.');
+  });
+
   it('fails /api/auth/me without a token', async () => {
     await request(server).get('/api/auth/me').expect(401);
   });
 
-  it('logs out successfully and clears the auth cookie with SameSite=Strict', async () => {
+  it('logs out successfully, clears the auth cookie, and revokes the existing token', async () => {
     const res = await adminAgent.post('/api/auth/logout').expect(200);
 
     assert.strictEqual(
@@ -165,5 +193,6 @@ describe('Auth API Integration Tests', () => {
     );
 
     await adminAgent.get('/api/auth/me').expect(401);
+    await request(server).get('/api/auth/me').set('Cookie', adminCookie).expect(403);
   });
 });

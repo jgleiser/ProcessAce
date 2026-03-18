@@ -7,6 +7,7 @@ const { evidenceQueue } = require('../services/queueInstance');
 const settingsService = require('../services/settingsService');
 const workspaceService = require('../services/workspaceService');
 const authService = require('../services/authService');
+const { auditMiddleware } = require('../middleware/auditMiddleware');
 const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 const { sanitizeFilename } = require('../utils/sanitizeFilename');
 
@@ -101,7 +102,18 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const isAudio =
       req.body.uploadType === 'audio' || req.file.mimetype.startsWith('audio/') || req.file.mimetype.startsWith('video/') || audioExts.includes(ext);
 
-    req.log.info({ file: req.file, uploadType: req.body.uploadType, ext, isAudio }, 'Upload Details Debug');
+    req.log.info(
+      {
+        event_type: 'upload_received',
+        storedFilename: req.file.filename,
+        mimeType: req.file.mimetype,
+        size: req.file.size,
+        uploadType: req.body.uploadType,
+        extension: ext,
+        isAudio,
+      },
+      'Evidence upload accepted for processing',
+    );
 
     if (isAudio) {
       const job = await evidenceQueue.add(
@@ -164,93 +176,97 @@ router.post('/upload', upload.single('file'), async (req, res) => {
  * GET /api/evidence/:id/file
  * Stream the original evidence file for playback.
  */
-router.get('/:id/file', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const evidence = await getEvidence(id);
+router.get(
+  '/:id/file',
+  auditMiddleware('evidence', (req) => req.params.id),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const evidence = await getEvidence(id);
 
-    if (!evidence) {
-      return res.status(404).json({ error: 'Evidence not found' });
-    }
+      if (!evidence) {
+        return res.status(404).json({ error: 'Evidence not found' });
+      }
 
-    let canView = false;
-    if (evidence.user_id && evidence.user_id === req.user.id) {
-      canView = true;
-    }
-
-    if (!canView && evidence.workspace_id) {
-      const role = workspaceService.getMemberRole(evidence.workspace_id, req.user.id);
-      if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+      let canView = false;
+      if (evidence.user_id && evidence.user_id === req.user.id) {
         canView = true;
       }
-    }
 
-    if (!canView) {
-      const user = authService.getUserById(req.user.id);
-      if (!user || user.role !== 'admin') {
+      if (!canView && evidence.workspace_id) {
+        const role = workspaceService.getMemberRole(evidence.workspace_id, req.user.id);
+        if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+          canView = true;
+        }
+      }
+
+      if (!canView) {
+        const user = authService.getUserById(req.user.id);
+        if (!user || user.role !== 'admin') {
+          return res.status(403).json({ error: 'Access denied' });
+        }
+      }
+
+      const absolutePath = path.resolve(evidence.path);
+      if (!isWithinUploadsDir(absolutePath)) {
         return res.status(403).json({ error: 'Access denied' });
       }
-    }
 
-    const absolutePath = path.resolve(evidence.path);
-    if (!isWithinUploadsDir(absolutePath)) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+      const stat = await fs.promises.stat(absolutePath);
+      const fileSize = stat.size;
 
-    const stat = await fs.promises.stat(absolutePath);
-    const fileSize = stat.size;
+      const downloadName = sanitizeFilename(evidence.originalName || evidence.filename, `evidence-${id}`);
+      res.setHeader('Content-Type', evidence.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
+      res.setHeader('Accept-Ranges', 'bytes');
 
-    const downloadName = sanitizeFilename(evidence.originalName || evidence.filename, `evidence-${id}`);
-    res.setHeader('Content-Type', evidence.mimeType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
-    res.setHeader('Accept-Ranges', 'bytes');
+      const range = req.headers.range;
+      if (range) {
+        const match = /^bytes=(\d+)-(\d*)$/.exec(range);
+        if (!match) {
+          return res.status(416).json({ error: 'Invalid range' });
+        }
 
-    const range = req.headers.range;
-    if (range) {
-      const match = /^bytes=(\d+)-(\d*)$/.exec(range);
-      if (!match) {
-        return res.status(416).json({ error: 'Invalid range' });
+        const start = Number(match[1]);
+        const end = match[2] ? Number(match[2]) : fileSize - 1;
+
+        if (Number.isNaN(start) || Number.isNaN(end) || start < 0 || end >= fileSize || start > end) {
+          return res.status(416).json({ error: 'Invalid range' });
+        }
+
+        const chunkSize = end - start + 1;
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
+        res.setHeader('Content-Length', chunkSize);
+
+        const stream = fs.createReadStream(absolutePath, { start, end });
+        stream.on('error', (err) => {
+          req.log.error({ err, evidenceId: id }, 'Evidence file stream failed');
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to stream evidence' });
+          }
+        });
+        return stream.pipe(res);
       }
 
-      const start = Number(match[1]);
-      const end = match[2] ? Number(match[2]) : fileSize - 1;
-
-      if (Number.isNaN(start) || Number.isNaN(end) || start < 0 || end >= fileSize || start > end) {
-        return res.status(416).json({ error: 'Invalid range' });
-      }
-
-      const chunkSize = end - start + 1;
-      res.status(206);
-      res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`);
-      res.setHeader('Content-Length', chunkSize);
-
-      const stream = fs.createReadStream(absolutePath, { start, end });
+      res.setHeader('Content-Length', fileSize);
+      const stream = fs.createReadStream(absolutePath);
       stream.on('error', (err) => {
         req.log.error({ err, evidenceId: id }, 'Evidence file stream failed');
         if (!res.headersSent) {
           res.status(500).json({ error: 'Failed to stream evidence' });
         }
       });
-      return stream.pipe(res);
-    }
-
-    res.setHeader('Content-Length', fileSize);
-    const stream = fs.createReadStream(absolutePath);
-    stream.on('error', (err) => {
-      req.log.error({ err, evidenceId: id }, 'Evidence file stream failed');
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to stream evidence' });
+      stream.pipe(res);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'Evidence file not found' });
       }
-    });
-    stream.pipe(res);
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      return res.status(404).json({ error: 'Evidence file not found' });
+      req.log.error({ err, evidenceId: req.params.id }, 'Evidence file retrieval failed');
+      return res.status(500).json({ error: 'Failed to load evidence file' });
     }
-    req.log.error({ err, evidenceId: req.params.id }, 'Evidence file retrieval failed');
-    return res.status(500).json({ error: 'Failed to load evidence file' });
-  }
-});
+  },
+);
 
 /**
  * POST /api/evidence/:id/process-text

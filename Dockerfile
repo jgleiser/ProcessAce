@@ -2,18 +2,16 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Install build dependencies for better-sqlite3
-# python3, make, and g++ are needed for native modules
-# ffmpeg is needed for fluent-ffmpeg audio chunking
-RUN apk add --no-cache python3 make g++ ffmpeg
+# Install build/runtime dependencies for native SQLite drivers and ffmpeg.
+RUN apk add --no-cache python3 make g++ ffmpeg sqlcipher-dev openssl-dev pkgconfig
 
 COPY package*.json ./
 
 # Install production dependencies
-RUN npm ci --only=production
+RUN npm_config_build_from_source=true npm ci --omit=dev
 
-# Rebuild better-sqlite3 for the container architecture
-RUN npm rebuild better-sqlite3
+# Rebuild native modules for the container architecture
+RUN npm rebuild better-sqlite3 --build-from-source && npm rebuild @journeyapps/sqlcipher --build-from-source
 
 COPY . .
 

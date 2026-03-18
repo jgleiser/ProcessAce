@@ -6,6 +6,7 @@ const { getJob } = require('../models/job');
 const { getLlmProvider } = require('../llm');
 const { deleteModel, listInstalledModels } = require('../services/ollamaService');
 const { modelQueue } = require('../services/queueInstance');
+const { auditMiddleware } = require('../middleware/auditMiddleware');
 const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
@@ -24,14 +25,19 @@ const requireAdmin = (req, res, next) => {
  * GET /api/settings
  * Get all application settings. API keys are masked. Admin only.
  */
-router.get('/', requireAdmin, (req, res) => {
-  try {
-    const settings = settingsService.getSettings();
-    res.json(settings);
-  } catch (error) {
-    return sendErrorResponse(res, error, req);
-  }
-});
+router.get(
+  '/',
+  requireAdmin,
+  auditMiddleware('settings', () => 'app_settings'),
+  (req, res) => {
+    try {
+      const settings = settingsService.getSettings();
+      res.json(settings);
+    } catch (error) {
+      return sendErrorResponse(res, error, req);
+    }
+  },
+);
 
 /**
  * PUT /api/settings

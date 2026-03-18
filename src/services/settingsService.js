@@ -1,10 +1,10 @@
 const crypto = require('crypto');
-const db = require('./db');
 const logger = require('../logging/logger');
 
 // Retrieve encryption key from environment variable
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const IV_LENGTH = 16; // AES block size
+let db;
 
 class SettingsService {
   constructor() {
@@ -268,4 +268,7 @@ class SettingsService {
   }
 }
 
-module.exports = new SettingsService();
+const settingsService = new SettingsService();
+db = require('./db');
+
+module.exports = settingsService;

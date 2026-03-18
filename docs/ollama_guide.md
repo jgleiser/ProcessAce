@@ -24,6 +24,7 @@ Before starting the stack, configure the required base variables in `.env`:
 
 - `JWT_SECRET`
 - `ENCRYPTION_KEY`
+- `SQLITE_ENCRYPTION_KEY`
 - `CORS_ALLOWED_ORIGINS`
 - `REDIS_PASSWORD`
 

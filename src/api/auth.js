@@ -1,6 +1,7 @@
 const express = require('express');
 const authService = require('../services/authService');
 const notificationService = require('../services/notificationService');
+const logger = require('../logging/logger');
 const { authenticateToken } = require('../middleware/auth');
 const { sendErrorResponse } = require('../utils/errorResponse');
 
@@ -74,8 +75,12 @@ router.post('/login', async (req, res) => {
 
     res.json({ message: 'Login successful', user });
   } catch (error) {
-    if (error.message === 'Invalid email or password') {
+    if (error.message === authService.INVALID_CREDENTIALS_ERROR) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    if (error.message === authService.ACCOUNT_LOCKED_ERROR) {
+      return res.status(423).json({ error: error.message });
     }
 
     if (
@@ -94,7 +99,17 @@ router.post('/login', async (req, res) => {
  * POST /api/auth/logout
  * Clear auth cookie and end session.
  */
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+  const token = req.cookies['auth_token'];
+
+  if (token) {
+    try {
+      await authService.revokeToken(token);
+    } catch (error) {
+      (req.log || logger).warn({ err: error }, 'Failed to revoke auth token during logout');
+    }
+  }
+
   res.clearCookie('auth_token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

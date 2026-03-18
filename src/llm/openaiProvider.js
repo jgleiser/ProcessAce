@@ -151,9 +151,9 @@ class OpenAIProvider extends LlmProvider {
 
   async transcribe(filePath, language = null) {
     try {
-      logger.info({ model: this.model, filePath }, 'Calling OpenAI Transcription API');
-
       const fileName = path.basename(filePath);
+      logger.info({ model: this.model, fileName }, 'Calling OpenAI Transcription API');
+
       const ext = path.extname(fileName).toLowerCase();
 
       const mimeTypes = {

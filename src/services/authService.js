@@ -1,16 +1,28 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const db = require('./db');
+const crypto = require('crypto');
 const logger = require('../logging/logger');
+const tokenBlocklist = require('./tokenBlocklist');
 
 const SALT_ROUNDS = 10;
+const JWT_EXPIRES_IN = '24h';
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+const PASSWORD_ERROR_MSG = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+const INVALID_CREDENTIALS_ERROR = 'Invalid email or password';
+const INVALID_TOKEN_ERROR = 'Invalid token';
 const ACCOUNT_INACTIVE_ERROR = 'Account is deactivated';
 const ACCOUNT_PENDING_ERROR = 'Your account is pending administrator approval.';
 const ACCOUNT_REJECTED_ERROR = 'Your registration was not approved.';
+const ACCOUNT_LOCKED_ERROR = 'Too many failed login attempts. Try again later.';
 const APPROVABLE_STATUSES = new Set(['pending', 'rejected']);
+const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_DURATIONS_MINUTES = [15, 30, 60];
+
 const resolveJwtSecret = () => {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET;
+  }
 
   const isProduction = process.env.NODE_ENV === 'production';
   if (isProduction) {
@@ -18,85 +30,147 @@ const resolveJwtSecret = () => {
     throw new Error('JWT_SECRET environment variable is required in production.');
   }
 
-  const devSecret = require('crypto').randomBytes(32).toString('hex');
+  const devSecret = crypto.randomBytes(32).toString('hex');
   logger.warn('JWT_SECRET is not set. Using a random per-process secret (dev only). Sessions will not survive restarts.');
   return devSecret;
 };
 
 const JWT_SECRET = resolveJwtSecret();
+const db = require('./db');
 
-const JWT_EXPIRES_IN = '24h';
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-const PASSWORD_ERROR_MSG = 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+const getLockoutDurationMinutes = (attemptCount) => {
+  if (attemptCount < LOCKOUT_THRESHOLD) {
+    return 0;
+  }
+
+  const escalationIndex = Math.min(attemptCount - LOCKOUT_THRESHOLD, LOCKOUT_DURATIONS_MINUTES.length - 1);
+  return LOCKOUT_DURATIONS_MINUTES[escalationIndex];
+};
+
+const isLockActive = (lockedUntil) => {
+  if (!lockedUntil) {
+    return false;
+  }
+
+  const lockedUntilTimestamp = Date.parse(lockedUntil);
+  return Number.isFinite(lockedUntilTimestamp) && lockedUntilTimestamp > Date.now();
+};
 
 class AuthService {
-  /**
-   * Register a new user
-   * @param {string} name
-   * @param {string} email
-   * @param {string} password
-   * @returns {Object} User object (without password)
-   */
   async registerUser(name, email, password) {
     try {
-      // Check if user exists
       const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
       if (existingUser) {
         throw new Error('User already exists');
       }
 
-      // Validate password
       if (!PASSWORD_REGEX.test(password)) {
         throw new Error(PASSWORD_ERROR_MSG);
       }
 
-      // Hash password
       const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
       const userId = uuidv4();
       const now = new Date().toISOString();
-
-      // Determine role: first user becomes admin, others become editor
       const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
       const role = userCount.count === 0 ? 'admin' : 'editor';
       const status = userCount.count === 0 ? 'active' : 'pending';
 
-      // Insert user with role, status, and name
-      const stmt = db.prepare('INSERT INTO users (id, name, email, password_hash, created_at, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
-      stmt.run(userId, name, email, passwordHash, now, role, status);
+      db.prepare('INSERT INTO users (id, name, email, password_hash, created_at, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+        userId,
+        name,
+        email,
+        passwordHash,
+        now,
+        role,
+        status,
+      );
 
-      logger.info({ userId, role, name }, 'User registered successfully');
+      logger.info({ userId, role, status }, 'User registered successfully');
 
-      // Find or create default workspace for user (Simple 1:1 for now)
       const workspaceId = uuidv4();
       db.prepare('INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)').run(workspaceId, 'My Workspace', userId, now);
       db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)').run(workspaceId, userId, 'admin');
 
       return { id: userId, name, email, role, status, createdAt: now };
     } catch (error) {
-      logger.error({ err: error, email }, 'Error registering user');
+      logger.error({ err: error }, 'Error registering user');
       throw error;
     }
   }
 
-  /**
-   * Authenticate user and return token
-   * @param {string} email
-   * @param {string} password
-   * @returns {Object} { user, token }
-   */
+  getLoginAttempt(userId) {
+    return db.prepare('SELECT user_id, attempt_count, locked_until FROM login_attempts WHERE user_id = ?').get(userId) || null;
+  }
+
+  clearFailedLoginAttempts(userId) {
+    db.prepare('DELETE FROM login_attempts WHERE user_id = ?').run(userId);
+  }
+
+  recordFailedLoginAttempt(userId) {
+    const currentAttempt = this.getLoginAttempt(userId);
+    const nextAttemptCount = (currentAttempt?.attempt_count || 0) + 1;
+    const lockoutDurationMinutes = getLockoutDurationMinutes(nextAttemptCount);
+    const lockedUntil =
+      lockoutDurationMinutes > 0 ? new Date(Date.now() + lockoutDurationMinutes * 60 * 1000).toISOString() : currentAttempt?.locked_until || null;
+
+    db.prepare(
+      `
+        INSERT INTO login_attempts (user_id, attempt_count, locked_until)
+        VALUES (?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+          attempt_count = excluded.attempt_count,
+          locked_until = excluded.locked_until
+      `,
+    ).run(userId, nextAttemptCount, lockedUntil);
+
+    return {
+      attemptCount: nextAttemptCount,
+      lockedUntil,
+      lockoutDurationMinutes,
+    };
+  }
+
+  getActiveLock(userId) {
+    const attempt = this.getLoginAttempt(userId);
+    if (!attempt || !isLockActive(attempt.locked_until)) {
+      return null;
+    }
+
+    return {
+      attemptCount: attempt.attempt_count,
+      lockedUntil: attempt.locked_until,
+      lockoutDurationMinutes: getLockoutDurationMinutes(attempt.attempt_count),
+    };
+  }
+
   async authenticateUser(email, password) {
     try {
       const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (!user) {
-        throw new Error('Invalid email or password');
+        throw new Error(INVALID_CREDENTIALS_ERROR);
       }
 
-      const match = await bcrypt.compare(password, user.password_hash);
-      if (!match) {
-        throw new Error('Invalid email or password');
+      const activeLock = this.getActiveLock(user.id);
+      if (activeLock) {
+        logger.warn({ userId: user.id, lockedUntil: activeLock.lockedUntil }, 'Blocked login attempt for locked account');
+        throw new Error(ACCOUNT_LOCKED_ERROR);
       }
 
-      // Check if user is active
+      const passwordMatches = await bcrypt.compare(password, user.password_hash);
+      if (!passwordMatches) {
+        const failedAttempt = this.recordFailedLoginAttempt(user.id);
+
+        if (failedAttempt.lockedUntil && isLockActive(failedAttempt.lockedUntil)) {
+          logger.warn(
+            { userId: user.id, attemptCount: failedAttempt.attemptCount, lockedUntil: failedAttempt.lockedUntil },
+            'Account locked after failed login attempts',
+          );
+          throw new Error(ACCOUNT_LOCKED_ERROR);
+        }
+
+        throw new Error(INVALID_CREDENTIALS_ERROR);
+      }
+
       if (user.status === 'inactive') {
         throw new Error(ACCOUNT_INACTIVE_ERROR);
       }
@@ -109,12 +183,12 @@ class AuthService {
         throw new Error(ACCOUNT_REJECTED_ERROR);
       }
 
-      // Generate Token (include role for frontend access control)
-      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, {
+      this.clearFailedLoginAttempts(user.id);
+
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role, jti: uuidv4() }, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
       });
 
-      // Get user's default workspace
       const workspace = db.prepare('SELECT workspace_id FROM workspace_members WHERE user_id = ? LIMIT 1').get(user.id);
       const workspaceId = workspace ? workspace.workspace_id : null;
 
@@ -123,47 +197,71 @@ class AuthService {
         token,
       };
     } catch (error) {
-      logger.warn({ err: error.message, email }, 'Authentication failed');
+      logger.warn({ err: error.message }, 'Authentication failed');
       throw error;
     }
   }
 
-  /**
-   * Verify JWT Token
-   * @param {string} token
-   * @returns {Object} Decoded token payload
-   */
-  verifyToken(token) {
+  async revokeToken(token) {
     try {
-      return jwt.verify(token, JWT_SECRET);
+      const decoded = jwt.verify(token, JWT_SECRET);
+      return await tokenBlocklist.revokeToken(decoded, token);
     } catch {
-      throw new Error('Invalid token');
+      return false;
     }
   }
 
-  /**
-   * Get user by ID
-   * @param {string} id
-   */
+  async verifyToken(token) {
+    let decodedToken;
+
+    try {
+      decodedToken = jwt.verify(token, JWT_SECRET);
+    } catch {
+      throw new Error(INVALID_TOKEN_ERROR);
+    }
+
+    const isRevoked = await tokenBlocklist.isTokenRevoked(decodedToken, token);
+    if (isRevoked) {
+      throw new Error(INVALID_TOKEN_ERROR);
+    }
+
+    const user = this.getUserById(decodedToken.id);
+    if (!user) {
+      throw new Error(INVALID_TOKEN_ERROR);
+    }
+
+    if (user.status === 'inactive') {
+      throw new Error(ACCOUNT_INACTIVE_ERROR);
+    }
+
+    if (user.status === 'pending') {
+      throw new Error(ACCOUNT_PENDING_ERROR);
+    }
+
+    if (user.status === 'rejected') {
+      throw new Error(ACCOUNT_REJECTED_ERROR);
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      created_at: user.created_at,
+      iat: decodedToken.iat,
+      exp: decodedToken.exp,
+      jti: decodedToken.jti,
+    };
+  }
+
   getUserById(id) {
     return db.prepare('SELECT id, name, email, role, status, created_at FROM users WHERE id = ?').get(id);
   }
 
-  /**
-   * Get all users (admin only)
-   * @returns {Array} List of all users
-   */
   getAllUsers() {
     return db.prepare('SELECT id, name, email, role, status, created_at FROM users ORDER BY created_at ASC').all();
   }
 
-  /**
-   * Get users with pagination and filters
-   * @param {number} page
-   * @param {number} limit
-   * @param {Object} filters - { name, email, role, status }
-   * @returns {Object} { users, total, totalPages }
-   */
   getUsersPaginated(page = 1, limit = 10, filters = {}) {
     const offset = (page - 1) * limit;
 
@@ -198,10 +296,10 @@ class AuthService {
     const totalPages = Math.ceil(total / limit);
 
     const usersQuery = `
-      SELECT id, name, email, role, status, created_at 
-      FROM users 
+      SELECT id, name, email, role, status, created_at
+      FROM users
       ${whereSql}
-      ORDER BY created_at ASC 
+      ORDER BY created_at ASC
       LIMIT ? OFFSET ?
     `;
 
@@ -210,12 +308,6 @@ class AuthService {
     return { users, total, totalPages };
   }
 
-  /**
-   * Update user role and/or status (admin only)
-   * @param {string} id - User ID
-   * @param {Object} updates - { role?, status? }
-   * @returns {Object} Updated user
-   */
   updateUser(id, updates) {
     const user = this.getUserById(id);
     if (!user) {
@@ -243,13 +335,8 @@ class AuthService {
     return this.getUserById(id);
   }
 
-  /**
-   * Update user profile (name, password)
-   * @param {string} id
-   * @param {Object} updates { name, password }
-   */
   async updateUserProfile(id, { name, password, currentPassword }) {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id); // Need full user for password_hash
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
     if (!user) {
       throw new Error('User not found');
     }
@@ -267,7 +354,6 @@ class AuthService {
         throw new Error('Incorrect current password');
       }
 
-      // Password Complexity Check
       if (!PASSWORD_REGEX.test(password)) {
         throw new Error(PASSWORD_ERROR_MSG);
       }
@@ -278,13 +364,11 @@ class AuthService {
 
     return this.getUserById(id);
   }
-  /**
-   * Search users by name or email
-   * @param {string} query
-   * @returns {Array} List of matching users (id, name, email)
-   */
+
   searchUsers(query) {
-    if (!query || query.length < 2) return [];
+    if (!query || query.length < 2) {
+      return [];
+    }
 
     const likeQuery = `%${query}%`;
     return db.prepare('SELECT id, name, email FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY name ASC LIMIT 10').all(likeQuery, likeQuery);
@@ -321,7 +405,14 @@ class AuthService {
   }
 }
 
-module.exports = new AuthService();
+const authService = new AuthService();
+
+module.exports = authService;
 module.exports.ACCOUNT_INACTIVE_ERROR = ACCOUNT_INACTIVE_ERROR;
 module.exports.ACCOUNT_PENDING_ERROR = ACCOUNT_PENDING_ERROR;
 module.exports.ACCOUNT_REJECTED_ERROR = ACCOUNT_REJECTED_ERROR;
+module.exports.ACCOUNT_LOCKED_ERROR = ACCOUNT_LOCKED_ERROR;
+module.exports.INVALID_CREDENTIALS_ERROR = INVALID_CREDENTIALS_ERROR;
+module.exports.INVALID_TOKEN_ERROR = INVALID_TOKEN_ERROR;
+module.exports.LOCKOUT_DURATIONS_MINUTES = LOCKOUT_DURATIONS_MINUTES;
+module.exports.LOCKOUT_THRESHOLD = LOCKOUT_THRESHOLD;

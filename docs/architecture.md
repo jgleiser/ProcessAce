@@ -188,7 +188,9 @@ The processing pipeline is implemented inside the worker process and consists of
 
 ### 3.6. Persistence
 
-- **Database**: **SQLite** (`better-sqlite3`) using WAL mode (`src/services/db.js`).
+- **Database**: **SQLite** with environment-specific drivers (`src/services/db.js`).
+  - Development/test: `better-sqlite3` with `data/processAce-dev.db` by default.
+  - Production: SQLCipher-backed SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
   - Tables:
     - `users` – id, name, email, password_hash, role, status, created_at.
     - `workspaces` – id, name, owner_id, created_at.
@@ -266,6 +268,8 @@ Example: "Text document → BPMN 2.0 + SIPOC + RACI + Doc"
 - Services (via `docker-compose.yml`):
   - `app` – API backend + worker + frontend (single Node.js process).
   - `redis` – Redis 7 Alpine for BullMQ job queue.
+- Production TLS overlay (`docker-compose.tls.yml`):
+  - `caddy` – reverse proxy and automatic HTTPS termination in front of `app`.
 - Volumes:
   - `./uploads` – mounted for evidence file persistence.
   - `./data` – mounted for SQLite database persistence.
@@ -278,6 +282,7 @@ Key properties:
 - Supports both single-tenant deployments and, with commercial licensing, multi-tenant setups.
 - The base Docker stack now runs the `app` container as a non-root `appuser`.
 - Redis uses password authentication and is not exposed on a public host port in the base Compose stack.
+- The TLS overlay publishes only `80/443`; `app` and `redis` stay on the internal Compose network.
 
 ---
 
@@ -292,14 +297,18 @@ ProcessAce implements the following security measures:
 - **CSP Headers**: Helmet middleware with nonce-based Content Security Policy for inline scripts.
 - **Input Validation**: Server-side validation on all API endpoints.
 - **Upload Hardening**: Evidence uploads enforce an extension allowlist and a configurable maximum size.
+- **Session Hardening**: JWTs carry a `jti`, logouts revoke tokens through Redis, and protected requests re-check current user state from SQLite.
+- **Audit Trail**: Sensitive read operations emit `data_access` audit logs with actor/resource/correlation fields.
+- **PII Redaction**: Structured logs redact cookies, auth headers, passwords, API keys, emails, and token-like fields.
 
 Recommended practices for production:
 
-- Deploy behind TLS (reverse proxy).
-- Set `JWT_SECRET`, `ENCRYPTION_KEY`, and `REDIS_PASSWORD` to strong, unique values.
+- Deploy behind TLS (the Caddy overlay is the default documented path).
+- Set `JWT_SECRET`, `ENCRYPTION_KEY`, `SQLITE_ENCRYPTION_KEY`, and `REDIS_PASSWORD` to strong, unique values.
 - Set `CORS_ALLOWED_ORIGINS` to the exact allowed frontend origin list.
 - Set `NODE_ENV=production` for secure cookies.
 - Ensure `data/` and `uploads/` bind mounts are writable by the container UID when running Docker on Linux hosts.
+- Migrate any legacy plaintext production database before enabling SQLCipher; the app will not auto-convert it in place.
 - Keep all dependencies and base images updated.
 
 ---

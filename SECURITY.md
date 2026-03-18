@@ -52,11 +52,15 @@ We will:
 Because ProcessAce is a **self-hosted** and **BYO-LLM** tool, you are responsible for securing your own deployments. We strongly recommend:
 
 - Running ProcessAce behind proper authentication and HTTPS.
+- Using the bundled TLS overlay (`docker-compose.tls.yml`) or an equivalent reverse proxy so only `80/443` are publicly exposed.
 - Limiting network exposure (e.g. via firewalls, VPN, reverse proxies).
 - Restricting access to admin interfaces and configuration.
-- Setting strong deployment secrets for `JWT_SECRET`, `ENCRYPTION_KEY`, and `REDIS_PASSWORD`.
+- Setting strong deployment secrets for `JWT_SECRET`, `ENCRYPTION_KEY`, `SQLITE_ENCRYPTION_KEY`, and `REDIS_PASSWORD`.
 - Restricting browser access with an explicit `CORS_ALLOWED_ORIGINS` value.
 - Ensuring Docker bind mounts such as `data/` and `uploads/` are writable by the unprivileged container user.
+- Planning a one-time SQLCipher migration before upgrading any existing plaintext production database file.
+- Rebuilding the Docker image after SQLCipher-related dependency changes so the native module is compiled against the container libraries.
+- Installing SQLCipher and the matching OpenSSL development libraries first when deploying without Docker.
 - Keeping dependencies and the base OS up to date.
 - Treating LLM credentials and other API keys as secrets.
 

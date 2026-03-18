@@ -12,7 +12,7 @@ const getAudioDuration = (filePath) => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {
       if (err) {
-        logger.error({ err, filePath }, 'Failed to probe audio duration');
+        logger.error({ err }, 'Failed to probe audio duration');
         return reject(err);
       }
       const duration = metadata.format.duration;
@@ -33,11 +33,11 @@ const getAudioDuration = (filePath) => {
  * @returns {Promise<Array<string>>} - Ordered array of chunk file paths
  */
 const splitAudioFile = async (filePath, maxSizeMB, outputDir) => {
-  logger.info({ filePath, maxSizeMB }, 'Starting audio chunking process');
-
   const stats = await fs.stat(filePath);
   const fileSizeInBytes = stats.size;
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+  logger.info({ fileSizeInBytes, maxSizeMB }, 'Starting audio chunking process');
 
   const duration = await getAudioDuration(filePath);
 
@@ -61,7 +61,7 @@ const splitAudioFile = async (filePath, maxSizeMB, outputDir) => {
       const chunkFilename = `${baseFilename}-chunk-${chunkIndex}.mp3`;
       const chunkPath = path.join(outputDir, chunkFilename);
 
-      logger.info({ chunkIndex, startTime, path: chunkPath }, 'Extracting audio chunk');
+      logger.info({ chunkIndex, startTime }, 'Extracting audio chunk');
 
       await new Promise((resolve, reject) => {
         ffmpeg(filePath)

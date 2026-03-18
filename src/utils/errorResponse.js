@@ -12,7 +12,7 @@ class AppError extends Error {
 }
 
 const generateCorrelationId = (req) => {
-  return req?.headers?.['x-request-id'] || uuidv4();
+  return req?.correlationId || req?.headers?.['x-request-id'] || uuidv4();
 };
 
 const sendErrorResponse = (res, error, req) => {

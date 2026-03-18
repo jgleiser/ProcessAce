@@ -38,7 +38,13 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Sets `auth_token` HTTP-only cookie (24h expiry).
 - Returns `200` with `{ message, user }`.
+- Returns `423` after repeated failed attempts temporarily lock the account.
 - Returns `403` for `pending`, `rejected`, or `inactive` accounts.
+
+### `POST /api/auth/logout`
+
+- Clears the `auth_token` cookie even if the session is already invalid.
+- Revokes the current JWT when it is still valid so the same cookie cannot be replayed after logout.
 
 ### `PUT /api/auth/me`
 
@@ -348,11 +354,12 @@ Some operational error responses also include a `correlationId` field for suppor
 
 Common HTTP status codes:
 
-| Code  | Meaning                                  |
-| ----- | ---------------------------------------- |
-| `400` | Bad request (missing/invalid parameters) |
-| `401` | Unauthorized (missing or invalid JWT)    |
-| `403` | Forbidden (insufficient role)            |
-| `404` | Resource not found                       |
-| `409` | Conflict (e.g. duplicate user)           |
-| `500` | Internal server error                    |
+| Code  | Meaning                                                 |
+| ----- | ------------------------------------------------------- |
+| `400` | Bad request (missing/invalid parameters)                |
+| `401` | Unauthorized (missing or invalid JWT)                   |
+| `403` | Forbidden (insufficient role)                           |
+| `404` | Resource not found                                      |
+| `409` | Conflict (e.g. duplicate user)                          |
+| `423` | Account temporarily locked after repeated failed logins |
+| `500` | Internal server error                                   |

@@ -64,5 +64,8 @@
     "globals": "^17.4.0",
     "prettier": "^3.8.1",
     "supertest": "^7.2.2"
+  },
+  "optionalDependencies": {
+    "@journeyapps/sqlcipher": "^5.2.0"
   }
 }

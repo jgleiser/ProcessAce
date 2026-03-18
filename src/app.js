@@ -7,16 +7,19 @@ const healthRoutes = require('./api/health');
 const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
-const authRoutes = require('./api/auth');
-const { authenticateToken } = require('./middleware/auth');
-const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
-const { sendErrorResponse } = require('./utils/errorResponse');
+const { generateCorrelationId, sendErrorResponse } = require('./utils/errorResponse');
 
 const app = express();
 const publicDir = path.join(__dirname, 'public');
 
 const attachCspNonce = (_req, res, next) => {
   res.locals.cspNonce = crypto.randomUUID().replace(/-/g, '');
+  next();
+};
+
+const attachRequestContext = (req, res, next) => {
+  req.correlationId = generateCorrelationId(req);
+  res.setHeader('x-request-id', req.correlationId);
   next();
 };
 
@@ -70,6 +73,8 @@ const parseCorsOrigins = () => {
   return ['http://localhost:3000', 'http://processace.local:3000'];
 };
 
+app.use(attachRequestContext);
+
 app.use(
   cors({
     origin: parseCorsOrigins(),
@@ -98,7 +103,7 @@ app.use(cookieParser());
 
 // Request logging middleware
 app.use((req, res, next) => {
-  req.log = logger.child({ reqId: req.headers['x-request-id'] });
+  req.log = logger.child({ correlationId: req.correlationId });
   req.log.info({ req }, 'Incoming request');
 
   res.on('finish', () => {
@@ -112,6 +117,9 @@ app.use((req, res, next) => {
 app.use(serveHtmlWithNonce);
 app.use(express.static(publicDir));
 
+const authRoutes = require('./api/auth');
+const { authenticateToken } = require('./middleware/auth');
+const { authLimiter, apiLimiter } = require('./middleware/rateLimit');
 const evidenceRoutes = require('./api/evidence');
 const jobsRoutes = require('./api/jobs');
 const artifactsRoutes = require('./api/artifacts');
