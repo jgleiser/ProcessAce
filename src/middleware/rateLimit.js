@@ -4,6 +4,7 @@ const logger = require('../logging/logger');
 const { ipKeyGenerator } = rateLimit;
 
 const AUTH_RATE_LIMITED_PATHS = new Set(['/api/auth/login', '/api/auth/register']);
+const AUTH_RATE_LIMIT_MAX = 20;
 const GENERAL_API_RATE_LIMIT_MAX = 1000;
 
 const isTestEnvironment = () => process.env.NODE_ENV === 'test';
@@ -11,6 +12,27 @@ const isTestEnvironment = () => process.env.NODE_ENV === 'test';
 const normalizeRequestPath = (req) => req.originalUrl.split('?')[0];
 
 const isExcludedFromGlobalApiRateLimit = (req) => AUTH_RATE_LIMITED_PATHS.has(normalizeRequestPath(req));
+
+const normalizeAuthIdentifier = (value) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.trim().toLowerCase();
+};
+
+const getClientIpKey = (req) => `ip:${ipKeyGenerator(req.ip)}`;
+
+const getAuthRateLimitKey = (req) => {
+  const email = normalizeAuthIdentifier(req.body?.email);
+  const ipKey = getClientIpKey(req);
+
+  if (!email) {
+    return ipKey;
+  }
+
+  return `auth:${email}:${ipKey}`;
+};
 
 const getAuthenticatedSessionKey = (token) => `session:${crypto.createHash('sha256').update(token).digest('hex')}`;
 
@@ -20,7 +42,7 @@ const getApiRateLimitKey = (req) => {
     return getAuthenticatedSessionKey(authToken.trim());
   }
 
-  return `ip:${ipKeyGenerator(req.ip)}`;
+  return getClientIpKey(req);
 };
 
 const createRateLimiter = ({
@@ -51,9 +73,12 @@ const createRateLimiter = ({
 
 const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: AUTH_RATE_LIMIT_MAX,
   message: 'Too many authentication attempts. Please try again in 15 minutes.',
+  keyGenerator: getAuthRateLimitKey,
 });
+
+const resetAuthRateLimit = async (req) => authLimiter.resetKey(getAuthRateLimitKey(req));
 
 const apiLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
@@ -64,11 +89,14 @@ const apiLimiter = createRateLimiter({
 });
 
 module.exports = {
+  AUTH_RATE_LIMIT_MAX,
   authLimiter,
   apiLimiter,
   createRateLimiter,
   GENERAL_API_RATE_LIMIT_MAX,
+  getAuthRateLimitKey,
   getApiRateLimitKey,
   isExcludedFromGlobalApiRateLimit,
   normalizeRequestPath,
+  resetAuthRateLimit,
 };

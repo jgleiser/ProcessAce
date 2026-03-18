@@ -4,6 +4,7 @@ const authService = require('../services/authService');
 const notificationService = require('../services/notificationService');
 const logger = require('../logging/logger');
 const { authenticateToken } = require('../middleware/auth');
+const { resetAuthRateLimit } = require('../middleware/rateLimit');
 const { sendErrorResponse } = require('../utils/errorResponse');
 const { isAdminRole } = require('../utils/roles');
 
@@ -68,6 +69,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     const { user, token } = await authService.authenticateUser(email, password);
+    await resetAuthRateLimit(req);
 
     // Set HTTP-only cookie
     res.cookie('auth_token', token, {

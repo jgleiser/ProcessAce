@@ -59,15 +59,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const consentTypeLabel = t(`userSettings.consentTypes.${record.consent_type}`);
         const grantedLabel = record.granted ? t('userSettings.consentGranted') : t('userSettings.consentRevoked');
         const ipAddress = record.ip_address || t('userSettings.ipUnavailable');
+        const statusClass = record.granted ? 'is-granted' : 'is-revoked';
 
         return `
-          <div class="settings-message settings-message-success">
-            <div class="settings-message-content">
-              <strong>${escapeHtml(consentTypeLabel)}</strong><br />
-              ${escapeHtml(grantedLabel)}<br />
-              ${escapeHtml(formatDate(record.timestamp))}<br />
-              ${escapeHtml(ipAddress)}
+          <div class="consent-history-item">
+            <div class="consent-history-heading">
+              <strong class="consent-history-title">${escapeHtml(consentTypeLabel)}</strong>
+              <span class="consent-history-status ${statusClass}">${escapeHtml(grantedLabel)}</span>
             </div>
+            <div class="consent-history-meta">${escapeHtml(formatDate(record.timestamp))}</div>
+            <div class="consent-history-meta">${escapeHtml(ipAddress)}</div>
           </div>
         `;
       })
