@@ -1,4 +1,4 @@
-/* global showToast */
+/* global showConfirmModal, showToast */
 document.addEventListener('DOMContentLoaded', async () => {
   const t = window.i18n ? window.i18n.t : (k) => k;
   const form = document.getElementById('userSettingsForm');
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (!window.confirm(t('userSettings.deactivateConfirm'))) {
+    if (!(await showConfirmModal(t('userSettings.deactivateConfirm')))) {
       return;
     }
 
