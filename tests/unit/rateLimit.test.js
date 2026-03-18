@@ -5,7 +5,12 @@ const request = require('supertest');
 
 process.env.LOG_LEVEL = 'silent';
 
-const { createRateLimiter, isExcludedFromGlobalApiRateLimit } = require('../../src/middleware/rateLimit');
+const {
+  GENERAL_API_RATE_LIMIT_MAX,
+  createRateLimiter,
+  getApiRateLimitKey,
+  isExcludedFromGlobalApiRateLimit,
+} = require('../../src/middleware/rateLimit');
 
 const buildApp = (method, route, limiter) => {
   const app = express();
@@ -56,5 +61,29 @@ describe('rateLimit middleware', () => {
     assert.strictEqual(isExcludedFromGlobalApiRateLimit({ originalUrl: '/api/auth/register?next=%2F' }), true);
     assert.strictEqual(isExcludedFromGlobalApiRateLimit({ originalUrl: '/api/auth/me' }), false);
     assert.strictEqual(isExcludedFromGlobalApiRateLimit({ originalUrl: '/api/workspaces' }), false);
+  });
+
+  it('keys authenticated API traffic by session cookie and falls back to IP for anonymous traffic', () => {
+    const sessionKey = getApiRateLimitKey({
+      cookies: { auth_token: 'session-token-1' },
+      ip: '203.0.113.10',
+    });
+    const anotherSessionKey = getApiRateLimitKey({
+      cookies: { auth_token: 'session-token-2' },
+      ip: '203.0.113.10',
+    });
+    const anonymousKey = getApiRateLimitKey({
+      cookies: {},
+      ip: '203.0.113.10',
+    });
+
+    assert.match(sessionKey, /^session:/);
+    assert.match(anotherSessionKey, /^session:/);
+    assert.notStrictEqual(sessionKey, anotherSessionKey);
+    assert.strictEqual(anonymousKey, 'ip:203.0.113.10');
+  });
+
+  it('keeps the general API limiter high enough for normal dashboard polling', () => {
+    assert.strictEqual(GENERAL_API_RATE_LIMIT_MAX, 1000);
   });
 });
