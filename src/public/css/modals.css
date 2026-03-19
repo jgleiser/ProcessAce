@@ -266,13 +266,89 @@
 
 .bpmn-color-control {
   display: inline-flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   color: var(--text-main);
   font-size: 0.8rem;
 }
 
-.bpmn-color-control input[type='color'] {
+.bpmn-color-control-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bpmn-color-control-label {
+  min-width: 42px;
+}
+
+.bpmn-color-palette {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bpmn-color-swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bpmn-swatch-color, var(--card-bg));
+  color: var(--text-main);
+  cursor: pointer;
+  position: relative;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.bpmn-color-swatch:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.bpmn-color-swatch.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.bpmn-color-swatch.is-active::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+}
+
+.bpmn-color-swatch[data-color-value='#ffffff']::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(34, 34, 34, 0.25);
+  border-radius: 999px;
+}
+
+.bpmn-color-swatch-custom {
+  background: linear-gradient(135deg, var(--card-bg), var(--card-hover));
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.bpmn-color-swatch-custom.is-active::after {
+  inset: 4px;
+}
+
+.bpmn-color-advanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 52px;
+  color: var(--text-muted);
+}
+
+.bpmn-color-advanced input[type='color'] {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -282,7 +358,8 @@
   cursor: pointer;
 }
 
-.bpmn-color-control input[type='color']:disabled,
+.bpmn-color-advanced input[type='color']:disabled,
+.bpmn-color-swatch:disabled,
 .bpmn-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -331,6 +408,8 @@
 .bpmn-controls-group {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 /* Export CSV button */

@@ -17,6 +17,7 @@ globalThis.ArtifactViewer = (function () {
     fill: '#ffffff',
     stroke: '#222222',
   });
+  const bpmnPresetColors = Object.freeze(['#ffffff', '#222222', '#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed']);
 
   function createBpmnInstance({ editable = false } = {}) {
     const BpmnConstructor = editable || !globalThis.BpmnViewer ? BpmnJS : globalThis.BpmnViewer;
@@ -25,6 +26,53 @@ globalThis.ArtifactViewer = (function () {
       container: '#bpmn-canvas',
       height: '100%',
     });
+  }
+
+  function renderBpmnColorControl({ role, label, defaultColor }) {
+    const controlId = role === 'fill' ? 'bpmnFillColor' : 'bpmnStrokeColor';
+    const customButtonLabel = t()('artifacts.customColor');
+    const advancedLabel = t()('artifacts.advancedColor');
+
+    const swatches = bpmnPresetColors
+      .map(
+        (color) => `
+          <button
+            type="button"
+            class="bpmn-color-swatch"
+            data-color-role="${role}"
+            data-color-value="${color}"
+            aria-label="${label} ${color}"
+            title="${color}"
+            style="--bpmn-swatch-color: ${color};"
+          ></button>
+        `,
+      )
+      .join('');
+
+    return `
+      <div class="bpmn-color-control" data-color-role="${role}">
+        <div class="bpmn-color-control-main">
+          <span class="bpmn-color-control-label">${label}</span>
+          <div class="bpmn-color-palette" role="group" aria-label="${label}">
+            ${swatches}
+            <button
+              type="button"
+              class="bpmn-color-swatch bpmn-color-swatch-custom"
+              data-color-role="${role}"
+              data-color-value="custom"
+              aria-label="${customButtonLabel}"
+              title="${customButtonLabel}"
+            >
+              <span aria-hidden="true">...</span>
+            </button>
+          </div>
+        </div>
+        <label class="bpmn-color-advanced hidden" id="${controlId}Advanced" for="${controlId}">
+          <span>${advancedLabel}</span>
+          <input type="color" id="${controlId}" value="${defaultColor}" />
+        </label>
+      </div>
+    `;
   }
 
   function openArtifactModal() {
@@ -93,15 +141,16 @@ globalThis.ArtifactViewer = (function () {
                         </div>
                     </div>
                     <div id="editControls" class="bpmn-controls-group hidden">
-                        <label class="bpmn-color-control" for="bpmnFillColor">
-                            <span>${t()('artifacts.fillColor')}</span>
-                            <input type="color" id="bpmnFillColor" value="${defaultBpmnColors.fill}" />
-                        </label>
-                        <label class="bpmn-color-control" for="bpmnStrokeColor">
-                            <span>${t()('artifacts.strokeColor')}</span>
-                            <input type="color" id="bpmnStrokeColor" value="${defaultBpmnColors.stroke}" />
-                        </label>
-                        <button class="bpmn-btn" id="applyBpmnColor">${t()('artifacts.applyColor')}</button>
+                        ${renderBpmnColorControl({
+                          role: 'fill',
+                          label: t()('artifacts.fillColor'),
+                          defaultColor: defaultBpmnColors.fill,
+                        })}
+                        ${renderBpmnColorControl({
+                          role: 'stroke',
+                          label: t()('artifacts.strokeColor'),
+                          defaultColor: defaultBpmnColors.stroke,
+                        })}
                         <button class="bpmn-btn" id="resetBpmnColor">${t()('artifacts.resetColor')}</button>
                         <button class="bpmn-btn primary" id="saveBpmn">${t()('common.saveChanges')}</button>
                         <button class="bpmn-btn" id="cancelEdit">${t()('common.cancel')}</button>
@@ -325,16 +374,36 @@ globalThis.ArtifactViewer = (function () {
   function bindBpmnColorControls() {
     const eventBus = bpmnInstance.get('eventBus');
     const selection = bpmnInstance.get('selection');
-    const applyBtn = document.getElementById('applyBpmnColor');
     const resetBtn = document.getElementById('resetBpmnColor');
-
-    if (applyBtn) {
-      applyBtn.onclick = () => applySelectedBpmnColors();
-    }
+    const swatches = document.querySelectorAll('.bpmn-color-swatch');
+    const colorInputs = document.querySelectorAll('.bpmn-color-advanced input[type="color"]');
 
     if (resetBtn) {
       resetBtn.onclick = () => applySelectedBpmnColors({ reset: true });
     }
+
+    swatches.forEach((swatch) => {
+      swatch.onclick = () => {
+        const { colorRole, colorValue } = swatch.dataset;
+        if (!colorRole || !colorValue) return;
+
+        if (colorValue === 'custom') {
+          setBpmnColorValue(colorRole, getBpmnColorInputValue(colorRole), { useCustom: true, focusInput: true });
+          return;
+        }
+
+        setBpmnColorValue(colorRole, colorValue);
+        applySelectedBpmnColors();
+      };
+    });
+
+    colorInputs.forEach((input) => {
+      input.oninput = () => {
+        const colorRole = input.id === 'bpmnFillColor' ? 'fill' : 'stroke';
+        setBpmnColorValue(colorRole, input.value, { useCustom: true });
+        applySelectedBpmnColors();
+      };
+    });
 
     if (eventBus) {
       eventBus.on('selection.changed', syncBpmnColorControls);
@@ -350,6 +419,24 @@ globalThis.ArtifactViewer = (function () {
     }
 
     syncBpmnColorControls();
+  }
+
+  function setBpmnColorValue(role, color, { useCustom = false, focusInput = false } = {}) {
+    const normalizedColor = normalizeHexColor(color) || defaultBpmnColors[role];
+    const input = getBpmnColorInput(role);
+    const isPreset = bpmnPresetColors.includes(normalizedColor);
+    const shouldUseCustom = useCustom || !isPreset;
+
+    if (input) {
+      input.value = normalizedColor;
+    }
+
+    updateBpmnColorControlState(role, normalizedColor, { useCustom: shouldUseCustom });
+
+    if (input && focusInput && shouldUseCustom) {
+      input.focus();
+      input.click();
+    }
   }
 
   function applySelectedBpmnColors({ reset = false } = {}) {
@@ -373,24 +460,18 @@ globalThis.ArtifactViewer = (function () {
   }
 
   function syncBpmnColorControls() {
-    const fillInput = document.getElementById('bpmnFillColor');
-    const strokeInput = document.getElementById('bpmnStrokeColor');
-    const applyBtn = document.getElementById('applyBpmnColor');
     const resetBtn = document.getElementById('resetBpmnColor');
-
-    if (!fillInput || !strokeInput) return;
+    const colorControls = document.querySelectorAll('.bpmn-color-control');
 
     const selectedElement = getPrimarySelectedBpmnElement();
     const hasSelection = Boolean(selectedElement);
 
-    fillInput.disabled = !hasSelection;
-    strokeInput.disabled = !hasSelection;
-    if (applyBtn) applyBtn.disabled = !hasSelection;
+    colorControls.forEach((control) => setBpmnColorControlEnabled(control, hasSelection));
     if (resetBtn) resetBtn.disabled = !hasSelection;
 
     const colors = readElementColors(selectedElement);
-    fillInput.value = colors.fill;
-    strokeInput.value = colors.stroke;
+    setBpmnColorValue('fill', colors.fill, { useCustom: !bpmnPresetColors.includes(colors.fill) });
+    setBpmnColorValue('stroke', colors.stroke, { useCustom: !bpmnPresetColors.includes(colors.stroke) });
   }
 
   function getPrimarySelectedBpmnElement() {
@@ -428,6 +509,40 @@ globalThis.ArtifactViewer = (function () {
     }
 
     return null;
+  }
+
+  function getBpmnColorInput(role) {
+    return document.getElementById(role === 'fill' ? 'bpmnFillColor' : 'bpmnStrokeColor');
+  }
+
+  function getBpmnColorInputValue(role) {
+    return getBpmnColorInput(role)?.value || defaultBpmnColors[role];
+  }
+
+  function getBpmnColorAdvancedPanel(role) {
+    return document.getElementById(role === 'fill' ? 'bpmnFillColorAdvanced' : 'bpmnStrokeColorAdvanced');
+  }
+
+  function setBpmnColorControlEnabled(control, enabled) {
+    control.querySelectorAll('button, input').forEach((element) => {
+      element.disabled = !enabled;
+    });
+  }
+
+  function updateBpmnColorControlState(role, color, { useCustom = false } = {}) {
+    const normalizedColor = normalizeHexColor(color) || defaultBpmnColors[role];
+    const advancedPanel = getBpmnColorAdvancedPanel(role);
+    const shouldUseCustom = useCustom || !bpmnPresetColors.includes(normalizedColor);
+
+    document.querySelectorAll(`.bpmn-color-swatch[data-color-role="${role}"]`).forEach((swatch) => {
+      const isCustomButton = swatch.dataset.colorValue === 'custom';
+      const isActive = isCustomButton ? shouldUseCustom : swatch.dataset.colorValue === normalizedColor && !shouldUseCustom;
+      swatch.classList.toggle('is-active', isActive);
+    });
+
+    if (advancedPanel) {
+      advancedPanel.classList.toggle('hidden', !shouldUseCustom);
+    }
   }
 
   async function downloadSvg() {
