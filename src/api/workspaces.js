@@ -26,12 +26,13 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
     const workspace = await workspaceService.createWorkspace(name, req.user.id);
     res.status(201).json(workspace);
   } catch (error) {
+    if (error.message === 'Name is required' || error.message === `"My Workspace" and "* Personal Workspace" are reserved workspace names`) {
+      return res.status(400).json({ error: error.message });
+    }
+
     return sendErrorResponse(res, error, req);
   }
 });

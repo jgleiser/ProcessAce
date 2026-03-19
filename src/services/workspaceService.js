@@ -4,14 +4,145 @@ const logger = require('../logging/logger');
 const notificationService = require('./notificationService');
 const {
   DEFAULT_PERSONAL_WORKSPACE_NAME,
+  PERSONAL_WORKSPACE_SUFFIX,
   WORKSPACE_KINDS,
   buildTransferredPersonalWorkspaceName,
   isDefaultWorkspaceForUser,
   isPersonalWorkspace,
   isProtectedPersonalWorkspace,
+  isReservedWorkspaceName,
+  isTransferredPersonalWorkspaceName,
 } = require('../utils/workspaces');
 
 class WorkspaceService {
+  repairLegacyPersonalWorkspace(workspace) {
+    if (!workspace) {
+      return workspace;
+    }
+
+    let repairedWorkspace = workspace;
+    const owner = db.prepare('SELECT id, role, status FROM users WHERE id = ?').get(workspace.owner_id);
+
+    if (workspace.workspace_kind === WORKSPACE_KINDS.PERSONAL) {
+      if (!workspace.personal_owner_user_id) {
+        db.prepare('UPDATE workspaces SET personal_owner_user_id = ? WHERE id = ?').run(workspace.owner_id, workspace.id);
+        repairedWorkspace = {
+          ...workspace,
+          personal_owner_user_id: workspace.owner_id,
+        };
+      }
+
+      return repairedWorkspace;
+    }
+
+    if (workspace.name === DEFAULT_PERSONAL_WORKSPACE_NAME && owner?.status === 'active') {
+      const transferredCandidates = db
+        .prepare(
+          `
+            SELECT
+              w.id,
+              inactive_user.id as personal_owner_user_id,
+              inactive_user.name as personal_owner_name,
+              inactive_user.email as personal_owner_email
+            FROM workspaces w
+            JOIN workspace_members inactive_member
+              ON inactive_member.workspace_id = w.id
+             AND inactive_member.user_id != w.owner_id
+            JOIN users inactive_user
+              ON inactive_user.id = inactive_member.user_id
+             AND inactive_user.status = 'inactive'
+            WHERE w.owner_id = ?
+              AND w.name = ?
+            GROUP BY w.id
+            HAVING COUNT(inactive_member.user_id) = 1
+          `,
+        )
+        .all(workspace.owner_id, DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+      transferredCandidates.forEach((candidate) => {
+        db.prepare(
+          `
+            UPDATE workspaces
+            SET name = ?, workspace_kind = ?, personal_owner_user_id = ?
+            WHERE id = ?
+          `,
+        ).run(
+          buildTransferredPersonalWorkspaceName({
+            name: candidate.personal_owner_name,
+            email: candidate.personal_owner_email,
+          }),
+          WORKSPACE_KINDS.PERSONAL,
+          candidate.personal_owner_user_id,
+          candidate.id,
+        );
+      });
+
+      repairedWorkspace = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(workspace.id);
+      if (repairedWorkspace.workspace_kind === WORKSPACE_KINDS.PERSONAL) {
+        return repairedWorkspace;
+      }
+    }
+
+    const inactiveMembers = db
+      .prepare(
+        `
+          SELECT u.id, u.name, u.email
+          FROM workspace_members wm
+          JOIN users u ON u.id = wm.user_id
+          WHERE wm.workspace_id = ?
+            AND wm.user_id != ?
+            AND u.status = 'inactive'
+          ORDER BY u.created_at ASC
+        `,
+      )
+      .all(workspace.id, workspace.owner_id);
+
+    let nextName = repairedWorkspace.name;
+    let nextKind = repairedWorkspace.workspace_kind;
+    let nextPersonalOwnerUserId = repairedWorkspace.personal_owner_user_id || null;
+
+    if (repairedWorkspace.name === DEFAULT_PERSONAL_WORKSPACE_NAME && owner?.status === 'active' && inactiveMembers.length === 1) {
+      nextKind = WORKSPACE_KINDS.PERSONAL;
+      nextPersonalOwnerUserId = inactiveMembers[0].id;
+      nextName = buildTransferredPersonalWorkspaceName(inactiveMembers[0]);
+    } else if (repairedWorkspace.name === DEFAULT_PERSONAL_WORKSPACE_NAME) {
+      const matchingWorkspaceCount = db
+        .prepare('SELECT COUNT(*) as count FROM workspaces WHERE owner_id = ? AND name = ?')
+        .get(repairedWorkspace.owner_id, DEFAULT_PERSONAL_WORKSPACE_NAME).count;
+
+      if (matchingWorkspaceCount === 1) {
+        nextKind = WORKSPACE_KINDS.PERSONAL;
+        nextPersonalOwnerUserId = repairedWorkspace.owner_id;
+      }
+    } else if (isTransferredPersonalWorkspaceName(repairedWorkspace.name) && inactiveMembers.length === 1) {
+      nextKind = WORKSPACE_KINDS.PERSONAL;
+      nextPersonalOwnerUserId = inactiveMembers[0].id;
+    }
+
+    if (
+      nextName !== repairedWorkspace.name ||
+      nextKind !== repairedWorkspace.workspace_kind ||
+      nextPersonalOwnerUserId !== repairedWorkspace.personal_owner_user_id
+    ) {
+      db.prepare(
+        `
+          UPDATE workspaces
+          SET name = ?, workspace_kind = ?, personal_owner_user_id = ?
+          WHERE id = ?
+        `,
+      ).run(nextName, nextKind, nextPersonalOwnerUserId, repairedWorkspace.id);
+
+      repairedWorkspace = {
+        ...repairedWorkspace,
+        name: nextName,
+        workspace_kind: nextKind,
+        personal_owner_user_id: nextPersonalOwnerUserId,
+      };
+    }
+
+    return repairedWorkspace;
+  }
+
   decorateWorkspaceForUser(workspace, userId) {
     if (!workspace) {
       return workspace;
@@ -32,6 +163,15 @@ class WorkspaceService {
   async createWorkspace(name, ownerId) {
     const id = uuidv4();
     const now = new Date().toISOString();
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+
+    if (!normalizedName) {
+      throw new Error('Name is required');
+    }
+
+    if (isReservedWorkspaceName(normalizedName)) {
+      throw new Error(`"${DEFAULT_PERSONAL_WORKSPACE_NAME}" and "* ${PERSONAL_WORKSPACE_SUFFIX}" are reserved workspace names`);
+    }
 
     try {
       const stmt = db.prepare(
@@ -40,14 +180,14 @@ class WorkspaceService {
           VALUES (?, ?, ?, ?, ?, ?)
         `,
       );
-      stmt.run(id, name, ownerId, now, WORKSPACE_KINDS.NAMED, null);
+      stmt.run(id, normalizedName, ownerId, now, WORKSPACE_KINDS.NAMED, null);
 
       // Add owner as admin
       this.addMember(id, ownerId, 'admin');
 
       return {
         id,
-        name,
+        name: normalizedName,
         owner_id: ownerId,
         created_at: now,
         workspace_kind: WORKSPACE_KINDS.NAMED,
@@ -111,7 +251,23 @@ class WorkspaceService {
       )
       .all(userId, userId, userId, userId);
 
-    return workspaces.map((workspace) => this.decorateWorkspaceForUser(workspace, userId));
+    return workspaces
+      .map((workspace) => this.decorateWorkspaceForUser(this.repairLegacyPersonalWorkspace(workspace), userId))
+      .sort((leftWorkspace, rightWorkspace) => {
+        const getSortWeight = (workspace) => {
+          if (workspace.is_default_workspace) {
+            return 0;
+          }
+
+          if (workspace.owner_id === userId) {
+            return 1;
+          }
+
+          return 2;
+        };
+
+        return getSortWeight(leftWorkspace) - getSortWeight(rightWorkspace) || leftWorkspace.created_at.localeCompare(rightWorkspace.created_at);
+      });
   }
 
   /**
@@ -119,7 +275,8 @@ class WorkspaceService {
    * @param {string} id
    */
   getWorkspace(id) {
-    return db.prepare('SELECT * FROM workspaces WHERE id = ?').get(id);
+    const workspace = db.prepare('SELECT * FROM workspaces WHERE id = ?').get(id);
+    return this.repairLegacyPersonalWorkspace(workspace);
   }
 
   /**
@@ -418,11 +575,11 @@ class WorkspaceService {
   transferOwnedWorkspaces(fromUserId, toUserId) {
     const transferTransaction = db.transaction(() => {
       const owner = db.prepare('SELECT id, name, email FROM users WHERE id = ?').get(fromUserId);
-      const ownedWorkspaces = db
-        .prepare('SELECT id, workspace_kind, personal_owner_user_id FROM workspaces WHERE owner_id = ? ORDER BY created_at ASC')
-        .all(fromUserId);
+      const ownedWorkspaces = db.prepare('SELECT * FROM workspaces WHERE owner_id = ? ORDER BY created_at ASC').all(fromUserId);
 
-      ownedWorkspaces.forEach((workspace) => {
+      ownedWorkspaces.forEach((rawWorkspace) => {
+        const workspace = this.repairLegacyPersonalWorkspace(rawWorkspace);
+
         if (workspace.workspace_kind === WORKSPACE_KINDS.PERSONAL) {
           db.prepare(
             `
@@ -452,6 +609,21 @@ class WorkspaceService {
 
   restorePersonalWorkspaces(userId) {
     const restoreTransaction = db.transaction(() => {
+      const legacyTransferredWorkspaces = db
+        .prepare(
+          `
+            SELECT w.*
+            FROM workspaces w
+            JOIN workspace_members wm ON wm.workspace_id = w.id
+            WHERE wm.user_id = ?
+          `,
+        )
+        .all(userId);
+
+      legacyTransferredWorkspaces.forEach((workspace) => {
+        this.repairLegacyPersonalWorkspace(workspace);
+      });
+
       const personalWorkspaces = db
         .prepare(
           `

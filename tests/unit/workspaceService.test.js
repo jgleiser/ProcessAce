@@ -41,6 +41,16 @@ describe('WorkspaceService', () => {
       const role = workspaceService.getMemberRole(ws.id, adminUser.id);
       assert.strictEqual(role, 'owner'); // getMemberRole returns 'owner' for owner_id match
     });
+
+    it('should reject reserved personal workspace names', async () => {
+      await assert.rejects(async () => {
+        await workspaceService.createWorkspace(DEFAULT_PERSONAL_WORKSPACE_NAME, adminUser.id);
+      }, /reserved workspace names/);
+
+      await assert.rejects(async () => {
+        await workspaceService.createWorkspace('Daniela Personal Workspace', adminUser.id);
+      }, /reserved workspace names/);
+    });
   });
 
   // --- isMember ---
@@ -94,6 +104,61 @@ describe('WorkspaceService', () => {
       assert.strictEqual(ws.personal_owner_user_id, adminUser.id);
       assert.strictEqual(ws.is_default_workspace, true);
       assert.strictEqual(ws.is_protected_personal_workspace, false);
+    });
+
+    it('should repair a stale My Workspace row before decorating it', () => {
+      db.prepare('UPDATE workspaces SET workspace_kind = ?, personal_owner_user_id = NULL WHERE id = ?').run(WORKSPACE_KINDS.NAMED, adminWorkspaceId);
+
+      const repairedWorkspace = workspaceService.getUserWorkspaces(adminUser.id).find((workspace) => workspace.id === adminWorkspaceId);
+
+      assert.ok(repairedWorkspace);
+      assert.strictEqual(repairedWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+      assert.strictEqual(repairedWorkspace.personal_owner_user_id, adminUser.id);
+      assert.strictEqual(repairedWorkspace.is_default_workspace, true);
+      assert.strictEqual(repairedWorkspace.is_protected_personal_workspace, false);
+    });
+
+    it('should repair duplicate legacy My Workspace rows for the owner and transferred personal workspace', async () => {
+      const legacyOwner = await authService.registerUser('Legacy Owner', `legacy_owner_${Date.now()}@test.com`, 'Password123');
+      authService.approveUser(legacyOwner.id);
+      const legacyInactiveUser = await authService.registerUser('Legacy Daniela', `legacy_daniela_${Date.now()}@test.com`, 'Password123');
+      authService.approveUser(legacyInactiveUser.id);
+      authService.updateUser(legacyInactiveUser.id, { status: 'inactive' });
+
+      const ownerDefaultWorkspace = db
+        .prepare('SELECT id FROM workspaces WHERE owner_id = ? AND name = ? ORDER BY created_at ASC LIMIT 1')
+        .get(legacyOwner.id, DEFAULT_PERSONAL_WORKSPACE_NAME);
+      const transferredWorkspaceId = `legacy-transferred-${Date.now()}`;
+      const timestamp = new Date().toISOString();
+
+      db.prepare('UPDATE workspaces SET workspace_kind = ?, personal_owner_user_id = NULL WHERE id = ?').run(
+        WORKSPACE_KINDS.NAMED,
+        ownerDefaultWorkspace.id,
+      );
+      db.prepare(
+        `
+          INSERT INTO workspaces (id, name, owner_id, created_at, workspace_kind, personal_owner_user_id)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+      ).run(transferredWorkspaceId, DEFAULT_PERSONAL_WORKSPACE_NAME, legacyOwner.id, timestamp, WORKSPACE_KINDS.NAMED, null);
+      workspaceService.addMember(transferredWorkspaceId, legacyOwner.id, 'admin');
+      workspaceService.addMember(transferredWorkspaceId, legacyInactiveUser.id, 'admin');
+
+      const repairedWorkspaces = workspaceService.getUserWorkspaces(legacyOwner.id);
+      const repairedDefaultWorkspace = repairedWorkspaces.find((workspace) => workspace.id === ownerDefaultWorkspace.id);
+      const repairedTransferredWorkspace = repairedWorkspaces.find((workspace) => workspace.id === transferredWorkspaceId);
+
+      assert.ok(repairedDefaultWorkspace);
+      assert.strictEqual(repairedDefaultWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+      assert.strictEqual(repairedDefaultWorkspace.personal_owner_user_id, legacyOwner.id);
+      assert.strictEqual(repairedDefaultWorkspace.is_default_workspace, true);
+
+      assert.ok(repairedTransferredWorkspace);
+      assert.strictEqual(repairedTransferredWorkspace.name, 'Legacy Daniela Personal Workspace');
+      assert.strictEqual(repairedTransferredWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+      assert.strictEqual(repairedTransferredWorkspace.personal_owner_user_id, legacyInactiveUser.id);
+      assert.strictEqual(repairedTransferredWorkspace.is_default_workspace, false);
+      assert.strictEqual(repairedTransferredWorkspace.is_protected_personal_workspace, true);
     });
   });
 
@@ -252,6 +317,14 @@ describe('WorkspaceService', () => {
       // Members should also be deleted
       const members = db.prepare('SELECT * FROM workspace_members WHERE workspace_id = ?').all(wsId);
       assert.strictEqual(members.length, 0);
+    });
+
+    it('should reject deleting a stale personal workspace row that lost its metadata', () => {
+      db.prepare('UPDATE workspaces SET workspace_kind = ?, personal_owner_user_id = NULL WHERE id = ?').run(WORKSPACE_KINDS.NAMED, adminWorkspaceId);
+
+      assert.throws(() => {
+        workspaceService.deleteWorkspace(adminWorkspaceId);
+      }, /Personal workspaces cannot be deleted/);
     });
   });
 

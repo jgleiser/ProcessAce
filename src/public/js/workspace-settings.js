@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (isDefaultWorkspace) {
         actionsContent = `
                         <div class="ws-card-info-text">${t('workspaceSettings.defaultWorkspace')}</div>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
                     `;
       } else if (isProtectedPersonalWorkspace) {
         actionsContent = `
@@ -150,6 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (isPersonalWorkspace) {
         actionsContent = `
                         <div class="ws-card-info-text">${t('workspaceSettings.personalWorkspace')}</div>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
                     `;
       } else {
         actionsContent = `

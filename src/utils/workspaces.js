@@ -18,6 +18,13 @@ const getPersonalWorkspaceOwnerLabel = (user) => normalizeWorkspaceLabel(user?.n
 
 const buildTransferredPersonalWorkspaceName = (user) => `${getPersonalWorkspaceOwnerLabel(user)} ${PERSONAL_WORKSPACE_SUFFIX}`;
 
+const isTransferredPersonalWorkspaceName = (value) => normalizeWorkspaceLabel(value).endsWith(` ${PERSONAL_WORKSPACE_SUFFIX}`);
+
+const isReservedWorkspaceName = (value) => {
+  const normalizedValue = normalizeWorkspaceLabel(value);
+  return normalizedValue === DEFAULT_PERSONAL_WORKSPACE_NAME || isTransferredPersonalWorkspaceName(normalizedValue);
+};
+
 const isPersonalWorkspace = (workspace) => workspace?.workspace_kind === WORKSPACE_KINDS.PERSONAL;
 
 const isNamedWorkspace = (workspace) => workspace?.workspace_kind === WORKSPACE_KINDS.NAMED;
@@ -38,4 +45,6 @@ module.exports = {
   isNamedWorkspace,
   isPersonalWorkspace,
   isProtectedPersonalWorkspace,
+  isReservedWorkspaceName,
+  isTransferredPersonalWorkspaceName,
 };

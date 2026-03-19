@@ -306,6 +306,26 @@ describe('AuthService', () => {
     assert.strictEqual(workspaceService.isMember(namedWorkspace.id, firstSuperadminId), true);
   });
 
+  it('repairs a stale My Workspace row before deactivation so it is renamed and transferred as personal', async () => {
+    const superadminId = db.prepare('SELECT id FROM users WHERE email = ?').get(superadminUserDetails.email).id;
+    const staleUserDetails = await createActiveUser('stale_personal_workspace');
+    const staleUserRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(staleUserDetails.email);
+    const staleWorkspace = db
+      .prepare('SELECT * FROM workspaces WHERE owner_id = ? AND name = ? ORDER BY created_at ASC LIMIT 1')
+      .get(staleUserRecord.id, DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+    db.prepare('UPDATE workspaces SET workspace_kind = ?, personal_owner_user_id = NULL WHERE id = ?').run(WORKSPACE_KINDS.NAMED, staleWorkspace.id);
+
+    await authService.deactivateUserAccount(staleUserRecord.id, staleUserDetails.password);
+
+    const transferredWorkspace = workspaceService.getWorkspace(staleWorkspace.id);
+
+    assert.strictEqual(transferredWorkspace.owner_id, superadminId);
+    assert.strictEqual(transferredWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+    assert.strictEqual(transferredWorkspace.personal_owner_user_id, staleUserRecord.id);
+    assert.strictEqual(transferredWorkspace.name, `${staleUserDetails.name} Personal Workspace`);
+  });
+
   it('restores transferred personal workspaces when an inactive user is reactivated', async () => {
     const superadminActor = authService.getUserById(db.prepare('SELECT id FROM users WHERE email = ?').get(superadminUserDetails.email).id);
     const reactivationUserDetails = await createActiveUser('reactivation_user');

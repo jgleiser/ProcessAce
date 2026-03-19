@@ -77,6 +77,11 @@ describe('Workspace API Integration Tests', () => {
     await agent.post('/api/workspaces').send({}).expect(400);
   });
 
+  it('should reject reserved personal workspace names', async () => {
+    await agent.post('/api/workspaces').send({ name: 'My Workspace' }).expect(400);
+    await agent.post('/api/workspaces').send({ name: 'Daniela Personal Workspace' }).expect(400);
+  });
+
   // --- GET /api/workspaces/:id/members ---
   it('should list workspace members', async () => {
     const res = await agent.get(`/api/workspaces/${workspaceId}/members`).expect(200);
@@ -128,6 +133,22 @@ describe('Workspace API Integration Tests', () => {
     const personalWorkspaceId = db.prepare('SELECT id FROM workspaces WHERE owner_id = ? AND workspace_kind = ?').get(ownerUserId, 'personal').id;
     const res = await agent.delete(`/api/workspaces/${personalWorkspaceId}`).expect(403);
     assert.strictEqual(res.body.error, 'Personal workspaces cannot be deleted');
+  });
+
+  it('should repair stale personal workspace metadata before listing and deletion checks', async () => {
+    const personalWorkspaceId = db.prepare('SELECT id FROM workspaces WHERE owner_id = ? AND name = ?').get(ownerUserId, 'My Workspace').id;
+    db.prepare('UPDATE workspaces SET workspace_kind = ?, personal_owner_user_id = NULL WHERE id = ?').run('named', personalWorkspaceId);
+
+    const listRes = await agent.get('/api/workspaces').expect(200);
+    const repairedWorkspace = listRes.body.find((workspace) => workspace.id === personalWorkspaceId);
+
+    assert.ok(repairedWorkspace);
+    assert.strictEqual(repairedWorkspace.workspace_kind, 'personal');
+    assert.strictEqual(repairedWorkspace.is_default_workspace, true);
+    assert.strictEqual(repairedWorkspace.is_protected_personal_workspace, false);
+
+    const deleteRes = await agent.delete(`/api/workspaces/${personalWorkspaceId}`).expect(403);
+    assert.strictEqual(deleteRes.body.error, 'Personal workspaces cannot be deleted');
   });
 
   it('should allow a superadmin to transfer ownership of a named workspace to an active member', async () => {
