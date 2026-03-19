@@ -264,6 +264,30 @@
   background: var(--primary-hover);
 }
 
+.bpmn-color-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 0.8rem;
+}
+
+.bpmn-color-control input[type='color'] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+}
+
+.bpmn-color-control input[type='color']:disabled,
+.bpmn-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .bjs-powered-by {
   display: block !important;
 }

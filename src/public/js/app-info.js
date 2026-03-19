@@ -1,8 +1,8 @@
 window.ProcessAceAppInfo =
   window.ProcessAceAppInfo ||
   Object.freeze({
-    version: '1.3.0',
-    versionLabel: 'v1.3.0',
+    version: '1.3.1',
+    versionLabel: 'v1.3.1',
     websiteUrl: 'https://processace.com',
     websiteEsUrl: 'https://processace.com/es',
     repoUrl: 'https://github.com/jgleiser/ProcessAce',

@@ -2,6 +2,19 @@
 
 All notable changes to ProcessAce will be documented in this file.
 
+## [1.3.1] - 2026-03-19
+
+### Changed
+
+- BPMN artifact viewing now uses the official pre-built `bpmn-js` browser bundle instead of the previous CDN ESM bootstrap.
+- BPMN edit mode now uses native diagram color controls backed by the stock modeling API.
+
+### Fixed
+
+- Resolved BPMN modal rendering failures triggered by incompatible browser-side BPMN editor module loading.
+- Fixed BPMN edit mode selection errors caused by reading DI metadata from `businessObject.di` instead of the diagram element.
+- Restored reliable BPMN shape creation and append behavior from the palette and context pad.
+
 ## [1.3.0] - 2026-03-18
 
 ### Added

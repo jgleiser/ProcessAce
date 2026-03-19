@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.13.1/dist/assets/diagram-js.css" />
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.13.1/dist/assets/bpmn-js.css" />
     <link rel="stylesheet" href="https://unpkg.com/bpmn-js@18.13.1/dist/assets/bpmn-font/css/bpmn.css" />
-    <link rel="stylesheet" href="https://unpkg.com/bpmn-js-color-picker/colors/color-picker.css" />
     <!-- EasyMDE -->
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
     <link rel="stylesheet" href="css/style.css" />
@@ -154,27 +153,7 @@
       </div>
     </div>
 
-    <script type="importmap" nonce="__CSP_NONCE__">
-      {
-        "imports": {
-          "bpmn-js/": "https://esm.sh/bpmn-js@18.13.1/",
-          "bpmn-js-color-picker": "https://esm.sh/bpmn-js-color-picker@0.7.2",
-          "bpmn-js-create-append-anything": "https://esm.sh/bpmn-js-create-append-anything@0.3.0"
-        }
-      }
-    </script>
-    <script type="module" nonce="__CSP_NONCE__">
-      import BpmnModeler from 'bpmn-js/lib/Modeler.js';
-      import BpmnColorPickerModule from 'bpmn-js-color-picker';
-      import { CreateAppendAnythingModule } from 'bpmn-js-create-append-anything';
-
-      globalThis.BpmnJS = class CustomModeler extends BpmnModeler {
-        constructor(options = {}) {
-          options.additionalModules = [...(options.additionalModules || []), BpmnColorPickerModule, CreateAppendAnythingModule];
-          super(options);
-        }
-      };
-    </script>
+    <script src="https://unpkg.com/bpmn-js@18.13.1/dist/bpmn-modeler.development.js"></script>
     <script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
     <script src="https://unpkg.com/easymde@2.18.0/dist/easymde.min.js"></script>
 

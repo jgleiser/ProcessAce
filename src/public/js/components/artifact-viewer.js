@@ -13,6 +13,19 @@ globalThis.ArtifactViewer = (function () {
   let currentArtifactContent = null;
   let currentArtifactType = null;
   let currentCanEdit = false;
+  const defaultBpmnColors = Object.freeze({
+    fill: '#ffffff',
+    stroke: '#222222',
+  });
+
+  function createBpmnInstance({ editable = false } = {}) {
+    const BpmnConstructor = editable || !globalThis.BpmnViewer ? BpmnJS : globalThis.BpmnViewer;
+
+    return new BpmnConstructor({
+      container: '#bpmn-canvas',
+      height: '100%',
+    });
+  }
 
   function openArtifactModal() {
     modal.classList.remove('hidden');
@@ -80,6 +93,16 @@ globalThis.ArtifactViewer = (function () {
                         </div>
                     </div>
                     <div id="editControls" class="bpmn-controls-group hidden">
+                        <label class="bpmn-color-control" for="bpmnFillColor">
+                            <span>${t()('artifacts.fillColor')}</span>
+                            <input type="color" id="bpmnFillColor" value="${defaultBpmnColors.fill}" />
+                        </label>
+                        <label class="bpmn-color-control" for="bpmnStrokeColor">
+                            <span>${t()('artifacts.strokeColor')}</span>
+                            <input type="color" id="bpmnStrokeColor" value="${defaultBpmnColors.stroke}" />
+                        </label>
+                        <button class="bpmn-btn" id="applyBpmnColor">${t()('artifacts.applyColor')}</button>
+                        <button class="bpmn-btn" id="resetBpmnColor">${t()('artifacts.resetColor')}</button>
                         <button class="bpmn-btn primary" id="saveBpmn">${t()('common.saveChanges')}</button>
                         <button class="bpmn-btn" id="cancelEdit">${t()('common.cancel')}</button>
                     </div>
@@ -210,10 +233,7 @@ globalThis.ArtifactViewer = (function () {
   function loadBpmnViewer(xml) {
     destroyBpmn();
 
-    bpmnInstance = new BpmnJS({
-      container: '#bpmn-canvas',
-      height: '100%',
-    });
+    bpmnInstance = createBpmnInstance();
 
     bpmnInstance
       .importXML(xml)
@@ -246,10 +266,7 @@ globalThis.ArtifactViewer = (function () {
     document.getElementById('viewControls').classList.add('hidden');
     document.getElementById('editControls').classList.remove('hidden');
 
-    bpmnInstance = new BpmnJS({
-      container: '#bpmn-canvas',
-      height: '100%',
-    });
+    bpmnInstance = createBpmnInstance({ editable: true });
 
     bpmnInstance
       .importXML(currentArtifactContent)
@@ -260,6 +277,7 @@ globalThis.ArtifactViewer = (function () {
         const palette = document.querySelector('.djs-palette');
         if (palette) palette.style.display = 'block';
 
+        bindBpmnColorControls();
         document.getElementById('saveBpmn').onclick = saveBpmnChanges;
         document.getElementById('cancelEdit').onclick = cancelEdit;
       })
@@ -302,6 +320,114 @@ globalThis.ArtifactViewer = (function () {
     document.getElementById('viewControls').classList.remove('hidden');
     document.getElementById('editControls').classList.add('hidden');
     loadBpmnViewer(currentArtifactContent);
+  }
+
+  function bindBpmnColorControls() {
+    const eventBus = bpmnInstance.get('eventBus');
+    const selection = bpmnInstance.get('selection');
+    const applyBtn = document.getElementById('applyBpmnColor');
+    const resetBtn = document.getElementById('resetBpmnColor');
+
+    if (applyBtn) {
+      applyBtn.onclick = () => applySelectedBpmnColors();
+    }
+
+    if (resetBtn) {
+      resetBtn.onclick = () => applySelectedBpmnColors({ reset: true });
+    }
+
+    if (eventBus) {
+      eventBus.on('selection.changed', syncBpmnColorControls);
+      eventBus.on('elements.changed', (event) => {
+        const selectedElements = selection ? selection.get() : [];
+        if (!selectedElements.length) return;
+
+        const selectedIds = new Set(selectedElements.map((element) => element.id));
+        if (event.elements.some((element) => selectedIds.has(element.id))) {
+          syncBpmnColorControls();
+        }
+      });
+    }
+
+    syncBpmnColorControls();
+  }
+
+  function applySelectedBpmnColors({ reset = false } = {}) {
+    if (!bpmnInstance) return;
+
+    const selection = bpmnInstance.get('selection');
+    const modeling = bpmnInstance.get('modeling');
+    const selectedElements = selection ? selection.get() : [];
+
+    if (!selectedElements.length || !modeling) return;
+
+    const colors = reset
+      ? { fill: null, stroke: null }
+      : {
+          fill: document.getElementById('bpmnFillColor')?.value || defaultBpmnColors.fill,
+          stroke: document.getElementById('bpmnStrokeColor')?.value || defaultBpmnColors.stroke,
+        };
+
+    modeling.setColor(selectedElements, colors);
+    syncBpmnColorControls();
+  }
+
+  function syncBpmnColorControls() {
+    const fillInput = document.getElementById('bpmnFillColor');
+    const strokeInput = document.getElementById('bpmnStrokeColor');
+    const applyBtn = document.getElementById('applyBpmnColor');
+    const resetBtn = document.getElementById('resetBpmnColor');
+
+    if (!fillInput || !strokeInput) return;
+
+    const selectedElement = getPrimarySelectedBpmnElement();
+    const hasSelection = Boolean(selectedElement);
+
+    fillInput.disabled = !hasSelection;
+    strokeInput.disabled = !hasSelection;
+    if (applyBtn) applyBtn.disabled = !hasSelection;
+    if (resetBtn) resetBtn.disabled = !hasSelection;
+
+    const colors = readElementColors(selectedElement);
+    fillInput.value = colors.fill;
+    strokeInput.value = colors.stroke;
+  }
+
+  function getPrimarySelectedBpmnElement() {
+    if (!bpmnInstance) return null;
+
+    const selection = bpmnInstance.get('selection');
+    const selectedElements = selection ? selection.get() : [];
+
+    return selectedElements.length ? selectedElements[0] : null;
+  }
+
+  function readElementColors(element) {
+    if (!element) return { ...defaultBpmnColors };
+
+    const di = element.di || element.labelTarget?.di;
+    const fill = normalizeHexColor(di?.get('bioc:fill')) || defaultBpmnColors.fill;
+    const stroke = normalizeHexColor(di?.get('bioc:stroke')) || defaultBpmnColors.stroke;
+
+    return { fill, stroke };
+  }
+
+  function normalizeHexColor(color) {
+    if (typeof color !== 'string') return null;
+
+    const trimmedColor = color.trim();
+    if (!trimmedColor.startsWith('#')) return null;
+
+    if (/^#[0-9a-fA-F]{6}$/.test(trimmedColor)) {
+      return trimmedColor.toLowerCase();
+    }
+
+    if (/^#[0-9a-fA-F]{3}$/.test(trimmedColor)) {
+      const [red, green, blue] = trimmedColor.slice(1).split('');
+      return `#${red}${red}${green}${green}${blue}${blue}`.toLowerCase();
+    }
+
+    return null;
   }
 
   async function downloadSvg() {
@@ -407,9 +533,9 @@ globalThis.ArtifactViewer = (function () {
   }
 
   async function downloadBpmnXml() {
-    if (!bpmnInstance) return;
+    if (!bpmnInstance && typeof currentArtifactContent !== 'string') return;
     try {
-      const { xml } = await bpmnInstance.saveXML({ format: true });
+      const xml = typeof bpmnInstance?.saveXML === 'function' ? (await bpmnInstance.saveXML({ format: true })).xml : currentArtifactContent;
       downloadFile(`process-${currentArtifactId}.bpmn`, xml, 'application/xml');
     } catch (err) {
       console.error('Error exporting BPMN XML', err);
