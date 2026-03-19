@@ -514,6 +514,37 @@
       "informed": "Informado"
     }
   },
+  "footer": {
+    "communityVersion": "Version comunitaria ProcessAce {{version}}",
+    "visitWebsite": "Visitar ProcessAce.com",
+    "githubRepo": "Repositorio de GitHub",
+    "aboutProcessAce": "Acerca de ProcessAce"
+  },
+  "about": {
+    "title": "Acerca de ProcessAce",
+    "languageSwitcherTitle": "Cambiar idioma",
+    "eyebrow": "Version comunitaria",
+    "pageTitle": "Acerca de ProcessAce",
+    "subtitle": "ProcessAce ayuda a los equipos a convertir entrevistas, grabaciones y documentos en documentacion estructurada de procesos.",
+    "productTitle": "Que hace ProcessAce",
+    "productDescription": "ProcessAce es una aplicacion de descubrimiento y documentacion de procesos impulsada por IA para equipos autogestionados.",
+    "productDetails": "Transforma el material fuente en diagramas BPMN, tablas SIPOC, matrices RACI y documentacion narrativa de procesos.",
+    "linksTitle": "Enlaces oficiales",
+    "websiteLabel": "Sitio web de ProcessAce",
+    "websiteHelp": "Visita el sitio principal para conocer detalles del producto y novedades.",
+    "websiteEsLabel": "Sitio web en espanol",
+    "websiteEsHelp": "Abre el sitio web de ProcessAce en espanol.",
+    "repoLabel": "Repositorio de GitHub",
+    "repoHelp": "Revisa el codigo fuente, los issues y la actividad del proyecto.",
+    "viewRepository": "Ver repositorio",
+    "versionTitle": "Version y licencia",
+    "currentVersionLabel": "Version actual",
+    "changelogLabel": "Registro de cambios",
+    "viewChangelog": "Ver changelog",
+    "communityDisclosureTitle": "Version comunitaria",
+    "communityDisclosureBody": "Esta compilacion de ProcessAce es la Version comunitaria y se distribuye bajo los terminos de licencia del proyecto.",
+    "reviewLicense": "Revisar la licencia"
+  },
   "modals": {
     "confirmTitle": "Confirmar acción",
     "confirmMessage": "¿Estás seguro?",

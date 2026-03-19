@@ -42,4 +42,25 @@ describe('App security integration tests', () => {
     assert.match(res.text, /<script type="module" nonce="[^"]+">/);
     assert.ok(!res.text.includes('__CSP_NONCE__'));
   });
+
+  it('serves the public about page with the shared footer assets', async () => {
+    const res = await request(server).get('/about.html').expect(200);
+
+    assert.match(res.text, /About ProcessAce/);
+    assert.match(res.text, /id="app-footer"/);
+    assert.match(res.text, /src="js\/app-info\.js"/);
+    assert.match(res.text, /src="js\/footer\.js"/);
+    assert.ok(!res.text.includes('__CSP_NONCE__'));
+  });
+
+  it('includes the shared footer mount and assets on login and dashboard pages', async () => {
+    const loginRes = await request(server).get('/login.html').expect(200);
+    const dashboardRes = await request(server).get('/').expect(200);
+
+    for (const res of [loginRes, dashboardRes]) {
+      assert.match(res.text, /id="app-footer"/);
+      assert.match(res.text, /src="js\/app-info\.js"/);
+      assert.match(res.text, /src="js\/footer\.js"/);
+    }
+  });
 });

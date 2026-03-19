@@ -10,6 +10,21 @@
   background-color: var(--bg-color);
 }
 
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+}
+
+body.auth-page .auth-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
 .auth-box {
   background: #ffffff;
   padding: 2rem;
@@ -72,4 +87,14 @@
 
 .auth-footer a:hover {
   text-decoration: underline;
+}
+
+body.auth-page .page-footer {
+  width: min(100%, 400px);
+  margin: 1.5rem auto 0;
+  padding-top: 1rem;
+}
+
+body.auth-page .page-footer-content {
+  justify-content: center;
 }

@@ -514,6 +514,37 @@
       "informed": "Informed"
     }
   },
+  "footer": {
+    "communityVersion": "ProcessAce Community {{version}}",
+    "visitWebsite": "Visit ProcessAce.com",
+    "githubRepo": "Github Repo",
+    "aboutProcessAce": "About ProcessAce"
+  },
+  "about": {
+    "title": "About ProcessAce",
+    "languageSwitcherTitle": "Change language",
+    "eyebrow": "Community Edition",
+    "pageTitle": "About ProcessAce",
+    "subtitle": "ProcessAce helps teams turn interviews, recordings, and documents into structured process documentation.",
+    "productTitle": "What ProcessAce Does",
+    "productDescription": "ProcessAce is an AI-powered process discovery and documentation application built for self-hosted teams.",
+    "productDetails": "It transforms source material into BPMN diagrams, SIPOC tables, RACI matrices, and narrative process documentation.",
+    "linksTitle": "Official Links",
+    "websiteLabel": "ProcessAce website",
+    "websiteHelp": "Visit the main site for product details and updates.",
+    "websiteEsLabel": "Spanish website",
+    "websiteEsHelp": "Open the Spanish-language ProcessAce website.",
+    "repoLabel": "GitHub repository",
+    "repoHelp": "Review the source code, issues, and project activity.",
+    "viewRepository": "View repository",
+    "versionTitle": "Version and Licensing",
+    "currentVersionLabel": "Current version",
+    "changelogLabel": "Changelog",
+    "viewChangelog": "View changelog",
+    "communityDisclosureTitle": "Community Version",
+    "communityDisclosureBody": "This ProcessAce build is the Community Version and is distributed under the project license terms.",
+    "reviewLicense": "Review the license"
+  },
   "modals": {
     "confirmTitle": "Confirm Action",
     "confirmMessage": "Are you sure?",

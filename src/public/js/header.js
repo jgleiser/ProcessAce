@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.i18n.init();
   }
 
+  if (typeof window.renderAppFooter === 'function') {
+    window.renderAppFooter();
+  }
+
   // 3. Setup Language Switcher
   setupLanguageSwitcher();
 

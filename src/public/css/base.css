@@ -36,12 +36,17 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .app-container {
   width: 100%;
   max-width: 1000px;
   padding: 2rem;
+}
+
+body.auth-page {
+  display: block;
 }
 
 /* Common Header */
@@ -105,4 +110,55 @@ body {
 .back-link {
   color: var(--primary);
   text-decoration: none;
+}
+
+.public-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.page-footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.page-footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.page-footer-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.page-footer-link:hover {
+  color: var(--text-main);
+}
+
+.page-footer-separator {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+@media (max-width: 720px) {
+  .app-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .public-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

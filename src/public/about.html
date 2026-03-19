@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title data-i18n="about.title">About ProcessAce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <div class="app-container">
+      <div class="public-page-header">
+        <a href="/" class="header-brand">
+          <img src="images/ProcessAce-w-100x100.png" alt="ProcessAce Logo" width="32" height="32" />
+          <h1>ProcessAce</h1>
+        </a>
+
+        <div class="lang-switcher-container" id="langSwitcher">
+          <button id="langSwitcherBtn" class="lang-switcher-btn" data-i18n-title="about.languageSwitcherTitle" title="Change language">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+              <path d="M2 12h20" stroke="currentColor" stroke-width="2"></path>
+              <path d="M12 2c2.5 2.5 4 5.5 4 10s-1.5 7.5-4 10c-2.5-2.5-4-5.5-4-10s1.5-7.5 4-10z" stroke="currentColor" stroke-width="2"></path>
+            </svg>
+            <span id="currentLangLabel">EN</span>
+          </button>
+          <div id="langDropdown" class="lang-dropdown hidden">
+            <button class="lang-option" data-lang="en">
+              <span data-i18n="languageSwitcher.english">English</span>
+              <span class="lang-check hidden" id="langCheckEn">&#10003;</span>
+            </button>
+            <button class="lang-option" data-lang="es">
+              <span data-i18n="languageSwitcher.spanish">Spanish</span>
+              <span class="lang-check hidden" id="langCheckEs">&#10003;</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section class="card about-hero">
+        <p class="about-eyebrow" data-i18n="about.eyebrow">Community Edition</p>
+        <h1 data-i18n="about.pageTitle">About ProcessAce</h1>
+        <p class="about-lead" data-i18n="about.subtitle">
+          ProcessAce helps teams turn interviews, recordings, and documents into structured process documentation.
+        </p>
+      </section>
+
+      <section class="about-grid">
+        <article class="card about-card">
+          <h2 data-i18n="about.productTitle">What ProcessAce Does</h2>
+          <p data-i18n="about.productDescription">
+            ProcessAce is an AI-powered process discovery and documentation application built for self-hosted teams.
+          </p>
+          <p data-i18n="about.productDetails">
+            It transforms source material into BPMN diagrams, SIPOC tables, RACI matrices, and narrative process documentation.
+          </p>
+        </article>
+
+        <article class="card about-card">
+          <h2 data-i18n="about.linksTitle">Official Links</h2>
+          <div class="about-link-list">
+            <div class="about-link-row">
+              <div>
+                <h3 data-i18n="about.websiteLabel">ProcessAce website</h3>
+                <p data-i18n="about.websiteHelp">Visit the main site for product details and updates.</p>
+                <a id="aboutWebsiteLink" class="about-link" target="_blank" rel="noopener noreferrer">processace.com</a>
+              </div>
+            </div>
+
+            <div class="about-link-row">
+              <div>
+                <h3 data-i18n="about.websiteEsLabel">Spanish website</h3>
+                <p data-i18n="about.websiteEsHelp">Open the Spanish-language ProcessAce website.</p>
+                <a id="aboutWebsiteEsLink" class="about-link" target="_blank" rel="noopener noreferrer">processace.com/es</a>
+              </div>
+            </div>
+
+            <div class="about-link-row">
+              <div>
+                <h3 data-i18n="about.repoLabel">GitHub repository</h3>
+                <p data-i18n="about.repoHelp">Review the source code, issues, and project activity.</p>
+                <a id="aboutRepoLink" class="about-link" target="_blank" rel="noopener noreferrer" data-i18n="about.viewRepository">
+                  View repository
+                </a>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card about-card">
+          <h2 data-i18n="about.versionTitle">Version and Licensing</h2>
+          <div class="about-meta-list">
+            <div class="about-meta-row">
+              <span class="about-meta-label" data-i18n="about.currentVersionLabel">Current version</span>
+              <strong class="about-meta-value" data-app-version>v1.3.0</strong>
+            </div>
+
+            <div class="about-meta-row">
+              <span class="about-meta-label" data-i18n="about.changelogLabel">Changelog</span>
+              <a id="aboutChangelogLink" class="about-link" target="_blank" rel="noopener noreferrer" data-i18n="about.viewChangelog">
+                View changelog
+              </a>
+            </div>
+          </div>
+
+          <div class="about-disclosure">
+            <p class="about-disclosure-title" data-i18n="about.communityDisclosureTitle">Community Version</p>
+            <p data-i18n="about.communityDisclosureBody">
+              This ProcessAce build is the Community Version and is distributed under the project license terms.
+            </p>
+            <a id="aboutLicenseLink" class="about-link" target="_blank" rel="noopener noreferrer" data-i18n="about.reviewLicense">
+              Review the license
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <div id="app-footer"></div>
+    </div>
+
+    <script src="js/i18n.js"></script>
+    <script src="js/app-info.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/about.js"></script>
+  </body>
+</html>

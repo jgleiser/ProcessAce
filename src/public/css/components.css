@@ -951,6 +951,116 @@
 }
 
 /* ── Job Card Inline Editing ── */
+.about-hero {
+  margin-bottom: 2rem;
+  background:
+    radial-gradient(circle at top right, rgba(124, 77, 255, 0.24), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+}
+
+.about-eyebrow {
+  margin-bottom: 0.75rem;
+  color: #d6c6ff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.about-lead {
+  margin-top: 0.9rem;
+  max-width: 48rem;
+  color: var(--text-muted);
+  font-size: 1.02rem;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.about-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.about-card h2 {
+  font-size: 1.25rem;
+}
+
+.about-card h3 {
+  font-size: 1rem;
+}
+
+.about-card p {
+  color: var(--text-muted);
+}
+
+.about-link-list,
+.about-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.about-link-row,
+.about-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.about-meta-label {
+  color: var(--text-muted);
+}
+
+.about-meta-value {
+  color: var(--text-main);
+}
+
+.about-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  text-align: right;
+}
+
+.about-link:hover {
+  color: var(--primary-hover);
+}
+
+.about-disclosure {
+  margin-top: auto;
+  padding: 1rem;
+  border: 1px solid rgba(124, 77, 255, 0.22);
+  border-radius: var(--radius-md);
+  background: rgba(124, 77, 255, 0.08);
+}
+
+.about-disclosure-title {
+  margin-bottom: 0.45rem;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .about-link-row,
+  .about-meta-row {
+    flex-direction: column;
+  }
+
+  .about-link {
+    text-align: left;
+  }
+}
+
 .job-title-row {
   display: flex;
   justify-content: space-between;

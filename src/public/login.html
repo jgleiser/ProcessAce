@@ -8,69 +8,77 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
 
-  <body>
-    <div class="auth-container">
-      <!-- Language Switcher -->
-      <div class="auth-lang-switcher" id="authLangSwitcher">
-        <button class="auth-lang-btn" id="authLangBtn" title="Change language">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-            <path d="M2 12h20" />
-          </svg>
-          <span id="authLangLabel">EN</span>
-        </button>
-        <div class="auth-lang-dropdown hidden" id="authLangDropdown">
-          <button class="auth-lang-option" data-lang="en">🇺🇸 English</button>
-          <button class="auth-lang-option" data-lang="es">🇪🇸 Español</button>
+  <body class="auth-page">
+    <div class="auth-shell">
+      <div class="auth-container">
+        <!-- Language Switcher -->
+        <div class="auth-lang-switcher" id="authLangSwitcher">
+          <button class="auth-lang-btn" id="authLangBtn" title="Change language">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+              <path d="M2 12h20" />
+            </svg>
+            <span id="authLangLabel">EN</span>
+          </button>
+          <div class="auth-lang-dropdown hidden" id="authLangDropdown">
+            <button class="auth-lang-option" data-lang="en" data-i18n="languageSwitcher.english">English</button>
+            <button class="auth-lang-option" data-lang="es" data-i18n="languageSwitcher.spanish">Espanol</button>
+          </div>
+        </div>
+        <div class="auth-box">
+          <div class="auth-header">
+            <h1>
+              <img src="images/ProcessAce-b-100x100.png" alt="ProcessAce Logo" width="32" height="32" />
+              ProcessAce
+            </h1>
+            <p data-i18n="login.subtitle">Sign in to your account</p>
+          </div>
+
+          <div id="errorMsg" class="error-message"></div>
+
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="email" data-i18n="login.emailLabel">Email</label>
+              <input type="email" id="email" required data-i18n-placeholder="login.emailPlaceholder" placeholder="name@company.com" />
+            </div>
+            <div class="form-group">
+              <label for="password" data-i18n="login.passwordLabel">Password</label>
+              <input type="password" id="password" required data-i18n-placeholder="login.passwordPlaceholder" placeholder="Password" />
+            </div>
+            <button type="submit" class="btn-primary w-full" data-i18n="login.signIn">Sign In</button>
+          </form>
+
+          <div class="auth-footer">
+            <p>
+              <span data-i18n="login.noAccount">Don't have an account?</span>
+              <a href="register.html" data-i18n="login.signUp">Sign up</a>
+            </p>
+          </div>
         </div>
       </div>
-      <div class="auth-box">
-        <div class="auth-header">
-          <h1>
-            <img src="images/ProcessAce-b-100x100.png" alt="ProcessAce Logo" width="32" height="32" />
-            ProcessAce
-          </h1>
-          <p data-i18n="login.subtitle">Sign in to your account</p>
-        </div>
 
-        <div id="errorMsg" class="error-message"></div>
-
-        <form id="loginForm">
-          <div class="form-group">
-            <label for="email" data-i18n="login.emailLabel">Email</label>
-            <input type="email" id="email" required data-i18n-placeholder="login.emailPlaceholder" placeholder="name@company.com" />
-          </div>
-          <div class="form-group">
-            <label for="password" data-i18n="login.passwordLabel">Password</label>
-            <input type="password" id="password" required placeholder="••••••••" />
-          </div>
-          <button type="submit" class="btn-primary w-full" data-i18n="login.signIn">Sign In</button>
-        </form>
-
-        <div class="auth-footer">
-          <p>
-            <span data-i18n="login.noAccount">Don't have an account?</span>
-            <a href="register.html" data-i18n="login.signUp">Sign up</a>
-          </p>
-        </div>
-      </div>
+      <div id="app-footer"></div>
     </div>
 
     <script src="js/i18n.js"></script>
+    <script src="js/app-info.js"></script>
+    <script src="js/footer.js"></script>
     <script nonce="__CSP_NONCE__">
       // Initialize i18n for login page (no header.js on auth pages)
-      if (globalThis.i18n) globalThis.i18n.init();
+      if (globalThis.i18n) {
+        globalThis.i18n.init().then(() => globalThis.renderAppFooter?.());
+      }
 
       // Auth page language switcher logic
       (function () {
