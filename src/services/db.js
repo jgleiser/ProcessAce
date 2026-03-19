@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const logger = require('../logging/logger');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS, buildTransferredPersonalWorkspaceName } = require('../utils/workspaces');
 
 const PLAINTEXT_SQLITE_HEADER = Buffer.from('SQLite format 3\0', 'utf8');
 
@@ -129,6 +130,138 @@ const ensureColumn = (database, tableName, columnName, definition) => {
   }
 };
 
+const repairTransferredPersonalWorkspaces = (database) => {
+  const candidateRows = database
+    .prepare(
+      `
+        SELECT
+          w.id,
+          inactive_user.id as personal_owner_user_id,
+          inactive_user.name as personal_owner_name,
+          inactive_user.email as personal_owner_email
+        FROM workspaces w
+        JOIN users owner_user ON owner_user.id = w.owner_id
+        JOIN workspace_members inactive_member
+          ON inactive_member.workspace_id = w.id
+         AND inactive_member.user_id != w.owner_id
+        JOIN users inactive_user
+          ON inactive_user.id = inactive_member.user_id
+         AND inactive_user.status = 'inactive'
+        WHERE w.name = ?
+          AND owner_user.status = 'active'
+          AND owner_user.role IN ('superadmin', 'admin')
+        GROUP BY w.id
+        HAVING COUNT(inactive_member.user_id) = 1
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+  const updateStatement = database.prepare(
+    `
+      UPDATE workspaces
+      SET workspace_kind = ?, personal_owner_user_id = ?, name = ?
+      WHERE id = ?
+    `,
+  );
+
+  candidateRows.forEach((row) => {
+    updateStatement.run(
+      WORKSPACE_KINDS.PERSONAL,
+      row.personal_owner_user_id,
+      buildTransferredPersonalWorkspaceName({
+        name: row.personal_owner_name,
+        email: row.personal_owner_email,
+      }),
+      row.id,
+    );
+  });
+};
+
+const backfillActivePersonalWorkspaces = (database) => {
+  const candidateRows = database
+    .prepare(
+      `
+        SELECT w.id, w.owner_id
+        FROM workspaces w
+        JOIN users owner_user ON owner_user.id = w.owner_id
+        WHERE w.name = ?
+          AND owner_user.status = 'active'
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+  const ownerWorkspaceCounts = candidateRows.reduce((counts, row) => {
+    counts.set(row.owner_id, (counts.get(row.owner_id) || 0) + 1);
+    return counts;
+  }, new Map());
+
+  const updateStatement = database.prepare(
+    `
+      UPDATE workspaces
+      SET workspace_kind = ?, personal_owner_user_id = owner_id
+      WHERE id = ?
+    `,
+  );
+
+  candidateRows.forEach((row) => {
+    if (ownerWorkspaceCounts.get(row.owner_id) === 1) {
+      updateStatement.run(WORKSPACE_KINDS.PERSONAL, row.id);
+    }
+  });
+};
+
+const logAmbiguousPersonalWorkspaceRows = (database) => {
+  const ambiguousRows = database
+    .prepare(
+      `
+        SELECT id, owner_id
+        FROM workspaces
+        WHERE name = ?
+          AND workspace_kind = ?
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS.NAMED);
+
+  if (ambiguousRows.length > 0) {
+    logger.warn(
+      {
+        workspaceIds: ambiguousRows.map((row) => row.id),
+        ownerIds: ambiguousRows.map((row) => row.owner_id),
+      },
+      'Some legacy "My Workspace" rows could not be classified automatically and were left as named workspaces.',
+    );
+  }
+};
+
+const backfillWorkspaceKinds = (database) => {
+  database
+    .prepare(
+      `
+        UPDATE workspaces
+        SET workspace_kind = ?
+        WHERE workspace_kind IS NULL
+           OR workspace_kind NOT IN (?, ?)
+      `,
+    )
+    .run(WORKSPACE_KINDS.NAMED, WORKSPACE_KINDS.NAMED, WORKSPACE_KINDS.PERSONAL);
+
+  repairTransferredPersonalWorkspaces(database);
+  backfillActivePersonalWorkspaces(database);
+
+  database
+    .prepare(
+      `
+        UPDATE workspaces
+        SET personal_owner_user_id = owner_id
+        WHERE workspace_kind = ?
+          AND personal_owner_user_id IS NULL
+      `,
+    )
+    .run(WORKSPACE_KINDS.PERSONAL);
+
+  logAmbiguousPersonalWorkspaceRows(database);
+};
+
 const configureJournalMode = (database, env = process.env) => {
   if (env.DISABLE_SQLITE_WAL !== 'true') {
     try {
@@ -176,11 +309,16 @@ const initializeSchema = (database) => {
             name TEXT,
             owner_id TEXT,
             created_at TEXT,
+            workspace_kind TEXT NOT NULL DEFAULT 'named',
+            personal_owner_user_id TEXT,
             FOREIGN KEY(owner_id) REFERENCES users(id)
         )
     `,
       )
       .run();
+
+    ensureColumn(database, 'workspaces', 'workspace_kind', "TEXT NOT NULL DEFAULT 'named'");
+    ensureColumn(database, 'workspaces', 'personal_owner_user_id', 'TEXT');
 
     database
       .prepare(
@@ -196,6 +334,8 @@ const initializeSchema = (database) => {
     `,
       )
       .run();
+
+    backfillWorkspaceKinds(database);
 
     database
       .prepare(
@@ -376,6 +516,7 @@ const createDatabaseConnection = (options = {}) => {
 const db = createDatabaseConnection();
 
 const dbHelpers = {
+  backfillWorkspaceKinds,
   resolveDatabaseConfig,
   createDatabaseConnection,
   applyDatabaseEncryptionKey,

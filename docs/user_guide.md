@@ -38,6 +38,10 @@ Workspaces help you organize your processes and collaborate with your team.
    - **My Workspaces**: Workspaces you own.
    - **Shared Workspaces**: Workspaces you have been invited to.
 3. **Create New Workspace**: Click the **+ New** button, enter a name, and click **Create**.
+4. Each user starts with a personal default workspace named **My Workspace**.
+   - Personal workspaces cannot be deleted.
+   - Personal workspaces cannot be ownership-transferred.
+   - Only your own personal workspace is labeled as **Default Workspace**.
 
 #### Managing Members (Owner Only)
 
@@ -56,6 +60,10 @@ If you are the owner of a workspace, you can manage its members:
    - **Change Role**: Update a member's role (e.g., Viewer to Editor).
    - **Remove Member**: Click the **Delete (🗑️)** icon to remove a user from the workspace.
 
+5. **Transfer Ownership**:
+   - Superadmins can transfer ownership of a regular named workspace to another active existing member.
+   - Personal workspaces are excluded from ownership transfer.
+
 #### Joining a Workspace
 
 1. When invited, you will receive a notification (or see a pending invite in your list).
@@ -64,6 +72,7 @@ If you are the owner of a workspace, you can manage its members:
 4. The new workspace will appear in your **Shared Workspaces** list.
 
 > **Note**: Jobs and artifacts are scoped to the current workspace. All members of a workspace can see its content, but only Editors and Owners can make changes.
+> **Note**: If a user is deactivated, their personal workspace is temporarily held by the primary Superadmin as `<user> Personal Workspace`. If that user is reactivated later, ownership of that personal workspace is restored automatically.
 
 ### 4. Uploading Evidence
 
@@ -201,7 +210,9 @@ Ollama-specific setup depends on the host OS and hardware. Use the dedicated gui
 5. Use **Export My Data** to download your JSON data export.
 6. Use **Deactivate My Account** if you should no longer access the installation.
    - Deactivation preserves organizational data.
-   - Any workspaces you own are transferred to the primary Superadmin.
+   - Named workspaces you own are transferred to the primary Superadmin.
+   - Your personal workspace is transferred to the primary Superadmin as `<your name> Personal Workspace`.
+   - If an admin reactivates your account later, your original personal workspace is restored to you as **My Workspace**.
 
 ## Troubleshooting
 

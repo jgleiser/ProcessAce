@@ -13,6 +13,7 @@ process.env.UPLOADS_DIR = 'tmp/test-uploads-privacy-superadmin';
 const uploadsDir = path.resolve(process.cwd(), process.env.UPLOADS_DIR);
 const app = require('../../src/app');
 const db = require('../../src/services/db');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME } = require('../../src/utils/workspaces');
 
 describe('Privacy and Superadmin Integration Tests', () => {
   let server;
@@ -110,13 +111,35 @@ describe('Privacy and Superadmin Integration Tests', () => {
   it('deactivates the current user, transfers workspace ownership, revokes the session, and blocks future login', async () => {
     await editorAgent.post('/api/auth/me/deactivate').send({ currentPassword: editorUser.password }).expect(200);
 
-    const transferredWorkspace = db.prepare('SELECT owner_id FROM workspaces WHERE id = ?').get(editorWorkspaceId);
+    const transferredWorkspace = db
+      .prepare('SELECT owner_id, name, workspace_kind, personal_owner_user_id FROM workspaces WHERE id = ?')
+      .get(editorWorkspaceId);
     assert.strictEqual(transferredWorkspace.owner_id, superadminId);
+    assert.strictEqual(transferredWorkspace.workspace_kind, 'personal');
+    assert.strictEqual(transferredWorkspace.personal_owner_user_id, editorUserId);
+    assert.strictEqual(transferredWorkspace.name, `${editorUser.name} Personal Workspace`);
 
     await request(server).get('/api/auth/me').set('Cookie', editorCookie).expect(403);
 
     const loginRes = await request(server).post('/api/auth/login').send({ email: editorUser.email, password: editorUser.password }).expect(403);
     assert.strictEqual(loginRes.body.error, 'Account is deactivated');
+
+    const superadminWorkspaces = await superadminAgent.get('/api/workspaces').expect(200);
+    const transferredPersonalWorkspace = superadminWorkspaces.body.find((workspace) => workspace.id === editorWorkspaceId);
+    assert.ok(transferredPersonalWorkspace);
+    assert.strictEqual(transferredPersonalWorkspace.name, `${editorUser.name} Personal Workspace`);
+    assert.strictEqual(transferredPersonalWorkspace.is_default_workspace, false);
+    assert.strictEqual(transferredPersonalWorkspace.is_protected_personal_workspace, true);
+  });
+
+  it('reactivates the user and restores ownership of the original personal workspace', async () => {
+    await superadminAgent.patch(`/api/admin/users/${editorUserId}`).send({ status: 'active' }).expect(200);
+
+    const restoredWorkspace = db.prepare('SELECT owner_id, name FROM workspaces WHERE id = ?').get(editorWorkspaceId);
+    assert.strictEqual(restoredWorkspace.owner_id, editorUserId);
+    assert.strictEqual(restoredWorkspace.name, DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+    await editorAgent.post('/api/auth/login').send({ email: editorUser.email, password: editorUser.password }).expect(200);
   });
 
   it('restricts full reset to superadmins and requires password plus DELETE ALL confirmation', async () => {

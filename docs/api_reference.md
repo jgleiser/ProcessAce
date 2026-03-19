@@ -74,8 +74,10 @@ All API endpoints are served under `http://localhost:3000` (default).
 **Body**: `{ "currentPassword": "string" }`
 
 - Marks the current account as `inactive`.
-- Transfers any owned workspaces to the primary active `superadmin`.
+- Transfers named workspaces to the primary active `superadmin`.
+- Transfers personal workspaces to the primary active `superadmin` as protected personal workspaces renamed to `<display name> Personal Workspace`.
 - Revokes the current JWT and clears the auth cookie.
+- If the user is later reactivated, their original personal workspace is restored to them as `My Workspace`.
 
 ---
 
@@ -178,39 +180,51 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Workspaces (`/api/workspaces`)
 
-| Method   | Path                                        | Auth | Description                     |
-| -------- | ------------------------------------------- | ---- | ------------------------------- |
-| `GET`    | `/api/workspaces`                           | Yes  | List current user's workspaces  |
-| `POST`   | `/api/workspaces`                           | Yes  | Create a new workspace          |
-| `DELETE` | `/api/workspaces/:id`                       | Yes  | Delete a workspace (Owner only) |
-| `GET`    | `/api/workspaces/:id/members`               | Yes  | Get workspace members           |
-| `PUT`    | `/api/workspaces/:id/members/:userId`       | Yes  | Update member role              |
-| `DELETE` | `/api/workspaces/:id/members/:userId`       | Yes  | Remove member                   |
-| `POST`   | `/api/workspaces/:id/invite`                | Yes  | Invite user                     |
-| `GET`    | `/api/workspaces/:id/invitations`           | Yes  | List pending invitations        |
-| `DELETE` | `/api/workspaces/:id/invitations/:inviteId` | Yes  | Revoke invitation               |
+| Method   | Path                                        | Auth | Description                                          |
+| -------- | ------------------------------------------- | ---- | ---------------------------------------------------- |
+| `GET`    | `/api/workspaces`                           | Yes  | List current user's workspaces                       |
+| `POST`   | `/api/workspaces`                           | Yes  | Create a new workspace                               |
+| `DELETE` | `/api/workspaces/:id`                       | Yes  | Delete a workspace (Owner only)                      |
+| `POST`   | `/api/workspaces/:id/transfer-ownership`    | Yes  | Transfer named workspace ownership (Superadmin only) |
+| `GET`    | `/api/workspaces/:id/members`               | Yes  | Get workspace members                                |
+| `PUT`    | `/api/workspaces/:id/members/:userId`       | Yes  | Update member role                                   |
+| `DELETE` | `/api/workspaces/:id/members/:userId`       | Yes  | Remove member                                        |
+| `POST`   | `/api/workspaces/:id/invite`                | Yes  | Invite user                                          |
+| `GET`    | `/api/workspaces/:id/invitations`           | Yes  | List pending invitations                             |
+| `DELETE` | `/api/workspaces/:id/invitations/:inviteId` | Yes  | Revoke invitation                                    |
 
 ### `POST /api/workspaces`
 
 **Body**: `{ "name": "string" }`
 
 - Returns `201` with workspace object.
+- User-created workspaces are created as `workspace_kind = "named"`.
 
 ### `DELETE /api/workspaces/:id`
 
 - Deletes a workspace and all its contents.
 - **Note**: Only the workspace owner can delete it.
+- Personal workspaces cannot be deleted.
+
+### `POST /api/workspaces/:id/transfer-ownership`
+
+**Body**: `{ "newOwnerUserId": "string" }`
+
+- Superadmin only.
+- Only available for `named` workspaces.
+- The new owner must already be an active member of the workspace.
+- Keeps the previous owner as a workspace admin member.
 
 ### `GET /api/workspaces/:id/members`
 
-- Returns a list of members in the workspace with their roles.
+- Returns a list of members in the workspace with their roles and account status.
 
 ### `PUT /api/workspaces/:id/members/:userId`
 
 **Body**: `{ "role": "viewer" | "editor" }`
 
 - Updates a member's role.
-- **Note**: Only the workspace owner can manage roles.
+- **Note**: Workspace owners and admins can manage roles.
 
 ### `DELETE /api/workspaces/:id/members/:userId`
 
@@ -222,6 +236,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Invites a user to the workspace.
 - Returns `200` with the invitation object.
+- Workspace owners and admins can invite users.
 
 ### `GET /api/workspaces/:id/invitations`
 
@@ -306,6 +321,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 - Cannot modify your own user.
 - Only superadmins can assign or revoke `admin` / `superadmin` roles.
 - `pending` and `rejected` registration states are managed through the dedicated approval endpoints.
+- Reactivating an inactive user restores any transferred personal workspace back to that user as `My Workspace`.
 
 ### `POST /api/admin/users/:id/approve`
 

@@ -9,6 +9,7 @@ process.env.NODE_ENV = 'test';
 process.env.SQLITE_ENCRYPTION_KEY = 'test-sqlcipher-key';
 
 const dbModule = require('../../src/services/db');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../../src/utils/workspaces');
 
 describe('db configuration', () => {
   let temporaryDbPath = null;
@@ -78,5 +79,89 @@ describe('db configuration', () => {
         }),
       /plaintext SQLite database detected/i,
     );
+  });
+
+  it('repairs duplicate legacy My Workspace rows into active and transferred personal workspaces', () => {
+    const testDatabase = dbModule.createDatabaseConnection({
+      env: {
+        DB_PATH: ':memory:',
+        NODE_ENV: 'test',
+        SQLITE_ENCRYPTION_KEY: 'test-sqlcipher-key',
+      },
+    });
+
+    const superadminId = 'superadmin-user';
+    const inactiveUserId = 'inactive-user';
+    const activePersonalWorkspaceId = 'workspace-active-personal';
+    const transferredPersonalWorkspaceId = 'workspace-transferred-personal';
+    const timestamp = new Date().toISOString();
+
+    testDatabase
+      .prepare(
+        `
+          INSERT INTO users (id, email, password_hash, role, status, name, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(superadminId, 'superadmin@example.com', 'hash', 'superadmin', 'active', 'Primary Admin', timestamp);
+
+    testDatabase
+      .prepare(
+        `
+          INSERT INTO users (id, email, password_hash, role, status, name, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(inactiveUserId, 'inactive@example.com', 'hash', 'editor', 'inactive', 'Daniela Delaiglesia', timestamp);
+
+    testDatabase
+      .prepare(
+        `
+          INSERT INTO workspaces (id, name, owner_id, created_at, workspace_kind, personal_owner_user_id)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(activePersonalWorkspaceId, DEFAULT_PERSONAL_WORKSPACE_NAME, superadminId, timestamp, WORKSPACE_KINDS.NAMED, null);
+
+    testDatabase
+      .prepare(
+        `
+          INSERT INTO workspaces (id, name, owner_id, created_at, workspace_kind, personal_owner_user_id)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+      )
+      .run(transferredPersonalWorkspaceId, DEFAULT_PERSONAL_WORKSPACE_NAME, superadminId, timestamp, WORKSPACE_KINDS.NAMED, null);
+
+    testDatabase
+      .prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)')
+      .run(activePersonalWorkspaceId, superadminId, 'admin');
+    testDatabase
+      .prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)')
+      .run(transferredPersonalWorkspaceId, superadminId, 'admin');
+    testDatabase
+      .prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)')
+      .run(transferredPersonalWorkspaceId, inactiveUserId, 'admin');
+
+    dbModule.backfillWorkspaceKinds(testDatabase);
+
+    const activePersonalWorkspace = testDatabase
+      .prepare('SELECT name, owner_id, workspace_kind, personal_owner_user_id FROM workspaces WHERE id = ?')
+      .get(activePersonalWorkspaceId);
+    const transferredPersonalWorkspace = testDatabase
+      .prepare('SELECT name, owner_id, workspace_kind, personal_owner_user_id FROM workspaces WHERE id = ?')
+      .get(transferredPersonalWorkspaceId);
+
+    assert.deepStrictEqual(activePersonalWorkspace, {
+      name: DEFAULT_PERSONAL_WORKSPACE_NAME,
+      owner_id: superadminId,
+      workspace_kind: WORKSPACE_KINDS.PERSONAL,
+      personal_owner_user_id: superadminId,
+    });
+    assert.deepStrictEqual(transferredPersonalWorkspace, {
+      name: 'Daniela Delaiglesia Personal Workspace',
+      owner_id: superadminId,
+      workspace_kind: WORKSPACE_KINDS.PERSONAL,
+      personal_owner_user_id: inactiveUserId,
+    });
   });
 });

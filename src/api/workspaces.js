@@ -1,5 +1,7 @@
 const express = require('express');
 const workspaceService = require('../services/workspaceService');
+const { requireSuperAdmin } = require('../middleware/requireSuperAdmin');
+const { isPersonalWorkspace } = require('../utils/workspaces');
 const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
@@ -49,6 +51,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Workspace not found' });
     }
 
+    if (isPersonalWorkspace(workspace)) {
+      return res.status(403).json({ error: 'Personal workspaces cannot be deleted' });
+    }
+
     if (workspace.owner_id !== userId) {
       return res.status(403).json({ error: 'Only the workspace owner can delete it' });
     }
@@ -56,6 +62,34 @@ router.delete('/:id', async (req, res) => {
     workspaceService.deleteWorkspace(workspaceId);
     res.json({ success: true });
   } catch (error) {
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/:id/transfer-ownership', requireSuperAdmin, async (req, res) => {
+  try {
+    const workspaceId = req.params.id;
+    const { newOwnerUserId } = req.body || {};
+
+    if (!newOwnerUserId) {
+      return res.status(400).json({ error: 'newOwnerUserId is required' });
+    }
+
+    const workspace = workspaceService.transferOwnership(workspaceId, newOwnerUserId);
+    res.json({ success: true, workspace });
+  } catch (error) {
+    if (error.message === 'Workspace not found') {
+      return res.status(404).json({ error: error.message });
+    }
+
+    if (error.message === 'Personal workspaces cannot be transferred') {
+      return res.status(403).json({ error: error.message });
+    }
+
+    if (error.message === 'User already owns this workspace' || error.message === 'New owner must be an active workspace member') {
+      return res.status(400).json({ error: error.message });
+    }
+
     return sendErrorResponse(res, error, req);
   }
 });

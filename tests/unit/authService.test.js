@@ -15,6 +15,7 @@ const authService = require('../../src/services/authService');
 const workspaceService = require('../../src/services/workspaceService');
 const db = require('../../src/services/db');
 const tokenBlocklist = require('../../src/services/tokenBlocklist');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../../src/utils/workspaces');
 
 const createUniqueUser = (prefix) => ({
   name: `${prefix} User`,
@@ -73,12 +74,16 @@ describe('AuthService', () => {
   it('registers the first user as an active superadmin and records required consent', () => {
     const user = authService.getUserRecordByEmail(superadminUserDetails.email);
     const consentRecords = authService.getConsentHistory(user.id);
+    const bootstrapWorkspace = db.prepare('SELECT * FROM workspaces WHERE owner_id = ? ORDER BY created_at ASC LIMIT 1').get(user.id);
 
     assert.strictEqual(user.email, superadminUserDetails.email);
     assert.strictEqual(user.role, 'superadmin');
     assert.strictEqual(user.status, 'active');
     assert.strictEqual(consentRecords.length, 2);
     assert.deepStrictEqual(consentRecords.map((record) => record.consent_type).sort(), ['data_processing', 'terms_of_service']);
+    assert.strictEqual(bootstrapWorkspace.name, DEFAULT_PERSONAL_WORKSPACE_NAME);
+    assert.strictEqual(bootstrapWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+    assert.strictEqual(bootstrapWorkspace.personal_owner_user_id, user.id);
   });
 
   it('registers later users as pending editors', async () => {
@@ -272,23 +277,58 @@ describe('AuthService', () => {
     assert.strictEqual(exportPayload.evidence[0].originalName, 'Human Readable.txt');
   });
 
-  it('deactivates a user with password confirmation and transfers owned workspaces to the primary superadmin', async () => {
+  it('deactivates a user with password confirmation, renames personal workspaces, and transfers named workspaces to the primary superadmin', async () => {
     const firstSuperadminId = db.prepare('SELECT id FROM users WHERE email = ?').get(superadminUserDetails.email).id;
     const secondSuperadminDetails = await createActiveUser('second_superadmin');
     const secondSuperadminRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(secondSuperadminDetails.email);
     const firstSuperadminActor = authService.getUserById(firstSuperadminId);
     const ownerUserDetails = await createActiveUser('owned_workspace_user');
     const ownerUserRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(ownerUserDetails.email);
-    const ownerWorkspace = workspaceService.getUserWorkspaces(ownerUserRecord.id)[0];
+    const personalWorkspace = db
+      .prepare('SELECT * FROM workspaces WHERE owner_id = ? AND workspace_kind = ? ORDER BY created_at ASC LIMIT 1')
+      .get(ownerUserRecord.id, WORKSPACE_KINDS.PERSONAL);
+    const namedWorkspace = await workspaceService.createWorkspace('Operations Workspace', ownerUserRecord.id);
 
     authService.updateUser(secondSuperadminRecord.id, { role: 'superadmin' }, firstSuperadminActor);
 
     const updatedUser = await authService.deactivateUserAccount(ownerUserRecord.id, ownerUserDetails.password);
-    const transferredWorkspace = workspaceService.getWorkspace(ownerWorkspace.id);
+    const transferredPersonalWorkspace = workspaceService.getWorkspace(personalWorkspace.id);
+    const transferredNamedWorkspace = workspaceService.getWorkspace(namedWorkspace.id);
 
     assert.strictEqual(updatedUser.status, 'inactive');
-    assert.strictEqual(transferredWorkspace.owner_id, firstSuperadminId);
-    assert.strictEqual(workspaceService.isMember(ownerWorkspace.id, firstSuperadminId), true);
+    assert.strictEqual(transferredPersonalWorkspace.owner_id, firstSuperadminId);
+    assert.strictEqual(transferredPersonalWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+    assert.strictEqual(transferredPersonalWorkspace.personal_owner_user_id, ownerUserRecord.id);
+    assert.strictEqual(transferredPersonalWorkspace.name, `${ownerUserDetails.name} Personal Workspace`);
+    assert.strictEqual(transferredNamedWorkspace.owner_id, firstSuperadminId);
+    assert.strictEqual(transferredNamedWorkspace.workspace_kind, WORKSPACE_KINDS.NAMED);
+    assert.strictEqual(workspaceService.isMember(personalWorkspace.id, firstSuperadminId), true);
+    assert.strictEqual(workspaceService.isMember(namedWorkspace.id, firstSuperadminId), true);
+  });
+
+  it('restores transferred personal workspaces when an inactive user is reactivated', async () => {
+    const superadminActor = authService.getUserById(db.prepare('SELECT id FROM users WHERE email = ?').get(superadminUserDetails.email).id);
+    const reactivationUserDetails = await createActiveUser('reactivation_user');
+    const reactivationUserRecord = db.prepare('SELECT id FROM users WHERE email = ?').get(reactivationUserDetails.email);
+    const personalWorkspace = db
+      .prepare('SELECT * FROM workspaces WHERE owner_id = ? AND workspace_kind = ? ORDER BY created_at ASC LIMIT 1')
+      .get(reactivationUserRecord.id, WORKSPACE_KINDS.PERSONAL);
+    const namedWorkspace = await workspaceService.createWorkspace('Transfer Stays Named', reactivationUserRecord.id);
+
+    await authService.deactivateUserAccount(reactivationUserRecord.id, reactivationUserDetails.password);
+    const deactivatedPersonalWorkspace = workspaceService.getWorkspace(personalWorkspace.id);
+    assert.notStrictEqual(deactivatedPersonalWorkspace.owner_id, reactivationUserRecord.id);
+
+    const reactivatedUser = authService.updateUser(reactivationUserRecord.id, { status: 'active' }, superadminActor);
+    const restoredPersonalWorkspace = workspaceService.getWorkspace(personalWorkspace.id);
+    const retainedNamedWorkspace = workspaceService.getWorkspace(namedWorkspace.id);
+
+    assert.strictEqual(reactivatedUser.status, 'active');
+    assert.strictEqual(restoredPersonalWorkspace.owner_id, reactivationUserRecord.id);
+    assert.strictEqual(restoredPersonalWorkspace.name, DEFAULT_PERSONAL_WORKSPACE_NAME);
+    assert.strictEqual(restoredPersonalWorkspace.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+    assert.strictEqual(restoredPersonalWorkspace.personal_owner_user_id, reactivationUserRecord.id);
+    assert.strictEqual(retainedNamedWorkspace.owner_id, superadminActor.id);
   });
 
   it('fails to register an existing email', async () => {

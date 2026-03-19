@@ -11,6 +11,7 @@ process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5
 const authService = require('../../src/services/authService');
 const workspaceService = require('../../src/services/workspaceService');
 const db = require('../../src/services/db');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../../src/utils/workspaces');
 
 let adminUser;
 let editorUser;
@@ -21,6 +22,7 @@ describe('WorkspaceService', () => {
     // Create test users via authService (which also creates default workspaces)
     adminUser = await authService.registerUser('WS Admin', 'ws_admin@test.com', 'Password123');
     editorUser = await authService.registerUser('WS Editor', 'ws_editor@test.com', 'Password123');
+    db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(editorUser.id);
 
     // Find admin's default workspace
     const workspaces = workspaceService.getUserWorkspaces(adminUser.id);
@@ -33,6 +35,7 @@ describe('WorkspaceService', () => {
       const ws = await workspaceService.createWorkspace('Test WS', adminUser.id);
       assert.ok(ws.id);
       assert.strictEqual(ws.name, 'Test WS');
+      assert.strictEqual(ws.workspace_kind, WORKSPACE_KINDS.NAMED);
 
       // Owner should be admin member
       const role = workspaceService.getMemberRole(ws.id, adminUser.id);
@@ -86,6 +89,11 @@ describe('WorkspaceService', () => {
       assert.ok(ws.id);
       assert.ok(ws.name);
       assert.ok(ws.role);
+      assert.strictEqual(ws.name, DEFAULT_PERSONAL_WORKSPACE_NAME);
+      assert.strictEqual(ws.workspace_kind, WORKSPACE_KINDS.PERSONAL);
+      assert.strictEqual(ws.personal_owner_user_id, adminUser.id);
+      assert.strictEqual(ws.is_default_workspace, true);
+      assert.strictEqual(ws.is_protected_personal_workspace, false);
     });
   });
 
@@ -244,6 +252,45 @@ describe('WorkspaceService', () => {
       // Members should also be deleted
       const members = db.prepare('SELECT * FROM workspace_members WHERE workspace_id = ?').all(wsId);
       assert.strictEqual(members.length, 0);
+    });
+  });
+
+  describe('transferOwnership', () => {
+    let namedWorkspaceId;
+
+    before(async () => {
+      const namedWorkspace = await workspaceService.createWorkspace('Transfer Ownership WS', adminUser.id);
+      namedWorkspaceId = namedWorkspace.id;
+      workspaceService.addMember(namedWorkspaceId, editorUser.id, 'editor');
+    });
+
+    it('should transfer ownership of a named workspace to an active member', () => {
+      const updatedWorkspace = workspaceService.transferOwnership(namedWorkspaceId, editorUser.id);
+
+      assert.strictEqual(updatedWorkspace.owner_id, editorUser.id);
+      assert.strictEqual(workspaceService.getMemberRole(namedWorkspaceId, adminUser.id), 'admin');
+      assert.strictEqual(workspaceService.getMemberRole(namedWorkspaceId, editorUser.id), 'owner');
+    });
+
+    it('should reject transferring a personal workspace', () => {
+      assert.throws(() => {
+        workspaceService.transferOwnership(adminWorkspaceId, editorUser.id);
+      }, /Personal workspaces cannot be transferred/);
+    });
+
+    it('should reject transferring ownership to a non-member or inactive member', async () => {
+      const anotherWorkspace = await workspaceService.createWorkspace('Inactive Transfer WS', adminUser.id);
+      const inactiveUser = await authService.registerUser('Inactive Transfer', 'inactive_transfer@test.com', 'Password123');
+      workspaceService.addMember(anotherWorkspace.id, inactiveUser.id, 'viewer');
+      db.prepare("UPDATE users SET status = 'inactive' WHERE id = ?").run(inactiveUser.id);
+
+      assert.throws(() => {
+        workspaceService.transferOwnership(anotherWorkspace.id, 'missing-user-id');
+      }, /New owner must be an active workspace member/);
+
+      assert.throws(() => {
+        workspaceService.transferOwnership(anotherWorkspace.id, inactiveUser.id);
+      }, /New owner must be an active workspace member/);
     });
   });
 });

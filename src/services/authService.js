@@ -7,6 +7,7 @@ const path = require('path');
 const logger = require('../logging/logger');
 const tokenBlocklist = require('./tokenBlocklist');
 const { USER_ROLES, isAdminRole, isSuperAdminRole } = require('../utils/roles');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../utils/workspaces');
 
 const SALT_ROUNDS = 10;
 const JWT_EXPIRES_IN = '24h';
@@ -180,7 +181,12 @@ class AuthService {
           status,
         );
 
-        db.prepare('INSERT INTO workspaces (id, name, owner_id, created_at) VALUES (?, ?, ?, ?)').run(workspaceId, 'My Workspace', userId, now);
+        db.prepare(
+          `
+            INSERT INTO workspaces (id, name, owner_id, created_at, workspace_kind, personal_owner_user_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `,
+        ).run(workspaceId, DEFAULT_PERSONAL_WORKSPACE_NAME, userId, now, WORKSPACE_KINDS.PERSONAL, userId);
         db.prepare('INSERT INTO workspace_members (workspace_id, user_id, role) VALUES (?, ?, ?)').run(workspaceId, userId, 'admin');
         this.createConsentRecords(userId, options.ipAddress, now);
 
@@ -455,6 +461,9 @@ class AuthService {
     }
     if (status) {
       db.prepare('UPDATE users SET status = ? WHERE id = ?').run(status, id);
+      if (status === 'active' && user.status === 'inactive') {
+        workspaceService.restorePersonalWorkspaces(id);
+      }
       logger.info({ userId: id, newStatus: status }, 'User status updated');
     }
 

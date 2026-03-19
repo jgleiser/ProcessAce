@@ -66,6 +66,7 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `admin-jobs.html` – Admin view of all jobs across workspaces.
   - `app-settings.html` – Application settings plus superadmin-only reset controls.
   - `user-settings.html` – User profile, privacy export, consent history, and self-deactivation.
+- `workspace-settings.html` – Workspace dashboard and membership management, including superadmin-only named-workspace ownership transfer.
 - Shared modules:
   - `js/header.js` – Header with user menu and workspace switcher.
   - `js/modal-utils.js` – Reusable confirmation modals.
@@ -194,7 +195,7 @@ The processing pipeline is implemented inside the worker process and consists of
   - Production: SQLCipher-compatible encrypted SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
   - Tables:
     - `users` – id, name, email, password_hash, role, status, created_at, last_login_at.
-    - `workspaces` – id, name, owner_id, created_at.
+    - `workspaces` – id, name, owner_id, created_at, workspace_kind, personal_owner_user_id.
     - `workspace_members` – workspace_id, user_id, role.
     - `workspace_invitations` – id, workspace_id, recipient_email, role, token, status, expires_at.
     - `evidence` – id, filename, originalName, mimeType, size, path, status, metadata, user_id, workspace_id.
@@ -217,10 +218,11 @@ The processing pipeline is implemented inside the worker process and consists of
 - **Auth Service** (`src/services/authService.js`):
   - Registration with email/password (password validated: 8+ chars, uppercase, lowercase, numbers).
   - First registered user automatically gets `superadmin` role and `active` status; later self-registrations get `editor` role and `pending` status until approved.
-  - Each new user gets a default workspace created automatically and required consent records stored at registration time.
+  - Each new user gets a default personal workspace created automatically (`workspace_kind = personal`, `personal_owner_user_id = owner_id`) and required consent records stored at registration time.
   - Login returns JWT token set as HTTP-only cookie (`auth_token`) and updates `last_login_at`.
   - JWT expires in 24 hours; include user id, email, role, and `jti` in payload.
-  - Users can self-export their personal data and self-deactivate. Self-deactivation preserves organizational data and transfers owned workspaces to the primary active superadmin.
+  - Users can self-export their personal data and self-deactivate. Self-deactivation preserves organizational data, transfers named workspaces to the primary active superadmin, and transfers personal workspaces as protected custodial records until reactivation.
+  - Reactivating an inactive user restores any transferred personal workspace back to that user as `My Workspace`.
   - Superadmins can reset the full installation back to an empty bootstrap state.
 - **Middleware** (`src/middleware/auth.js`, `src/middleware/requireAdmin.js`):
   - `authenticateToken` – extracts and verifies JWT from cookies.
@@ -231,6 +233,9 @@ The processing pipeline is implemented inside the worker process and consists of
   - **Workspace Roles**: `owner` (full control), `editor` (can edit content), `viewer` (read-only).
 - **User Status**: `active`, `inactive`, `pending`, `rejected`.
 - **Authorization**: Resources are scoped by `workspace_id`. Access is determined by the user's membership role in that workspace.
+- **Workspace Types**:
+  - `personal` – the user bootstrap workspace, protected from deletion and ownership transfer.
+  - `named` – standard collaborative workspaces, including superadmin-only ownership transfer to active members.
 
 ---
 
