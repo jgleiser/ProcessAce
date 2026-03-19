@@ -1406,7 +1406,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    if (!window.confirm(t('appSettings.resetConfirm'))) {
+    const confirmed = await showConfirmModal(
+      t('appSettings.resetConfirm'),
+      t('appSettings.section5Title'),
+      t('appSettings.resetInstanceBtn'),
+      t('common.cancel'),
+    );
+
+    if (!confirmed) {
       return;
     }
 
