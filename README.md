@@ -8,7 +8,7 @@ AI-powered process discovery and documentation engine – from raw text to BPMN 
 
 🌐 **Website & Enterprise Options:** [processace.com](https://processace.com)
 
-> ⚠️ **Status: Beta**. Core ingestion, generation, and editing features are functional. APIs may evolve.
+> **Status: Launched in v1.3.0**. ProcessAce is in launch state with the current security, privacy, and compliance hardening shipped in the `1.3.x` line.
 
 ---
 
