@@ -4,38 +4,60 @@ const sanitizeHtml = require('sanitize-html');
 const { marked } = require('marked');
 const router = express.Router();
 const { getArtifact, getArtifactVersionHistory, getArtifactVersion } = require('../models/artifact');
+const { auditMiddleware } = require('../middleware/auditMiddleware');
+const { sanitizeFilename } = require('../utils/sanitizeFilename');
 
 /**
  * GET /api/artifacts/:id/content
  * Download or view an artifact's content. Set ?view=true for inline display.
  */
-router.get('/:id/content', async (req, res) => {
-  const { id } = req.params;
-  const artifact = await getArtifact(id);
+router.get(
+  '/:id/content',
+  auditMiddleware('artifact', (req) => req.params.id),
+  async (req, res) => {
+    const { id } = req.params;
+    const artifact = await getArtifact(id);
 
-  if (!artifact) {
-    return res.status(404).json({ error: 'Artifact not found' });
-  }
+    if (!artifact) {
+      return res.status(404).json({ error: 'Artifact not found' });
+    }
 
-  // Set headers for file download
-  // Infer mime type
-  let mimeType = 'text/plain';
-  if (artifact.type === 'bpmn') mimeType = 'text/xml';
-  if (artifact.type === 'sipoc' || artifact.type === 'raci') mimeType = 'application/json';
-  if (artifact.type === 'doc') mimeType = 'text/markdown';
+    // Authorization Check
+    let canView = false;
+    if (artifact.user_id && artifact.user_id === req.user.id) {
+      canView = true;
+    }
+    if (!canView && artifact.workspace_id) {
+      const workspaceService = require('../services/workspaceService');
+      const role = workspaceService.getMemberRole(artifact.workspace_id, req.user.id);
+      if (['admin', 'editor', 'owner', 'viewer'].includes(role)) {
+        canView = true;
+      }
+    }
+    if (!canView) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
-  res.setHeader('Content-Type', mimeType);
+    // Infer mime type
+    let mimeType = 'text/plain';
+    if (artifact.type === 'bpmn') mimeType = 'text/xml';
+    if (artifact.type === 'sipoc' || artifact.type === 'raci') mimeType = 'application/json';
+    if (artifact.type === 'doc') mimeType = 'text/markdown';
 
-  const downloadName = artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`;
+    res.setHeader('Content-Type', mimeType);
 
-  // If ?view=true is present, do NOT set Content-Disposition attachment
-  // This allows the browser/fetch to read it inline
-  if (req.query.view !== 'true') {
-    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
-  }
+    const downloadName = sanitizeFilename(
+      artifact.filename || `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`,
+      `process-${id.substring(0, 8)}.${artifact.metadata.extension || 'txt'}`,
+    );
 
-  res.send(artifact.content);
-});
+    if (req.query.view !== 'true') {
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    }
+
+    res.send(artifact.content);
+  },
+);
 
 /**
  * PUT /api/artifacts/:id/content
@@ -172,7 +194,10 @@ router.get('/:id/versions/:version/content', async (req, res) => {
 
   res.setHeader('Content-Type', mimeType);
 
-  const downloadName = artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`;
+  const downloadName = sanitizeFilename(
+    artifact.filename || `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`,
+    `process-${id.substring(0, 8)}-v${version}.${artifact.metadata.extension || 'txt'}`,
+  );
 
   if (req.query.view !== 'true') {
     res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
@@ -251,7 +276,8 @@ router.get('/:id/export/docx', async (req, res) => {
     });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="document-${id}.docx"`);
+    const docxFilename = sanitizeFilename(`document-${id}.docx`, `document-${id}.docx`);
+    res.setHeader('Content-Disposition', `attachment; filename="${docxFilename}"`);
     res.setHeader('Content-Length', docxBuffer.length);
     res.send(docxBuffer);
 

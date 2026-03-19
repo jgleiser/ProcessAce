@@ -49,6 +49,8 @@
             <select id="filterStatus" class="filter-select">
               <option value="All" data-i18n="common.all">All</option>
               <option value="active" data-i18n="common.active">Active</option>
+              <option value="pending" data-i18n="common.pending">Pending</option>
+              <option value="rejected" data-i18n="common.rejected">Rejected</option>
               <option value="inactive" data-i18n="common.inactive">Inactive</option>
             </select>
           </div>
@@ -56,6 +58,7 @@
             <label for="filterRole" data-i18n="adminUsers.filterRole">Role</label>
             <select id="filterRole" class="filter-select">
               <option value="All" data-i18n="common.all">All</option>
+              <option value="superadmin" data-i18n="common.superadmin">Superadmin</option>
               <option value="admin" data-i18n="common.admin">Admin</option>
               <option value="editor" data-i18n="common.editor">Editor</option>
               <option value="viewer" data-i18n="common.viewer">Viewer</option>
@@ -75,6 +78,7 @@
               <th data-i18n="adminUsers.thStatus">Status</th>
               <th data-i18n="adminUsers.thRole">Role</th>
               <th data-i18n="adminUsers.thCreated">Created</th>
+              <th data-i18n="adminUsers.thActions">Actions</th>
             </tr>
           </thead>
           <tbody id="usersTableBody"></tbody>

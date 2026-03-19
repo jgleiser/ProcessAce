@@ -76,7 +76,7 @@
 
     <script src="js/i18n.js"></script>
     <script src="js/modal-utils.js"></script>
-    <script>
+    <script nonce="__CSP_NONCE__">
       // Initialize i18n for register page
       if (globalThis.i18n) globalThis.i18n.init();
 
@@ -147,7 +147,8 @@
           const data = await response.json();
 
           if (response.ok) {
-            await globalThis.showAlertModal(t('register.registrationSuccess'), t('common.success'), t('common.accept'));
+            const successMessage = data.user?.status === 'pending' ? t('register.registrationPending') : t('register.registrationSuccess');
+            await globalThis.showAlertModal(successMessage, t('common.success'), t('common.accept'));
             globalThis.location.href = '/login.html';
           } else {
             errorMsg.textContent = data.error || t('register.registrationFailed');

@@ -2,6 +2,10 @@ const { after, before, describe, it } = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 
+process.env.DB_PATH = ':memory:';
+process.env.JWT_SECRET = 'test-jwt-secret';
+process.env.NODE_ENV = 'test';
+process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
 process.env.LOG_LEVEL = 'silent';
 
 const app = require('../../src/app');
@@ -35,7 +39,7 @@ describe('Settings API Integration Tests', () => {
     const adminUser = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
     const editorUser = db.prepare('SELECT id FROM users WHERE email = ?').get(editorEmail);
     db.prepare("UPDATE users SET role = 'admin' WHERE id = ?").run(adminUser.id);
-    db.prepare("UPDATE users SET role = 'editor' WHERE id = ?").run(editorUser.id);
+    db.prepare("UPDATE users SET role = 'editor', status = 'active' WHERE id = ?").run(editorUser.id);
 
     await login(adminAgent, adminEmail);
     await login(editorAgent, editorEmail);
@@ -82,7 +86,7 @@ describe('Settings API Integration Tests', () => {
     const res = await adminAgent.get('/api/settings/llm/catalog').expect(200);
     assert.ok(Array.isArray(res.body.models));
     assert.ok(res.body.models.length > 0);
-    assert.ok(res.body.models.some((model) => model.id === 'qwen3:4b'));
+    assert.ok(res.body.models.some((model) => model.id === 'qwen3.5:4b'));
   });
 
   it('should enqueue a supported model pull for admins only', async () => {
@@ -98,9 +102,9 @@ describe('Settings API Integration Tests', () => {
       }),
     });
 
-    await editorAgent.post('/api/settings/llm/pull').send({ modelName: 'phi3:mini' }).expect(403);
+    await editorAgent.post('/api/settings/llm/pull').send({ modelName: 'phi3.5' }).expect(403);
 
-    const res = await adminAgent.post('/api/settings/llm/pull').send({ modelName: 'phi3:mini' }).expect(202);
+    const res = await adminAgent.post('/api/settings/llm/pull').send({ modelName: 'phi3.5' }).expect(202);
     assert.ok(res.body.jobId);
   });
 
@@ -114,7 +118,7 @@ describe('Settings API Integration Tests', () => {
       progress_message: 'downloading layers',
       result: null,
       error: null,
-      data: { modelName: 'phi3:mini' },
+      data: { modelName: 'phi3.5' },
     });
     saveJob(modelPullJob);
 
@@ -153,9 +157,9 @@ describe('Settings API Integration Tests', () => {
       throw new Error(`Unexpected URL: ${url}`);
     };
 
-    await editorAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3:mini' }).expect(403);
+    await editorAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3.5' }).expect(403);
 
-    const res = await adminAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3:mini' }).expect(200);
+    const res = await adminAgent.delete('/api/settings/llm/model').send({ modelName: 'phi3.5' }).expect(200);
     assert.strictEqual(res.body.success, true);
     assert.deepStrictEqual(res.body.installedModels, [{ id: 'llama3.2', name: 'llama3.2', size: null, modifiedAt: null }]);
   });

@@ -1,45 +1,290 @@
-const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 const logger = require('../logging/logger');
+const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS, buildTransferredPersonalWorkspaceName } = require('../utils/workspaces');
 
-const fs = require('fs');
+const PLAINTEXT_SQLITE_HEADER = Buffer.from('SQLite format 3\0', 'utf8');
 
-const dataDir = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+const resolveDatabaseConfig = (env = process.env) => {
+  const isProduction = env.NODE_ENV === 'production';
+  const dataDir = path.resolve(process.cwd(), 'data');
+  const dbPath = env.DB_PATH || path.join(dataDir, isProduction ? 'processAce.db' : 'processAce-dev.db');
+  const usesSqlCipher = isProduction;
 
-const dbPath = process.env.DB_PATH || path.join(dataDir, 'processAce.db');
-const db = new Database(dbPath /*, { verbose: console.log } */);
+  if (usesSqlCipher && !env.SQLITE_ENCRYPTION_KEY) {
+    logger.fatal('SQLITE_ENCRYPTION_KEY environment variable is required in production.');
+    throw new Error('SQLITE_ENCRYPTION_KEY environment variable is required in production.');
+  }
 
-const ensureColumn = (tableName, columnName, definition) => {
-  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
-  if (!columns.some((column) => column.name === columnName)) {
-    db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
+  return {
+    dataDir,
+    dbPath,
+    isProduction,
+    isInMemory: dbPath === ':memory:',
+    usesSqlCipher,
+    driverModuleName: usesSqlCipher ? 'better-sqlite3-multiple-ciphers' : 'better-sqlite3',
+    sqliteEncryptionKey: env.SQLITE_ENCRYPTION_KEY,
+  };
+};
+
+const ensureDataDirectory = (dataDir, fileSystem = fs) => {
+  if (!fileSystem.existsSync(dataDir)) {
+    fileSystem.mkdirSync(dataDir, { recursive: true });
   }
 };
 
-// Enable WAL for better concurrency, but check for explicit disable (e.g. for Docker on Windows)
-if (process.env.DISABLE_SQLITE_WAL !== 'true') {
-  try {
-    db.pragma('journal_mode = WAL');
-  } catch (err) {
-    logger.warn({ err }, 'Failed to enable WAL mode. Continuing with default journal mode.');
+const isPlaintextSqliteFile = (dbPath, fileSystem = fs) => {
+  if (!fileSystem.existsSync(dbPath)) {
+    return false;
   }
-} else {
+
+  const stats = fileSystem.statSync(dbPath);
+  if (stats.size === 0) {
+    return false;
+  }
+
+  const header = fileSystem.readFileSync(dbPath).subarray(0, PLAINTEXT_SQLITE_HEADER.length);
+  return header.equals(PLAINTEXT_SQLITE_HEADER);
+};
+
+const validateProductionDatabaseFile = (config, fileSystem = fs) => {
+  if (!config.usesSqlCipher || config.isInMemory) {
+    return;
+  }
+
+  if (isPlaintextSqliteFile(config.dbPath, fileSystem)) {
+    const message =
+      'Existing plaintext SQLite database detected in production. ProcessAce will not auto-migrate plaintext databases to SQLCipher. Back up the database and follow the documented export/import migration procedure before restarting.';
+    logger.fatal({ dbPath: config.dbPath }, message);
+    throw new Error(message);
+  }
+};
+
+const loadDatabaseDriver = (config) => {
   try {
-    db.pragma('journal_mode = DELETE');
+    return require(config.driverModuleName);
+  } catch (error) {
+    if (config.usesSqlCipher) {
+      logger.fatal(
+        { err: error },
+        'Encrypted SQLite driver is unavailable. Rebuild the production image so the production database module compiles for the target runtime.',
+      );
+      throw new Error(
+        'Encrypted SQLite driver is required in production. Rebuild the production image so the production database module compiles for the target runtime before starting ProcessAce.',
+        {
+          cause: error,
+        },
+      );
+    }
+
+    throw error;
+  }
+};
+
+const resolveDatabaseConstructor = (driverModule) => {
+  if (typeof driverModule === 'function') {
+    return driverModule;
+  }
+
+  if (driverModule && typeof driverModule.Database === 'function') {
+    return driverModule.Database;
+  }
+
+  if (driverModule && typeof driverModule.default === 'function') {
+    return driverModule.default;
+  }
+
+  if (driverModule && driverModule.default && typeof driverModule.default.Database === 'function') {
+    return driverModule.default.Database;
+  }
+
+  throw new TypeError('Database driver did not export a constructor.');
+};
+
+const escapePragmaValue = (value) => String(value).replace(/'/g, "''");
+
+const applyDatabaseEncryptionKey = (database, encryptionKey) => {
+  database.pragma("cipher = 'sqlcipher'");
+  database.pragma('legacy = 4');
+  database.pragma(`key = '${escapePragmaValue(encryptionKey)}'`);
+};
+
+const validateEncryptedDatabase = (database) => {
+  try {
+    database.prepare('SELECT count(*) as count FROM sqlite_master').get();
+  } catch (error) {
+    logger.fatal({ err: error }, 'Failed to open the encrypted production database.');
+    throw new Error(
+      'Failed to open the encrypted production database. Verify SQLITE_ENCRYPTION_KEY and migrate any legacy plaintext database before retrying.',
+      {
+        cause: error,
+      },
+    );
+  }
+};
+
+const ensureColumn = (database, tableName, columnName, definition) => {
+  const columns = database.prepare(`PRAGMA table_info(${tableName})`).all();
+  if (!columns.some((column) => column.name === columnName)) {
+    database.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`).run();
+  }
+};
+
+const repairTransferredPersonalWorkspaces = (database) => {
+  const candidateRows = database
+    .prepare(
+      `
+        SELECT
+          w.id,
+          inactive_user.id as personal_owner_user_id,
+          inactive_user.name as personal_owner_name,
+          inactive_user.email as personal_owner_email
+        FROM workspaces w
+        JOIN users owner_user ON owner_user.id = w.owner_id
+        JOIN workspace_members inactive_member
+          ON inactive_member.workspace_id = w.id
+         AND inactive_member.user_id != w.owner_id
+        JOIN users inactive_user
+          ON inactive_user.id = inactive_member.user_id
+         AND inactive_user.status = 'inactive'
+        WHERE w.name = ?
+          AND owner_user.status = 'active'
+          AND owner_user.role IN ('superadmin', 'admin')
+        GROUP BY w.id
+        HAVING COUNT(inactive_member.user_id) = 1
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+  const updateStatement = database.prepare(
+    `
+      UPDATE workspaces
+      SET workspace_kind = ?, personal_owner_user_id = ?, name = ?
+      WHERE id = ?
+    `,
+  );
+
+  candidateRows.forEach((row) => {
+    updateStatement.run(
+      WORKSPACE_KINDS.PERSONAL,
+      row.personal_owner_user_id,
+      buildTransferredPersonalWorkspaceName({
+        name: row.personal_owner_name,
+        email: row.personal_owner_email,
+      }),
+      row.id,
+    );
+  });
+};
+
+const backfillActivePersonalWorkspaces = (database) => {
+  const candidateRows = database
+    .prepare(
+      `
+        SELECT w.id, w.owner_id
+        FROM workspaces w
+        JOIN users owner_user ON owner_user.id = w.owner_id
+        WHERE w.name = ?
+          AND owner_user.status = 'active'
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME);
+
+  const ownerWorkspaceCounts = candidateRows.reduce((counts, row) => {
+    counts.set(row.owner_id, (counts.get(row.owner_id) || 0) + 1);
+    return counts;
+  }, new Map());
+
+  const updateStatement = database.prepare(
+    `
+      UPDATE workspaces
+      SET workspace_kind = ?, personal_owner_user_id = owner_id
+      WHERE id = ?
+    `,
+  );
+
+  candidateRows.forEach((row) => {
+    if (ownerWorkspaceCounts.get(row.owner_id) === 1) {
+      updateStatement.run(WORKSPACE_KINDS.PERSONAL, row.id);
+    }
+  });
+};
+
+const logAmbiguousPersonalWorkspaceRows = (database) => {
+  const ambiguousRows = database
+    .prepare(
+      `
+        SELECT id, owner_id
+        FROM workspaces
+        WHERE name = ?
+          AND workspace_kind = ?
+      `,
+    )
+    .all(DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS.NAMED);
+
+  if (ambiguousRows.length > 0) {
+    logger.warn(
+      {
+        workspaceIds: ambiguousRows.map((row) => row.id),
+        ownerIds: ambiguousRows.map((row) => row.owner_id),
+      },
+      'Some legacy "My Workspace" rows could not be classified automatically and were left as named workspaces.',
+    );
+  }
+};
+
+const backfillWorkspaceKinds = (database) => {
+  database
+    .prepare(
+      `
+        UPDATE workspaces
+        SET workspace_kind = ?
+        WHERE workspace_kind IS NULL
+           OR workspace_kind NOT IN (?, ?)
+      `,
+    )
+    .run(WORKSPACE_KINDS.NAMED, WORKSPACE_KINDS.NAMED, WORKSPACE_KINDS.PERSONAL);
+
+  repairTransferredPersonalWorkspaces(database);
+  backfillActivePersonalWorkspaces(database);
+
+  database
+    .prepare(
+      `
+        UPDATE workspaces
+        SET personal_owner_user_id = owner_id
+        WHERE workspace_kind = ?
+          AND personal_owner_user_id IS NULL
+      `,
+    )
+    .run(WORKSPACE_KINDS.PERSONAL);
+
+  logAmbiguousPersonalWorkspaceRows(database);
+};
+
+const configureJournalMode = (database, env = process.env) => {
+  if (env.DISABLE_SQLITE_WAL !== 'true') {
+    try {
+      database.pragma('journal_mode = WAL');
+    } catch (err) {
+      logger.warn({ err }, 'Failed to enable WAL mode. Continuing with default journal mode.');
+    }
+    return;
+  }
+
+  try {
+    database.pragma('journal_mode = DELETE');
     logger.info('WAL mode disabled via configuration. Switched to DELETE journal mode.');
   } catch (err) {
     logger.warn({ err }, 'Failed to switch to DELETE journal mode.');
   }
-}
+};
 
-// Initialize Tables
-try {
-  // Users Table
-  db.prepare(
-    `
+const initializeSchema = (database) => {
+  try {
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS users (
             id TEXT PRIMARY KEY,
             email TEXT UNIQUE,
@@ -47,27 +292,37 @@ try {
             role TEXT DEFAULT 'editor',
             status TEXT DEFAULT 'active',
             name TEXT,
-            created_at TEXT
+            created_at TEXT,
+            last_login_at TEXT
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Workspaces Table
-  db.prepare(
-    `
+    ensureColumn(database, 'users', 'last_login_at', 'TEXT');
+
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS workspaces (
             id TEXT PRIMARY KEY,
             name TEXT,
             owner_id TEXT,
             created_at TEXT,
+            workspace_kind TEXT NOT NULL DEFAULT 'named',
+            personal_owner_user_id TEXT,
             FOREIGN KEY(owner_id) REFERENCES users(id)
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Workspace Members Table
-  db.prepare(
-    `
+    ensureColumn(database, 'workspaces', 'workspace_kind', "TEXT NOT NULL DEFAULT 'named'");
+    ensureColumn(database, 'workspaces', 'personal_owner_user_id', 'TEXT');
+
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS workspace_members (
             workspace_id TEXT,
             user_id TEXT,
@@ -77,11 +332,14 @@ try {
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Workspace Invitations Table
-  db.prepare(
-    `
+    backfillWorkspaceKinds(database);
+
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS workspace_invitations (
             id TEXT PRIMARY KEY,
             workspace_id TEXT,
@@ -89,18 +347,19 @@ try {
             recipient_email TEXT,
             role TEXT DEFAULT 'viewer',
             token TEXT UNIQUE,
-            status TEXT DEFAULT 'pending', 
+            status TEXT DEFAULT 'pending',
             created_at TEXT,
             expires_at TEXT,
             FOREIGN KEY(workspace_id) REFERENCES workspaces(id),
             FOREIGN KEY(inviter_id) REFERENCES users(id)
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Evidence Table
-  db.prepare(
-    `
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS evidence (
             id TEXT PRIMARY KEY,
             filename TEXT,
@@ -116,11 +375,12 @@ try {
             workspace_id TEXT
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Artifact Table
-  db.prepare(
-    `
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS artifacts (
             id TEXT,
             type TEXT,
@@ -138,11 +398,12 @@ try {
             PRIMARY KEY (id, version)
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Jobs Table
-  db.prepare(
-    `
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS jobs (
             id TEXT PRIMARY KEY,
             type TEXT,
@@ -159,24 +420,26 @@ try {
             progress_message TEXT
         )
     `,
-  ).run();
+      )
+      .run();
 
-  ensureColumn('jobs', 'progress', 'INTEGER DEFAULT 0');
-  ensureColumn('jobs', 'progress_message', 'TEXT');
+    ensureColumn(database, 'jobs', 'progress', 'INTEGER DEFAULT 0');
+    ensureColumn(database, 'jobs', 'progress_message', 'TEXT');
 
-  // App Settings Table
-  db.prepare(
-    `
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS app_settings (
             key TEXT PRIMARY KEY,
             value TEXT
         )
     `,
-  ).run();
+      )
+      .run();
 
-  // Notifications Table
-  db.prepare(
-    `
+    database
+      .prepare(
+        `
         CREATE TABLE IF NOT EXISTS notifications (
             id TEXT PRIMARY KEY,
             user_id TEXT,
@@ -189,12 +452,86 @@ try {
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     `,
-  ).run();
+      )
+      .run();
 
-  logger.info('SQLite Database initialized');
-} catch (err) {
-  logger.error({ err }, 'Failed to initialize SQLite database');
-  process.exit(1);
-}
+    database
+      .prepare(
+        `
+        CREATE TABLE IF NOT EXISTS consent_records (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            consent_type TEXT,
+            granted INTEGER DEFAULT 1,
+            timestamp TEXT,
+            ip_address TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    `,
+      )
+      .run();
 
-module.exports = db;
+    database
+      .prepare(
+        `
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            user_id TEXT PRIMARY KEY,
+            attempt_count INTEGER DEFAULT 0,
+            locked_until TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    `,
+      )
+      .run();
+
+    logger.info('SQLite Database initialized');
+  } catch (err) {
+    logger.error({ err }, 'Failed to initialize SQLite database');
+    process.exit(1);
+  }
+};
+
+const createDatabaseConnection = (options = {}) => {
+  const env = options.env || process.env;
+  const fileSystem = options.fileSystem || fs;
+  const config = resolveDatabaseConfig(env);
+
+  ensureDataDirectory(config.dataDir, fileSystem);
+  validateProductionDatabaseFile(config, fileSystem);
+
+  const Database = resolveDatabaseConstructor(options.Database || loadDatabaseDriver(config));
+  const database = new Database(config.dbPath);
+
+  if (config.usesSqlCipher && !config.isInMemory) {
+    applyDatabaseEncryptionKey(database, config.sqliteEncryptionKey);
+    validateEncryptedDatabase(database);
+  }
+
+  configureJournalMode(database, env);
+  initializeSchema(database);
+
+  return database;
+};
+
+const db = createDatabaseConnection();
+
+const dbHelpers = {
+  backfillWorkspaceKinds,
+  resolveDatabaseConfig,
+  createDatabaseConnection,
+  applyDatabaseEncryptionKey,
+  isPlaintextSqliteFile,
+  resolveDatabaseConstructor,
+  validateProductionDatabaseFile,
+};
+
+module.exports = new Proxy(db, {
+  get(target, property, receiver) {
+    if (property in dbHelpers) {
+      return dbHelpers[property];
+    }
+
+    const value = Reflect.get(target, property, receiver);
+    return typeof value === 'function' ? value.bind(target) : value;
+  },
+});

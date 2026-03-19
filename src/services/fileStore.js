@@ -30,7 +30,7 @@ class FileStore {
         return new Map(Object.entries(parsed));
       }
     } catch (err) {
-      logger.error({ err, filepath: this.filepath }, 'Failed to load store');
+      logger.error({ err, storeFile: path.basename(this.filepath) }, 'Failed to load store');
     }
     return new Map();
   }
@@ -42,7 +42,7 @@ class FileStore {
       const data = JSON.stringify(obj, null, 2);
       fs.writeFileSync(this.filepath, data, 'utf8');
     } catch (err) {
-      logger.error({ err, filepath: this.filepath }, 'Failed to save store');
+      logger.error({ err, storeFile: path.basename(this.filepath) }, 'Failed to save store');
     }
   }
 }

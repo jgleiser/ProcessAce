@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const keyManagedProviders = ['openai', 'google', 'anthropic'];
   const generationProviders = [...keyManagedProviders, 'ollama'];
-  const transcriptionProviders = ['openai'];
   const providerDisplayNames = {
     openai: 'OpenAI',
     google: 'Google GenAI',
@@ -22,6 +21,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const providerSelect = document.getElementById('providerSelect');
   const saveBtn = document.getElementById('saveBtn');
   const messageContainer = document.getElementById('messageContainer');
+  const superadminResetSection = document.getElementById('superadminResetSection');
+  const resetInstanceForm = document.getElementById('resetInstanceForm');
+  const resetConfirmationInput = document.getElementById('resetConfirmationInput');
+  const resetPasswordInput = document.getElementById('resetPasswordInput');
+  const resetInstanceBtn = document.getElementById('resetInstanceBtn');
   const baseUrlGroup = document.getElementById('baseUrlGroup');
   const baseUrlLabel = document.getElementById('baseUrlLabel');
   const baseUrlInput = document.getElementById('baseUrlInput');
@@ -75,6 +79,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activeTranscriptionPullJobId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY);
   let activeTranscriptionPullModelId = sessionStorage.getItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY);
 
+  const isAdminRole = (role) => role === 'admin' || role === 'superadmin';
+
   const renderMessage = (type, renderContent, toastText) => {
     const message = document.createElement('div');
     const messageText = document.createElement('div');
@@ -82,7 +88,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     message.className = `settings-message ${type === 'error' ? 'settings-message-error' : 'settings-message-success'}`;
     messageText.className = 'settings-message-content';
-    messageText.textContent = displayText;
 
     dismissButton.type = 'button';
     dismissButton.className = 'notification-dismiss';
@@ -1297,7 +1302,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error(data.error || t('appSettings.uninstallModelFailed'));
       }
 
-      allTranscriptionModels = filterInstalledTranscriptionModels(data.installedModels || []).map((model) => ({ id: model.id, name: model.name || model.id }));
+      allTranscriptionModels = filterInstalledTranscriptionModels(data.installedModels || []).map((model) => ({
+        id: model.id,
+        name: model.name || model.id,
+      }));
       syncInstalledOllamaTranscriptionModels(allTranscriptionModels);
       renderTranscriptionModelCatalog();
       sttCombobox.render('');
@@ -1382,6 +1390,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  resetInstanceForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const confirmationText = resetConfirmationInput.value.trim();
+    const currentPassword = resetPasswordInput.value;
+
+    if (confirmationText !== 'DELETE ALL') {
+      showMessage('error', t('appSettings.resetConfirmationMismatch'));
+      return;
+    }
+
+    if (!currentPassword) {
+      showMessage('error', t('appSettings.resetPasswordRequired'));
+      return;
+    }
+
+    const confirmed = await showConfirmModal(
+      t('appSettings.resetConfirm'),
+      t('appSettings.section5Title'),
+      t('appSettings.resetInstanceBtn'),
+      t('common.cancel'),
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    resetInstanceBtn.disabled = true;
+    resetInstanceBtn.textContent = t('appSettings.saving');
+
+    try {
+      const res = await fetch('/api/superadmin/reset-instance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, confirmationText }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || t('appSettings.resetFailed'));
+      }
+
+      sessionStorage.removeItem(ACTIVE_PULL_JOB_STORAGE_KEY);
+      sessionStorage.removeItem(ACTIVE_PULL_MODEL_STORAGE_KEY);
+      sessionStorage.removeItem(ACTIVE_TRANSCRIPTION_PULL_JOB_STORAGE_KEY);
+      sessionStorage.removeItem(ACTIVE_TRANSCRIPTION_PULL_MODEL_STORAGE_KEY);
+      window.location.href = '/register.html';
+    } catch (err) {
+      console.error(err);
+      showMessage('error', err.message || t('appSettings.resetFailed'));
+    } finally {
+      resetInstanceBtn.disabled = false;
+      resetInstanceBtn.textContent = t('appSettings.resetInstanceBtn');
+    }
+  });
+
   try {
     const authRes = await fetch('/api/auth/me');
     if (!authRes.ok) {
@@ -1390,9 +1454,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const user = await authRes.json();
-    if (user.role !== 'admin') {
+    if (!isAdminRole(user.role)) {
       document.body.innerHTML = `<div class="access-denied">${t('common.accessDenied')}</div>`;
       return;
+    }
+
+    if (user.role === 'superadmin') {
+      superadminResetSection?.classList.remove('hidden');
     }
 
     const settingsRes = await fetch('/api/settings');

@@ -1,10 +1,10 @@
 const crypto = require('crypto');
-const db = require('./db');
 const logger = require('../logging/logger');
 
 // Retrieve encryption key from environment variable
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const IV_LENGTH = 16; // AES block size
+let db;
 
 class SettingsService {
   constructor() {
@@ -18,7 +18,12 @@ class SettingsService {
     };
 
     if (!ENCRYPTION_KEY) {
-      logger.warn('ENCRYPTION_KEY is not set. API keys will not be encrypted securely.');
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        logger.fatal('ENCRYPTION_KEY environment variable is required in production.');
+        throw new Error('ENCRYPTION_KEY environment variable is required in production.');
+      }
+      logger.warn('ENCRYPTION_KEY is not set. API keys will be stored in PLAINTEXT (dev only).');
     }
   }
 
@@ -263,4 +268,7 @@ class SettingsService {
   }
 }
 
-module.exports = new SettingsService();
+const settingsService = new SettingsService();
+db = require('./db');
+
+module.exports = settingsService;

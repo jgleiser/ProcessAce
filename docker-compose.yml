@@ -6,9 +6,13 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?REDIS_PASSWORD is required for Docker Compose}
       - NODE_ENV=production
       - MOCK_LLM=${MOCK_LLM}
+      - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SQLITE_ENCRYPTION_KEY=${SQLITE_ENCRYPTION_KEY}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
       - DISABLE_SQLITE_WAL=true
       - OLLAMA_BASE_URL_DEFAULT=${OLLAMA_BASE_URL_DEFAULT:-}
       - OLLAMA_PULL_HOST=${OLLAMA_PULL_HOST:-}
@@ -27,8 +31,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - '6379:6379'
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required for Docker Compose}
     volumes:
       - redis_data:/data
     restart: unless-stopped

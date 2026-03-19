@@ -20,11 +20,21 @@ Transcription remains on OpenAI-compatible speech-to-text providers. Ollama's cu
 
 Use this when you do not want local models and only plan to use cloud providers.
 
+Before starting the stack, configure the required base variables in `.env`:
+
+- `JWT_SECRET`
+- `ENCRYPTION_KEY`
+- `SQLITE_ENCRYPTION_KEY`
+- `CORS_ALLOWED_ORIGINS`
+- `REDIS_PASSWORD`
+
 ```bash
 docker compose up -d --build
 ```
 
 This starts only the application and Redis. No bundled `ollama` container is created.
+
+If you use Linux bind mounts for `./data` and `./uploads`, make sure those host directories are writable by the container UID because the app runs as a non-root user.
 
 ### 2. Bundled CPU Ollama
 
@@ -57,6 +67,7 @@ Steps:
 2. Set the ProcessAce `.env` values:
 
 ```bash
+CORS_ALLOWED_ORIGINS=http://localhost:3000
 OLLAMA_BASE_URL_DEFAULT=http://host.docker.internal:11434/v1
 OLLAMA_PULL_HOST=http://host.docker.internal:11434
 ```

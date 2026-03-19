@@ -4,6 +4,8 @@ const { authenticateToken } = require('../middleware/auth');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const logger = require('../logging/logger');
 const db = require('../services/db');
+const notificationService = require('../services/notificationService');
+const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
 
@@ -272,24 +274,22 @@ router.get('/jobs', (req, res) => {
 
 /**
  * PATCH /api/admin/users/:id
- * Update user role and/or status (admin only)
+ * Update user role and/or status (admin or superadmin)
  */
 router.patch('/users/:id', (req, res) => {
   try {
     const { id } = req.params;
     const { role, status } = req.body;
 
-    // Prevent admin from demoting themselves
-    if (id === req.user.id && role && role !== 'admin') {
-      return res.status(400).json({ error: 'Cannot change your own admin role' });
+    if (id === req.user.id && role && role !== req.user.role) {
+      return res.status(400).json({ error: 'Cannot change your own role' });
     }
 
-    // Prevent admin from deactivating themselves
     if (id === req.user.id && status === 'inactive') {
       return res.status(400).json({ error: 'Cannot deactivate your own account' });
     }
 
-    const updatedUser = authService.updateUser(id, { role, status });
+    const updatedUser = authService.updateUser(id, { role, status }, req.user);
 
     logger.info(
       {
@@ -309,8 +309,69 @@ router.patch('/users/:id', (req, res) => {
     if (error.message.includes('Invalid')) {
       return res.status(400).json({ error: error.message });
     }
-    logger.error({ err: error }, 'Error updating user');
-    res.status(500).json({ error: 'Failed to update user' });
+    if (error.message === authService.SUPERADMIN_ROLE_REQUIRED_ERROR || error.message === authService.SUPERADMIN_ACCOUNT_MANAGEMENT_ERROR) {
+      return res.status(403).json({ error: error.message });
+    }
+    if (error.message === authService.LAST_SUPERADMIN_DEACTIVATION_ERROR || error.message === authService.LAST_SUPERADMIN_ROLE_CHANGE_ERROR) {
+      return res.status(400).json({ error: error.message });
+    }
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/users/:id/approve', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedUser = authService.approveUser(id);
+
+    notificationService.createNotification(id, 'account_approved', 'Account approved', 'Your account has been approved. You can now sign in.');
+
+    logger.info(
+      {
+        event_type: 'admin_user_approved',
+        actor: req.user.id,
+        targetUserId: id,
+      },
+      'Admin approved user',
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending or rejected users can be approved') {
+      return res.status(400).json({ error: error.message });
+    }
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/users/:id/reject', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedUser = authService.rejectUser(id);
+
+    notificationService.createNotification(id, 'account_rejected', 'Registration not approved', 'Your registration was not approved.');
+
+    logger.info(
+      {
+        event_type: 'admin_user_rejected',
+        actor: req.user.id,
+        targetUserId: id,
+      },
+      'Admin rejected user',
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    if (error.message === 'User not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message === 'Only pending users can be rejected') {
+      return res.status(400).json({ error: error.message });
+    }
+    return sendErrorResponse(res, error, req);
   }
 });
 

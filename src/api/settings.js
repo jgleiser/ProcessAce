@@ -3,35 +3,32 @@ const ollamaModelCatalog = require('../config/ollamaModelCatalog');
 const ollamaTranscriptionModelCatalog = require('../config/ollamaTranscriptionModelCatalog');
 const settingsService = require('../services/settingsService');
 const { getJob } = require('../models/job');
-const logger = require('../logging/logger');
 const { getLlmProvider } = require('../llm');
 const { deleteModel, listInstalledModels } = require('../services/ollamaService');
 const { modelQueue } = require('../services/queueInstance');
+const { auditMiddleware } = require('../middleware/auditMiddleware');
+const { requireAdmin } = require('../middleware/requireAdmin');
+const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
-
-/**
- * Middleware to restrict access to admin users only.
- */
-const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Access denied. Admins only.' });
-  }
-  next();
-};
 
 /**
  * GET /api/settings
  * Get all application settings. API keys are masked. Admin only.
  */
-router.get('/', requireAdmin, (req, res) => {
-  try {
-    const settings = settingsService.getSettings();
-    res.json(settings);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch settings' });
-  }
-});
+router.get(
+  '/',
+  requireAdmin,
+  auditMiddleware('settings', () => 'app_settings'),
+  (req, res) => {
+    try {
+      const settings = settingsService.getSettings();
+      res.json(settings);
+    } catch (error) {
+      return sendErrorResponse(res, error, req);
+    }
+  },
+);
 
 /**
  * PUT /api/settings
@@ -46,8 +43,8 @@ router.put('/', requireAdmin, (req, res) => {
 
     const updated = settingsService.updateSetting(key, value);
     res.json(updated);
-  } catch {
-    res.status(500).json({ error: 'Failed to update setting' });
+  } catch (error) {
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -64,8 +61,8 @@ router.delete('/', requireAdmin, (req, res) => {
 
     settingsService.deleteSetting(key);
     res.json({ success: true, key });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete setting' });
+  } catch (error) {
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -96,8 +93,11 @@ router.post('/verify-provider', requireAdmin, async (req, res) => {
 
     res.json({ models });
   } catch (error) {
-    logger.error({ err: error, provider: req.body.provider }, 'Failed to verify provider');
-    res.status(500).json({ error: error.message || 'Failed to verify provider and fetch models' });
+    return sendErrorResponse(
+      res,
+      new AppError(500, 'Could not connect to the provider. Please verify your API key and settings.', { cause: error }),
+      req,
+    );
   }
 });
 
@@ -128,8 +128,7 @@ router.post('/llm/pull', requireAdmin, async (req, res) => {
 
     res.status(202).json({ jobId: job.id, status: job.status });
   } catch (error) {
-    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to initiate model pull');
-    res.status(500).json({ error: 'Failed to initiate download job' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -152,8 +151,7 @@ router.post('/transcription/pull', requireAdmin, async (req, res) => {
 
     res.status(202).json({ jobId: job.id, status: job.status });
   } catch (error) {
-    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to initiate transcription model pull');
-    res.status(500).json({ error: 'Failed to initiate download job' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -175,8 +173,11 @@ router.delete('/llm/model', requireAdmin, async (req, res) => {
       installedModels,
     });
   } catch (error) {
-    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to delete Ollama model');
-    res.status(500).json({ error: error.message || 'Failed to delete Ollama model' });
+    return sendErrorResponse(
+      res,
+      new AppError(500, 'Failed to delete the model. Please try again or check the Ollama connection.', { cause: error }),
+      req,
+    );
   }
 });
 
@@ -198,8 +199,11 @@ router.delete('/transcription/model', requireAdmin, async (req, res) => {
       installedModels,
     });
   } catch (error) {
-    logger.error({ err: error, modelName: req.body?.modelName }, 'Failed to delete Ollama transcription model');
-    res.status(500).json({ error: error.message || 'Failed to delete Ollama transcription model' });
+    return sendErrorResponse(
+      res,
+      new AppError(500, 'Failed to delete the transcription model. Please try again or check the Ollama connection.', { cause: error }),
+      req,
+    );
   }
 });
 
@@ -224,8 +228,7 @@ router.get('/llm/pull/:jobId', requireAdmin, (req, res) => {
       error: job.error,
     });
   } catch (error) {
-    logger.error({ err: error, jobId: req.params.jobId }, 'Failed to fetch model pull status');
-    res.status(500).json({ error: 'Failed to fetch model pull status' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -250,8 +253,7 @@ router.get('/transcription/pull/:jobId', requireAdmin, (req, res) => {
       error: job.error,
     });
   } catch (error) {
-    logger.error({ err: error, jobId: req.params.jobId }, 'Failed to fetch transcription model pull status');
-    res.status(500).json({ error: 'Failed to fetch transcription model pull status' });
+    return sendErrorResponse(res, error, req);
   }
 });
 

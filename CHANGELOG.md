@@ -2,6 +2,32 @@
 
 All notable changes to ProcessAce will be documented in this file.
 
+## [1.3.0] - 2026-03-18
+
+### Added
+
+- Phase 1 through Phase 4 security, privacy, and compliance hardening for ISO 27001, HIPAA, and GDPR readiness.
+- Admin-approved registration flow, `superadmin` role, consent tracking, user data export, self-deactivation, and superadmin-only instance reset.
+- CSP nonce injection, upload validation and filename sanitization, minimized invitation disclosure, and protected personal workspace ownership recovery.
+- Redis-backed token revocation, DB-backed login lockout, read-access audit logging, TLS deployment overlay with Caddy, and encrypted SQLite production support.
+- Compliance documentation set under `docs/compliance/` for breach notification, processing activities, and privacy impact assessment.
+
+### Changed
+
+- First-user bootstrap now creates an active `superadmin`, while later self-registrations require approval before login.
+- Docker and production startup requirements now enforce the new security environment contract, including JWT, CORS, Redis, and SQLite encryption settings.
+- Personal workspaces are now explicit protected records with restore-on-reactivation behavior instead of name-only special cases.
+- General API rate limiting now better reflects real authenticated usage patterns and normal dashboard polling.
+- Settings, workspace, and user-management flows now use the shared modal/toast patterns more consistently.
+
+### Fixed
+
+- Corrected partial Phase 1 protections, including API limiter coverage, error-response normalization, and stale verification gaps.
+- Fixed Docker runtime issues around env passthrough and encrypted SQLite driver compatibility in production containers.
+- Prevented legitimate users from being blocked by auth throttling during successful-login recovery.
+- Repaired stale or duplicate `My Workspace` metadata so transferred personal workspaces rename correctly and cannot surface delete behavior.
+- Exported user-data downloads are now formatted as readable JSON instead of a single-line payload.
+
 ## [1.2.0] - 2026-03-17
 
 ### Added

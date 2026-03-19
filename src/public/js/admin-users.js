@@ -1,29 +1,35 @@
-/**
- * Admin Page JavaScript
- * Handles user management functionality
- */
-
 let currentPage = 1;
 let currentLimit = 10;
 let totalPages = 1;
 let currentUserId = null;
-let originalUserData = {}; // Track original values to detect changes
+let currentUserRole = null;
+let originalUserData = {};
 const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
 
-// DOM Elements
 const paginationContainer = document.getElementById('paginationContainer');
 const paginationInfo = document.getElementById('paginationInfo');
 const paginationControls = document.getElementById('paginationControls');
 const limitSelect = document.getElementById('limitSelect');
-
-// Filter Elements
 const filterName = document.getElementById('filterName');
 const filterEmail = document.getElementById('filterEmail');
 const filterStatus = document.getElementById('filterStatus');
 const filterRole = document.getElementById('filterRole');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
-// Check authentication and admin status on load
+const isAdminRole = (role) => role === 'admin' || role === 'superadmin';
+const isCurrentUserSuperadmin = () => currentUserRole === 'superadmin';
+
+const getRoleLabel = (role) => {
+  const roleKeyMap = {
+    superadmin: 'common.superadmin',
+    admin: 'common.admin',
+    editor: 'common.editor',
+    viewer: 'common.viewer',
+  };
+
+  return t(roleKeyMap[role] || 'common.user');
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const response = await fetch('/api/auth/me');
@@ -34,35 +40,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const user = await response.json();
     currentUserId = user.id;
+    currentUserRole = user.role;
 
-    // Check if user is admin
-    if (user.role !== 'admin') {
+    if (!isAdminRole(user.role)) {
       showError(t('common.accessDenied'));
       document.getElementById('loadingState').classList.add('hidden');
       return;
     }
 
-    // Initialize limit select
     limitSelect.value = currentLimit;
-
     loadUsers(currentPage, currentLimit);
 
-    // Add event listener for save button
     document.getElementById('saveAllBtn').addEventListener('click', saveAllChanges);
 
-    // Add listener for limit select
     limitSelect.addEventListener('change', (e) => {
-      currentLimit = parseInt(e.target.value);
+      currentLimit = parseInt(e.target.value, 10);
       currentPage = 1;
       loadUsers(currentPage, currentLimit);
     });
 
-    // Add listner for pagination controls (Event Delegation)
     paginationControls.addEventListener('click', (e) => {
       const btn = e.target.closest('.page-btn');
       if (btn && !btn.disabled) {
-        const page = parseInt(btn.dataset.page);
-        if (!isNaN(page)) {
+        const page = parseInt(btn.dataset.page, 10);
+        if (!Number.isNaN(page)) {
           goToPage(page);
         }
       }
@@ -75,9 +76,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-/**
- * Load all users from API
- */
 async function loadUsers(page = 1, limit = 10) {
   try {
     const loading = document.getElementById('loadingState');
@@ -86,8 +84,6 @@ async function loadUsers(page = 1, limit = 10) {
 
     loading.classList.remove('hidden');
     table.classList.add('hidden');
-    pagContainer.classList.add('hidden');
-
     pagContainer.classList.add('hidden');
 
     const filters = getFilters();
@@ -107,8 +103,6 @@ async function loadUsers(page = 1, limit = 10) {
     }
 
     const data = await response.json();
-
-    // Handle response format change (array vs object with pagination)
     const users = data.users || data;
     const pagination = data.pagination || {
       page: 1,
@@ -125,14 +119,10 @@ async function loadUsers(page = 1, limit = 10) {
     renderPagination(pagination);
   } catch (error) {
     console.error('Error loading users. Details:', error);
-    console.error('Stack:', error.stack);
     showError(`Failed to load users: ${error.message}`);
   }
 }
 
-/**
- * Render users in the table
- */
 function renderUsersTable(users) {
   const tbody = document.getElementById('usersTableBody');
   const table = document.getElementById('usersTable');
@@ -143,46 +133,94 @@ function renderUsersTable(users) {
 
   tbody.innerHTML = users
     .map((user) => {
-      // Store original data
       originalUserData[user.id] = { status: user.status, role: user.role };
       const isCurrentUser = user.id === currentUserId;
+      const canManagePrivilegedUser = isCurrentUserSuperadmin() || !isAdminRole(user.role);
+      const canEditRole = !isCurrentUser && canManagePrivilegedUser;
+      const canEditStatus = !isCurrentUser && canManagePrivilegedUser && !['pending', 'rejected'].includes(user.status);
       const createdDate = new Date(user.created_at).toLocaleDateString();
+      const statusLabelKey = user.status === 'rejected' ? 'common.rejected' : `common.${user.status}`;
+      const roleOptions = isCurrentUserSuperadmin() ? ['superadmin', 'admin', 'editor', 'viewer'] : ['editor', 'viewer'];
+
+      const roleCell = canEditRole
+        ? `
+            <select class="role-select" data-field="role" data-user-id="${user.id}">
+              ${roleOptions
+                .map(
+                  (roleOption) =>
+                    `<option value="${roleOption}" ${user.role === roleOption ? 'selected' : ''}>${escapeHtml(getRoleLabel(roleOption))}</option>`,
+                )
+                .join('')}
+            </select>
+          `
+        : `<span class="user-row-muted">${escapeHtml(getRoleLabel(user.role))}</span>`;
+
+      const statusCell =
+        user.status === 'pending' || user.status === 'rejected'
+          ? `
+              <span class="status-badge status-badge-${user.status}">
+                ${t(statusLabelKey)}
+              </span>
+            `
+          : canEditStatus
+            ? `
+              <select class="status-select" data-field="status" data-user-id="${user.id}">
+                <option value="active" ${user.status === 'active' ? 'selected' : ''}>${t('common.active')}</option>
+                <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
+              </select>
+            `
+            : `<span class="user-row-muted">${escapeHtml(t(statusLabelKey))}</span>`;
+
+      const actionButtons = isCurrentUser
+        ? `<span class="user-row-muted">${escapeHtml(t('adminUsers.currentUserLocked'))}</span>`
+        : user.status === 'pending'
+          ? `
+              <div class="user-row-actions">
+                <button class="btn-primary btn-sm approve-user-btn" data-user-id="${user.id}">${t('adminUsers.approveUser')}</button>
+                <button class="btn-secondary btn-sm reject-user-btn" data-user-id="${user.id}">${t('adminUsers.rejectUser')}</button>
+              </div>
+            `
+          : user.status === 'rejected'
+            ? `
+              <div class="user-row-actions">
+                <button class="btn-primary btn-sm approve-user-btn" data-user-id="${user.id}">${t('adminUsers.approveUser')}</button>
+              </div>
+            `
+            : '<span class="user-row-muted">-</span>';
 
       return `
-            <tr data-user-id="${user.id}">
-                <td>
-                    <span class="user-name">${escapeHtml(user.name || 'N/A')}</span>
-                    ${isCurrentUser ? '<span class="you-badge">' + t('adminUsers.youBadge') + '</span>' : ''}
-                </td>
-                <td class="user-email">${escapeHtml(user.email)}</td>
-                <td>
-                    <select class="status-select" data-field="status" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
-                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>${t('common.active')}</option>
-                        <option value="inactive" ${user.status === 'inactive' ? 'selected' : ''}>${t('common.inactive')}</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="role-select" data-field="role" data-user-id="${user.id}" ${isCurrentUser ? 'disabled' : ''}>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>${t('common.admin')}</option>
-                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>${t('common.editor')}</option>
-                        <option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>${t('common.viewer')}</option>
-                    </select>
-                </td>
-                <td class="user-date">${createdDate}</td>
-            </tr>
-        `;
+        <tr data-user-id="${user.id}">
+          <td>
+            <span class="user-name">${escapeHtml(user.name || 'N/A')}</span>
+            ${isCurrentUser ? `<span class="you-badge">${t('adminUsers.youBadge')}</span>` : ''}
+          </td>
+          <td class="user-email">${escapeHtml(user.email)}</td>
+          <td>${statusCell}</td>
+          <td>${roleCell}</td>
+          <td class="user-date">${createdDate}</td>
+          <td>${actionButtons}</td>
+        </tr>
+      `;
     })
     .join('');
 
-  // Add change listeners to all selects
   document.querySelectorAll('.status-select, .role-select').forEach((select) => {
     select.addEventListener('change', updateSaveButton);
   });
+
+  document.querySelectorAll('.approve-user-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      updateUserRegistrationStatus(button.dataset.userId, 'approve');
+    });
+  });
+
+  document.querySelectorAll('.reject-user-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      updateUserRegistrationStatus(button.dataset.userId, 'reject');
+    });
+  });
 }
 
-/**
- * Get all pending changes
- */
 function getPendingChanges() {
   const changes = [];
 
@@ -190,16 +228,17 @@ function getPendingChanges() {
     const userId = row.dataset.userId;
     const statusSelect = row.querySelector('.status-select');
     const roleSelect = row.querySelector('.role-select');
-
-    if (!statusSelect || !roleSelect) return;
-
     const original = originalUserData[userId];
     const updates = {};
 
-    if (statusSelect.value !== original.status) {
+    if (!original) {
+      return;
+    }
+
+    if (statusSelect && statusSelect.value !== original.status) {
       updates.status = statusSelect.value;
     }
-    if (roleSelect.value !== original.role) {
+    if (roleSelect && roleSelect.value !== original.role) {
       updates.role = roleSelect.value;
     }
 
@@ -211,9 +250,26 @@ function getPendingChanges() {
   return changes;
 }
 
-/**
- * Update bulk save button state
- */
+async function updateUserRegistrationStatus(userId, action) {
+  try {
+    const response = await fetch(`/api/admin/users/${userId}/${action}`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || t('adminUsers.statusActionFailed'));
+    }
+
+    notifyToast(action === 'approve' ? t('adminUsers.userApproved') : t('adminUsers.userRejected'), 'success');
+    await loadUsers(currentPage, currentLimit);
+    updateSaveButton();
+  } catch (error) {
+    console.error(`Error executing ${action} for user ${userId}:`, error);
+    notifyToast(error.message || t('adminUsers.statusActionFailed'), 'error');
+  }
+}
+
 function updateSaveButton() {
   const changes = getPendingChanges();
   const saveBtn = document.getElementById('saveAllBtn');
@@ -228,9 +284,6 @@ function updateSaveButton() {
   }
 }
 
-/**
- * Save all pending changes
- */
 async function saveAllChanges() {
   const changes = getPendingChanges();
   if (changes.length === 0) return;
@@ -257,7 +310,7 @@ async function saveAllChanges() {
 
       const updatedUser = await response.json();
       originalUserData[userId] = { status: updatedUser.status, role: updatedUser.role };
-      successCount++;
+      successCount += 1;
     } catch (error) {
       console.error(`Error updating user ${userId}:`, error);
       errorMessages.push(error.message);
@@ -268,15 +321,14 @@ async function saveAllChanges() {
   updateSaveButton();
 
   if (errorMessages.length > 0) {
-    showToast(`${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`, 'error');
+    notifyToast(`${successCount} saved, ${errorMessages.length} failed: ${errorMessages[0]}`, 'error');
   } else {
-    showToast(t('adminUsers.changesSaved'), 'success');
+    notifyToast(t('adminUsers.changesSaved'), 'success');
   }
+
+  await loadUsers(currentPage, currentLimit);
 }
 
-/**
- * Show error message
- */
 function showError(message) {
   const container = document.getElementById('errorContainer');
   const dismissLabel = t('common.close');
@@ -293,60 +345,40 @@ function showError(message) {
     container.innerHTML = '';
   });
 
-  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
+  if (typeof window.showToast === 'function') {
     globalThis.showToast(message, 'error');
   }
 }
 
-/**
- * Show toast notification
- */
-function showToast(message, type = 'success') {
-  if (typeof globalThis.showToast === 'function' && globalThis.showToast !== showToast) {
-    globalThis.showToast(message, type);
+function notifyToast(message, type = 'success') {
+  if (typeof window.showToast === 'function') {
+    window.showToast(message, type);
     return;
   }
 
-  const toast = document.createElement('div');
-  toast.className = `toast ${type} is-visible`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  showError(message);
 }
 
-/**
- * Escape HTML to prevent XSS
- */
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-/**
- * Render pagination controls
- */
 function renderPagination(pagination) {
   const { page, limit, total, totalPages: pages } = pagination;
   const start = total === 0 ? 0 : (page - 1) * limit + 1;
   const end = Math.min(page * limit, total);
 
-  // Show container
   paginationContainer.classList.remove('hidden');
-
   paginationInfo.textContent = t('adminUsers.paginationInfo', { start, end, total });
 
-  // Build page buttons
-  let buttonsHtml = '';
+  let buttonsHtml = `
+    <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
+      ${t('common.prev')}
+    </button>
+  `;
 
-  // Previous button
-  buttonsHtml += `
-        <button class="page-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}">
-            ${t('common.prev')}
-        </button>
-    `;
-
-  // Page numbers
   const maxButtons = 5;
   let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
   let endPage = Math.min(pages, startPage + maxButtons - 1);
@@ -358,47 +390,39 @@ function renderPagination(pagination) {
   if (startPage > 1) {
     buttonsHtml += `<button class="page-btn" data-page="1">1</button>`;
     if (startPage > 2) {
-      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
+      buttonsHtml += '<span class="pagination-ellipsis">...</span>';
     }
   }
 
-  for (let i = startPage; i <= endPage; i++) {
+  for (let i = startPage; i <= endPage; i += 1) {
     buttonsHtml += `
-            <button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">
-                ${i}
-            </button>
-        `;
+      <button class="page-btn ${i === page ? 'active' : ''}" data-page="${i}">
+        ${i}
+      </button>
+    `;
   }
 
   if (endPage < pages) {
     if (endPage < pages - 1) {
-      buttonsHtml += `<span class="pagination-ellipsis">...</span>`;
+      buttonsHtml += '<span class="pagination-ellipsis">...</span>';
     }
     buttonsHtml += `<button class="page-btn" data-page="${pages}">${pages}</button>`;
   }
 
-  // Next button
   buttonsHtml += `
-        <button class="page-btn" ${page >= pages ? 'disabled' : ''} data-page="${page + 1}">
-            ${t('common.next')}
-        </button>
-    `;
+    <button class="page-btn" ${page >= pages ? 'disabled' : ''} data-page="${page + 1}">
+      ${t('common.next')}
+    </button>
+  `;
 
   paginationControls.innerHTML = buttonsHtml;
 }
 
-/**
- * Navigate to a specific page
- */
 function goToPage(page) {
   if (page < 1 || page > totalPages) return;
   currentPage = page;
   loadUsers(currentPage, currentLimit);
 }
-
-// ============================================
-// FILTER FUNCTIONS
-// ============================================
 
 function getFilters() {
   return {
@@ -415,11 +439,9 @@ function setupFilters() {
     loadUsers(currentPage, currentLimit);
   }, 500);
 
-  // Text inputs
   filterName.addEventListener('input', debouncedLoad);
   filterEmail.addEventListener('input', debouncedLoad);
 
-  // Select inputs
   filterStatus.addEventListener('change', () => {
     currentPage = 1;
     loadUsers(currentPage, currentLimit);
@@ -429,7 +451,6 @@ function setupFilters() {
     loadUsers(currentPage, currentLimit);
   });
 
-  // Clear button
   clearFiltersBtn.addEventListener('click', () => {
     filterName.value = '';
     filterEmail.value = '';

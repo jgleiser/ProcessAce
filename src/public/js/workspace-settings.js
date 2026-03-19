@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // State
   let currentUser = null;
   let activeModal = null; // Track active modal for back button / escape support
+  let activeWorkspaceContext = null;
 
   // --- Modal Logic (Close on Back / Escape / Click Outside) ---
 
@@ -49,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle Browser Back Button
   window.addEventListener('popstate', () => {
     if (activeModal) {
+      if (activeModal === manageModal) {
+        activeWorkspaceContext = null;
+      }
       activeModal.classList.add('hidden');
       activeModal = null;
     }
@@ -126,24 +130,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const jobCount = workspace.job_count || 0;
     const artifactCount = workspace.artifact_count || 0;
     const memberCount = workspace.member_count || 0;
+    const isDefaultWorkspace = Boolean(workspace.is_default_workspace);
+    const isProtectedPersonalWorkspace = Boolean(workspace.is_protected_personal_workspace);
+    const isPersonalWorkspace = workspace.workspace_kind === 'personal';
 
     const roleText = isOwner ? t('roles.owner') : workspace.role ? t(`roles.${workspace.role}`) : t('roles.viewer');
 
     let actionsContent;
     if (isOwner) {
-      if (workspace.name === 'My Workspace') {
+      if (isDefaultWorkspace) {
         actionsContent = `
                         <div class="ws-card-info-text">${t('workspaceSettings.defaultWorkspace')}</div>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
+                    `;
+      } else if (isProtectedPersonalWorkspace) {
+        actionsContent = `
+                        <div class="ws-card-info-text">${t('workspaceSettings.personalWorkspace')}</div>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
+                    `;
+      } else if (isPersonalWorkspace) {
+        actionsContent = `
+                        <div class="ws-card-info-text">${t('workspaceSettings.personalWorkspace')}</div>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
                     `;
       } else {
         actionsContent = `
-                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner">${t('common.manage')}</button>
+                        <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="owner" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
                         <button class="action-btn danger delete-ws-btn" data-id="${workspace.id}">${t('common.delete')}</button>
                     `;
       }
     } else if (workspace.role === 'admin') {
       actionsContent = `
-                    <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="admin">${t('common.manage')}</button>
+                    <button class="action-btn primary manage-btn" data-id="${workspace.id}" data-name="${workspace.name}" data-owner-id="${workspace.owner_id}" data-role="admin" data-workspace-kind="${workspace.workspace_kind}">${t('common.manage')}</button>
                 `;
     } else {
       actionsContent = `
@@ -187,7 +205,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = btn.getAttribute('data-name');
         const ownerId = btn.getAttribute('data-owner-id');
         const myRole = btn.getAttribute('data-role');
-        openManageModal(id, name, ownerId, myRole);
+        const workspaceKind = btn.getAttribute('data-workspace-kind');
+        openManageModal(id, name, ownerId, myRole, workspaceKind);
       });
     });
 
@@ -225,16 +244,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Manage Modal Logic ---
 
-  async function openManageModal(id, name, ownerId, myRole) {
+  async function openManageModal(id, name, ownerId, myRole, workspaceKind) {
     modalWorkspaceName.textContent = name;
     manageWorkspaceIdInput.value = id;
+    activeWorkspaceContext = { workspaceId: id, ownerId, myRole, workspaceKind };
 
     openModal(manageModal); // Use helper
 
     // Reset tabs
     switchTab('members');
 
-    loadMembers(id, ownerId, myRole);
+    loadMembers(id, ownerId, myRole, workspaceKind);
     loadInvitations(id);
   }
 
@@ -268,7 +288,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (tabInvites) tabInvites.addEventListener('click', () => switchTab('invites'));
 
   // Loading Members/Invites
-  async function loadMembers(workspaceId, ownerId, myRole) {
+  async function loadMembers(
+    workspaceId = activeWorkspaceContext?.workspaceId,
+    ownerId = activeWorkspaceContext?.ownerId,
+    myRole = activeWorkspaceContext?.myRole,
+    workspaceKind = activeWorkspaceContext?.workspaceKind,
+  ) {
     try {
       const res = await fetch(`/api/workspaces/${workspaceId}/members?t=${Date.now()}`);
       const members = await res.json();
@@ -294,11 +319,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 2. Member must NOT be owner
             // 3. Member must NOT be ME (leave workspace instead)
             const canRemove = canManage && !isMemberOwner && !isMe;
+            const canTransferOwnership =
+              currentUser && currentUser.role === 'superadmin' && workspaceKind === 'named' && !isMemberOwner && m.status === 'active';
 
             const removeButton = canRemove
               ? `
                                 <button class="btn-icon remove-member" data-uid="${m.id}" data-wid="${workspaceId}">
                                     <i data-lucide="trash-2" class="icon-sm"></i>
+                                </button>
+                            `
+              : '';
+            const transferOwnershipButton = canTransferOwnership
+              ? `
+                                <button class="action-btn primary make-owner-btn" data-uid="${m.id}" data-wid="${workspaceId}" data-owner-id="${ownerId}">
+                                    ${t('workspaceSettings.makeOwner')}
                                 </button>
                             `
               : '';
@@ -336,6 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="member-row">
                             ${roleDisplay}
+                            ${transferOwnershipButton}
                             ${removeButton}
                         </div>
                     </li>
@@ -382,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (res.ok) {
                   showInviteMessage('success', t('workspaceSettings.roleUpdated'));
-                  loadMembers(wid, ownerId, myRole);
+                  loadMembers(wid, ownerId, myRole, workspaceKind);
                 } else {
                   const err = await res.json();
                   showInviteMessage('error', err.error || t('workspaceSettings.roleUpdateFailed'));
@@ -396,8 +431,49 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Attach cancel listener
             const cancelBtn = container.querySelector('.cancel-role-btn');
             cancelBtn.addEventListener('click', () => {
-              loadMembers(workspaceId, ownerId, myRole); // Reload to reset
+              loadMembers(workspaceId, ownerId, myRole, workspaceKind); // Reload to reset
             });
+          });
+        });
+
+        document.querySelectorAll('.make-owner-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const confirmed = await showConfirmModal(
+              t('workspaceSettings.transferOwnershipConfirm'),
+              t('workspaceSettings.transferOwnershipTitle'),
+              t('workspaceSettings.makeOwner'),
+              t('common.cancel'),
+            );
+
+            if (!confirmed) {
+              return;
+            }
+
+            try {
+              const transferRes = await fetch(`/api/workspaces/${btn.dataset.wid}/transfer-ownership`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newOwnerUserId: btn.dataset.uid }),
+              });
+
+              if (!transferRes.ok) {
+                const errorData = await transferRes.json();
+                throw new Error(errorData.error || t('workspaceSettings.transferOwnershipFailed'));
+              }
+
+              showInviteMessage('success', t('workspaceSettings.transferOwnershipSuccess'));
+              activeWorkspaceContext = {
+                workspaceId: btn.dataset.wid,
+                ownerId: btn.dataset.uid,
+                myRole: myRole === 'owner' ? 'admin' : myRole,
+                workspaceKind,
+              };
+              await loadWorkspaces();
+              loadMembers();
+            } catch (error) {
+              console.error(error);
+              showInviteMessage('error', error.message || t('workspaceSettings.transferOwnershipError'));
+            }
           });
         });
 
@@ -463,7 +539,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Actions
   async function removeMember(wid, uid) {
     await fetch(`/api/workspaces/${wid}/members/${uid}`, { method: 'DELETE' });
-    loadMembers(wid);
+    loadMembers();
   }
 
   async function revokeInvitation(wid, inviteId) {

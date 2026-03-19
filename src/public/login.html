@@ -68,7 +68,7 @@
     </div>
 
     <script src="js/i18n.js"></script>
-    <script>
+    <script nonce="__CSP_NONCE__">
       // Initialize i18n for login page (no header.js on auth pages)
       if (globalThis.i18n) globalThis.i18n.init();
 
@@ -124,7 +124,13 @@
           if (response.ok) {
             globalThis.location.href = '/';
           } else {
-            errorMsg.textContent = data.error || t('login.loginFailed');
+            const loginErrorMessages = {
+              'Account is deactivated': t('login.accountInactive'),
+              'Your account is pending administrator approval.': t('login.accountPending'),
+              'Your registration was not approved.': t('login.accountRejected'),
+            };
+
+            errorMsg.textContent = loginErrorMessages[data.error] || data.error || t('login.loginFailed');
             errorMsg.style.display = 'block';
           }
         } catch (err) {

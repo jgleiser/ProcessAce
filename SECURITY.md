@@ -52,9 +52,20 @@ We will:
 Because ProcessAce is a **self-hosted** and **BYO-LLM** tool, you are responsible for securing your own deployments. We strongly recommend:
 
 - Running ProcessAce behind proper authentication and HTTPS.
+- Using the bundled TLS overlay (`docker-compose.tls.yml`) or an equivalent reverse proxy so only `80/443` are publicly exposed.
 - Limiting network exposure (e.g. via firewalls, VPN, reverse proxies).
 - Restricting access to admin interfaces and configuration.
+- Assigning the first bootstrap account carefully, since it becomes the initial `superadmin`.
+- Using `superadmin` only for privileged controls such as role delegation and full-instance reset.
+- Setting strong deployment secrets for `JWT_SECRET`, `ENCRYPTION_KEY`, `SQLITE_ENCRYPTION_KEY`, and `REDIS_PASSWORD`.
+- Restricting browser access with an explicit `CORS_ALLOWED_ORIGINS` value.
+- Ensuring Docker bind mounts such as `data/` and `uploads/` are writable by the unprivileged container user.
+- Planning a one-time SQLCipher migration before upgrading any existing plaintext production database file.
+- Rebuilding the Docker image after encrypted-database dependency changes so the native module is compiled for the container runtime.
+- Installing the native Node.js build prerequisites first when deploying without Docker if your platform does not have a prebuilt binary for the encrypted SQLite module.
 - Keeping dependencies and the base OS up to date.
 - Treating LLM credentials and other API keys as secrets.
+- Reviewing the checked-in compliance procedures under `docs/compliance/` and adapting them to your organization before handling regulated data.
+- Communicating to users that self-service account deactivation preserves organizational workspaces and that full-instance deletion is a superadmin-only operation.
 
 Additional hardening guides and configuration examples will be added to the documentation as the project matures.

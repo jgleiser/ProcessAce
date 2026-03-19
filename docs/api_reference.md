@@ -16,21 +16,24 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Authentication (`/api/auth`)
 
-| Method | Path                 | Auth | Description                          |
-| ------ | -------------------- | ---- | ------------------------------------ |
-| `POST` | `/api/auth/register` | No   | Register a new user                  |
-| `POST` | `/api/auth/login`    | No   | Authenticate and receive JWT cookie  |
-| `POST` | `/api/auth/logout`   | No   | Clear the auth cookie                |
-| `GET`  | `/api/auth/me`       | Yes  | Get current user profile             |
-| `PUT`  | `/api/auth/me`       | Yes  | Update current user (name, password) |
+| Method | Path                       | Auth | Description                             |
+| ------ | -------------------------- | ---- | --------------------------------------- |
+| `POST` | `/api/auth/register`       | No   | Register a new user                     |
+| `POST` | `/api/auth/login`          | No   | Authenticate and receive JWT cookie     |
+| `POST` | `/api/auth/logout`         | No   | Clear the auth cookie                   |
+| `GET`  | `/api/auth/me`             | Yes  | Get current user profile                |
+| `GET`  | `/api/auth/me/consent`     | Yes  | Get current user's consent history      |
+| `GET`  | `/api/auth/me/data-export` | Yes  | Download the current user's data export |
+| `POST` | `/api/auth/me/deactivate`  | Yes  | Deactivate the current user's account   |
+| `PUT`  | `/api/auth/me`             | Yes  | Update current user (name, password)    |
 
 ### `POST /api/auth/register`
 
 **Body**: `{ "name": "string", "email": "string", "password": "string" }`
 
 - Password: 8+ chars, uppercase, lowercase, numbers.
-- First user becomes `admin`; subsequent users get `viewer` role.
-- Returns `201` with user object.
+- First user becomes an active `superadmin`; subsequent users become pending `editor` accounts until approved.
+- Returns `201` with `{ user, message }`.
 
 ### `POST /api/auth/login`
 
@@ -38,12 +41,43 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Sets `auth_token` HTTP-only cookie (24h expiry).
 - Returns `200` with `{ message, user }`.
+- Returns `423` after repeated failed attempts temporarily lock the account.
+- Returns `403` for `pending`, `rejected`, or `inactive` accounts.
+
+### `POST /api/auth/logout`
+
+- Clears the `auth_token` cookie even if the session is already invalid.
+- Revokes the current JWT when it is still valid so the same cookie cannot be replayed after logout.
 
 ### `PUT /api/auth/me`
 
 **Body**: `{ "name"?: "string", "password"?: "string", "currentPassword"?: "string" }`
 
 - `currentPassword` required when changing password.
+
+### `GET /api/auth/me`
+
+- Returns the current profile including `created_at` and nullable `last_login_at`.
+
+### `GET /api/auth/me/consent`
+
+- Returns `{ consentHistory: [...] }`.
+- Consent records include `consent_type`, `granted`, `timestamp`, and `ip_address`.
+
+### `GET /api/auth/me/data-export`
+
+- Returns an `application/json` attachment with the authenticated user's profile metadata, workspace memberships, owned-workspace metadata, evidence metadata, artifacts, jobs, notifications, and consent history.
+- Excludes password hashes, auth tokens, encrypted provider keys, internal filesystem paths, and other users' personal data.
+
+### `POST /api/auth/me/deactivate`
+
+**Body**: `{ "currentPassword": "string" }`
+
+- Marks the current account as `inactive`.
+- Transfers named workspaces to the primary active `superadmin`.
+- Transfers personal workspaces to the primary active `superadmin` as protected personal workspaces renamed to `<display name> Personal Workspace`.
+- Revokes the current JWT and clears the auth cookie.
+- If the user is later reactivated, their original personal workspace is restored to them as `My Workspace`.
 
 ---
 
@@ -64,6 +98,8 @@ All API endpoints are served under `http://localhost:3000` (default).
 - `processName` (optional): Custom process name.
 - `uploadType` (optional): Use `audio` to force audio/video handling.
 - Provider/model from app settings are used automatically.
+- Allowed upload extensions: `.mp3`, `.m4a`, `.wav`, `.mp4`, `.webm`, `.ogg`, `.flac`, `.mpeg`, `.mpga`, `.oga`, `.txt`, `.md`, `.pdf`, `.doc`, `.docx`.
+- Oversized uploads return `413`; unsupported upload types return `415`.
 - Audio/video uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "transcription", statusUrl }`.
 - Text/document uploads return `202 Accepted` with `{ evidenceId, jobId, phase: "processing", statusUrl }`.
 
@@ -144,39 +180,51 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ## Workspaces (`/api/workspaces`)
 
-| Method   | Path                                        | Auth | Description                     |
-| -------- | ------------------------------------------- | ---- | ------------------------------- |
-| `GET`    | `/api/workspaces`                           | Yes  | List current user's workspaces  |
-| `POST`   | `/api/workspaces`                           | Yes  | Create a new workspace          |
-| `DELETE` | `/api/workspaces/:id`                       | Yes  | Delete a workspace (Owner only) |
-| `GET`    | `/api/workspaces/:id/members`               | Yes  | Get workspace members           |
-| `PUT`    | `/api/workspaces/:id/members/:userId`       | Yes  | Update member role              |
-| `DELETE` | `/api/workspaces/:id/members/:userId`       | Yes  | Remove member                   |
-| `POST`   | `/api/workspaces/:id/invite`                | Yes  | Invite user                     |
-| `GET`    | `/api/workspaces/:id/invitations`           | Yes  | List pending invitations        |
-| `DELETE` | `/api/workspaces/:id/invitations/:inviteId` | Yes  | Revoke invitation               |
+| Method   | Path                                        | Auth | Description                                          |
+| -------- | ------------------------------------------- | ---- | ---------------------------------------------------- |
+| `GET`    | `/api/workspaces`                           | Yes  | List current user's workspaces                       |
+| `POST`   | `/api/workspaces`                           | Yes  | Create a new workspace                               |
+| `DELETE` | `/api/workspaces/:id`                       | Yes  | Delete a workspace (Owner only)                      |
+| `POST`   | `/api/workspaces/:id/transfer-ownership`    | Yes  | Transfer named workspace ownership (Superadmin only) |
+| `GET`    | `/api/workspaces/:id/members`               | Yes  | Get workspace members                                |
+| `PUT`    | `/api/workspaces/:id/members/:userId`       | Yes  | Update member role                                   |
+| `DELETE` | `/api/workspaces/:id/members/:userId`       | Yes  | Remove member                                        |
+| `POST`   | `/api/workspaces/:id/invite`                | Yes  | Invite user                                          |
+| `GET`    | `/api/workspaces/:id/invitations`           | Yes  | List pending invitations                             |
+| `DELETE` | `/api/workspaces/:id/invitations/:inviteId` | Yes  | Revoke invitation                                    |
 
 ### `POST /api/workspaces`
 
 **Body**: `{ "name": "string" }`
 
 - Returns `201` with workspace object.
+- User-created workspaces are created as `workspace_kind = "named"`.
 
 ### `DELETE /api/workspaces/:id`
 
 - Deletes a workspace and all its contents.
 - **Note**: Only the workspace owner can delete it.
+- Personal workspaces cannot be deleted.
+
+### `POST /api/workspaces/:id/transfer-ownership`
+
+**Body**: `{ "newOwnerUserId": "string" }`
+
+- Superadmin only.
+- Only available for `named` workspaces.
+- The new owner must already be an active member of the workspace.
+- Keeps the previous owner as a workspace admin member.
 
 ### `GET /api/workspaces/:id/members`
 
-- Returns a list of members in the workspace with their roles.
+- Returns a list of members in the workspace with their roles and account status.
 
 ### `PUT /api/workspaces/:id/members/:userId`
 
 **Body**: `{ "role": "viewer" | "editor" }`
 
 - Updates a member's role.
-- **Note**: Only the workspace owner can manage roles.
+- **Note**: Workspace owners and admins can manage roles.
 
 ### `DELETE /api/workspaces/:id/members/:userId`
 
@@ -188,6 +236,7 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 - Invites a user to the workspace.
 - Returns `200` with the invitation object.
+- Workspace owners and admins can invite users.
 
 ### `GET /api/workspaces/:id/invitations`
 
@@ -199,22 +248,22 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ---
 
-## Settings (`/api/settings`) — Admin Only
+## Settings (`/api/settings`) — Admin or Superadmin Only
 
-| Method   | Path                            | Auth  | Description                         |
-| -------- | ------------------------------- | ----- | ----------------------------------- |
-| `GET`    | `/api/settings`                 | Admin | Get all application settings        |
-| `PUT`    | `/api/settings`                 | Admin | Create or update a setting by key   |
-| `DELETE` | `/api/settings`                 | Admin | Delete a setting by key             |
-| `POST`   | `/api/settings/verify-provider` | Admin | Verify LLM provider and list models |
-| `GET`    | `/api/settings/llm/catalog`     | Admin | Get the curated Ollama model catalog |
-| `POST`   | `/api/settings/llm/pull`        | Admin | Start an Ollama generation model download |
-| `DELETE` | `/api/settings/llm/model`       | Admin | Remove an installed Ollama generation model |
-| `GET`    | `/api/settings/llm/pull/:jobId` | Admin | Get generation model pull status |
-| `GET`    | `/api/settings/transcription/catalog` | Admin | Get the local transcription catalog metadata |
-| `POST`   | `/api/settings/transcription/pull` | Admin | Start a transcription model download job |
-| `DELETE` | `/api/settings/transcription/model` | Admin | Remove an installed transcription model |
-| `GET`    | `/api/settings/transcription/pull/:jobId` | Admin | Get transcription model pull status |
+| Method   | Path                                      | Auth  | Description                                  |
+| -------- | ----------------------------------------- | ----- | -------------------------------------------- |
+| `GET`    | `/api/settings`                           | Admin | Get all application settings                 |
+| `PUT`    | `/api/settings`                           | Admin | Create or update a setting by key            |
+| `DELETE` | `/api/settings`                           | Admin | Delete a setting by key                      |
+| `POST`   | `/api/settings/verify-provider`           | Admin | Verify LLM provider and list models          |
+| `GET`    | `/api/settings/llm/catalog`               | Admin | Get the curated Ollama model catalog         |
+| `POST`   | `/api/settings/llm/pull`                  | Admin | Start an Ollama generation model download    |
+| `DELETE` | `/api/settings/llm/model`                 | Admin | Remove an installed Ollama generation model  |
+| `GET`    | `/api/settings/llm/pull/:jobId`           | Admin | Get generation model pull status             |
+| `GET`    | `/api/settings/transcription/catalog`     | Admin | Get the local transcription catalog metadata |
+| `POST`   | `/api/settings/transcription/pull`        | Admin | Start a transcription model download job     |
+| `DELETE` | `/api/settings/transcription/model`       | Admin | Remove an installed transcription model      |
+| `GET`    | `/api/settings/transcription/pull/:jobId` | Admin | Get transcription model pull status          |
 
 ### `PUT /api/settings`
 
@@ -248,13 +297,15 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ---
 
-## Admin (`/api/admin`) — Admin Only
+## Admin (`/api/admin`) — Admin or Superadmin Only
 
-| Method  | Path                   | Auth  | Description                          |
-| ------- | ---------------------- | ----- | ------------------------------------ |
-| `GET`   | `/api/admin/users`     | Admin | List all users (paginated)           |
-| `PATCH` | `/api/admin/users/:id` | Admin | Update a user's role and/or status   |
-| `GET`   | `/api/admin/jobs`      | Admin | List all jobs (paginated, all users) |
+| Method  | Path                           | Auth  | Description                          |
+| ------- | ------------------------------ | ----- | ------------------------------------ |
+| `GET`   | `/api/admin/users`             | Admin | List all users (paginated)           |
+| `PATCH` | `/api/admin/users/:id`         | Admin | Update a user's role and/or status   |
+| `POST`  | `/api/admin/users/:id/approve` | Admin | Approve a pending or rejected user   |
+| `POST`  | `/api/admin/users/:id/reject`  | Admin | Reject a pending user                |
+| `GET`   | `/api/admin/jobs`              | Admin | List all jobs (paginated, all users) |
 
 ### `GET /api/admin/users`
 
@@ -264,10 +315,23 @@ All API endpoints are served under `http://localhost:3000` (default).
 
 ### `PATCH /api/admin/users/:id`
 
-**Body**: `{ "role"?: "admin" | "editor" | "viewer", "status"?: "active" | "inactive" }`
+**Body**: `{ "role"?: "superadmin" | "admin" | "editor" | "viewer", "status"?: "active" | "inactive" }`
 
 - Updates one or both fields.
 - Cannot modify your own user.
+- Only superadmins can assign or revoke `admin` / `superadmin` roles.
+- `pending` and `rejected` registration states are managed through the dedicated approval endpoints.
+- Reactivating an inactive user restores any transferred personal workspace back to that user as `My Workspace`.
+
+### `POST /api/admin/users/:id/approve`
+
+- Promotes a `pending` or `rejected` user to `active`.
+- Creates an in-app notification for the target user.
+
+### `POST /api/admin/users/:id/reject`
+
+- Changes a `pending` user to `rejected`.
+- Creates an in-app notification for the target user.
 
 ### `GET /api/admin/jobs`
 
@@ -305,6 +369,11 @@ All API endpoints are served under `http://localhost:3000` (default).
 | `POST` | `/api/invitations/:token/accept`  | Yes  | Accept an invitation            |
 | `POST` | `/api/invitations/:token/decline` | Yes  | Decline an invitation           |
 
+### `GET /api/invitations/:token`
+
+- Returns only `{ workspaceName, status, expired }`.
+- Returns `410 Gone` with the same shape when the invitation is expired.
+
 ### `POST /api/invitations/:token/accept`
 
 - Adds the user to the workspace with the invited role.
@@ -315,6 +384,22 @@ All API endpoints are served under `http://localhost:3000` (default).
 - Marks the invitation as declined.
 - Returns `200` with the updated invitation.
 
+---
+
+## Superadmin (`/api/superadmin`) — Superadmin Only
+
+| Method | Path                             | Auth       | Description                                  |
+| ------ | -------------------------------- | ---------- | -------------------------------------------- |
+| `POST` | `/api/superadmin/reset-instance` | Superadmin | Delete all application data and re-bootstrap |
+
+### `POST /api/superadmin/reset-instance`
+
+**Body**: `{ "currentPassword": "string", "confirmationText": "DELETE ALL" }`
+
+- Deletes all users, workspaces, evidence, artifacts, notifications, consent records, login-attempt records, app settings, and uploaded files.
+- Clears the current auth cookie and revokes the current JWT.
+- Leaves the schema and binaries intact so the next registration bootstraps a fresh `superadmin`.
+
 ## Error Responses
 
 All endpoints return errors in the format:
@@ -323,13 +408,16 @@ All endpoints return errors in the format:
 { "error": "Error message description" }
 ```
 
+Some operational error responses also include a `correlationId` field for support and audit tracing.
+
 Common HTTP status codes:
 
-| Code  | Meaning                                  |
-| ----- | ---------------------------------------- |
-| `400` | Bad request (missing/invalid parameters) |
-| `401` | Unauthorized (missing or invalid JWT)    |
-| `403` | Forbidden (insufficient role)            |
-| `404` | Resource not found                       |
-| `409` | Conflict (e.g. duplicate user)           |
-| `500` | Internal server error                    |
+| Code  | Meaning                                                 |
+| ----- | ------------------------------------------------------- |
+| `400` | Bad request (missing/invalid parameters)                |
+| `401` | Unauthorized (missing or invalid JWT)                   |
+| `403` | Forbidden (insufficient role)                           |
+| `404` | Resource not found                                      |
+| `409` | Conflict (e.g. duplicate user)                          |
+| `423` | Account temporarily locked after repeated failed logins |
+| `500` | Internal server error                                   |

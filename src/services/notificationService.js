@@ -69,8 +69,9 @@ class NotificationService {
    * Mark notification as read
    * @param {string} id
    */
-  markAsRead(id) {
-    db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?').run(id);
+  markAsRead(id, userId) {
+    const result = db.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?').run(id, userId);
+    return result.changes > 0;
   }
 
   /**
@@ -85,8 +86,13 @@ class NotificationService {
    * Delete a notification
    * @param {string} id
    */
-  deleteNotification(id) {
+  deleteNotification(id, userId) {
+    if (userId) {
+      const result = db.prepare('DELETE FROM notifications WHERE id = ? AND user_id = ?').run(id, userId);
+      return result.changes > 0;
+    }
     db.prepare('DELETE FROM notifications WHERE id = ?').run(id);
+    return true;
   }
 
   /**

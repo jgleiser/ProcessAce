@@ -2,23 +2,25 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Install build dependencies for better-sqlite3
-# python3, make, and g++ are needed for native modules
-# ffmpeg is needed for fluent-ffmpeg audio chunking
-RUN apk add --no-cache python3 make g++ ffmpeg
+# Install build/runtime dependencies for native SQLite drivers and ffmpeg.
+RUN apk add --no-cache python3 make g++ ffmpeg pkgconfig
 
 COPY package*.json ./
 
 # Install production dependencies
-RUN npm ci --only=production
+RUN npm_config_build_from_source=true npm ci --omit=dev
 
-# Rebuild better-sqlite3 for the container architecture
-RUN npm rebuild better-sqlite3
+# Rebuild native modules for the container architecture
+RUN npm rebuild better-sqlite3 --build-from-source && npm rebuild better-sqlite3-multiple-ciphers --build-from-source
 
 COPY . .
 
+# Create an unprivileged runtime user and ensure writable app directories
+RUN adduser -D -h /app appuser && mkdir -p /app/uploads /app/data && chown -R appuser:appuser /app
+
+USER appuser
+
 # Create volume mount point for database and uploads
-RUN mkdir -p uploads
 VOLUME /app/uploads
 VOLUME /app/data
 

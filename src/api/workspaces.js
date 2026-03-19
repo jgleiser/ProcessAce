@@ -1,6 +1,8 @@
 const express = require('express');
 const workspaceService = require('../services/workspaceService');
-const logger = require('../logging/logger');
+const { requireSuperAdmin } = require('../middleware/requireSuperAdmin');
+const { isPersonalWorkspace } = require('../utils/workspaces');
+const { sendErrorResponse } = require('../utils/errorResponse');
 
 const router = express.Router();
 
@@ -13,8 +15,7 @@ router.get('/', async (req, res) => {
     const workspaces = workspaceService.getUserWorkspaces(req.user.id);
     res.json(workspaces);
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch workspaces');
-    res.status(500).json({ error: 'Failed to fetch workspaces' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -25,14 +26,14 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
     const workspace = await workspaceService.createWorkspace(name, req.user.id);
     res.status(201).json(workspace);
   } catch (error) {
-    logger.error({ err: error }, 'Failed to create workspace');
-    res.status(500).json({ error: 'Failed to create workspace' });
+    if (error.message === 'Name is required' || error.message === `"My Workspace" and "* Personal Workspace" are reserved workspace names`) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -51,6 +52,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Workspace not found' });
     }
 
+    if (isPersonalWorkspace(workspace)) {
+      return res.status(403).json({ error: 'Personal workspaces cannot be deleted' });
+    }
+
     if (workspace.owner_id !== userId) {
       return res.status(403).json({ error: 'Only the workspace owner can delete it' });
     }
@@ -58,8 +63,35 @@ router.delete('/:id', async (req, res) => {
     workspaceService.deleteWorkspace(workspaceId);
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error deleting workspace');
-    res.status(500).json({ error: 'Failed to delete workspace' });
+    return sendErrorResponse(res, error, req);
+  }
+});
+
+router.post('/:id/transfer-ownership', requireSuperAdmin, async (req, res) => {
+  try {
+    const workspaceId = req.params.id;
+    const { newOwnerUserId } = req.body || {};
+
+    if (!newOwnerUserId) {
+      return res.status(400).json({ error: 'newOwnerUserId is required' });
+    }
+
+    const workspace = workspaceService.transferOwnership(workspaceId, newOwnerUserId);
+    res.json({ success: true, workspace });
+  } catch (error) {
+    if (error.message === 'Workspace not found') {
+      return res.status(404).json({ error: error.message });
+    }
+
+    if (error.message === 'Personal workspaces cannot be transferred') {
+      return res.status(403).json({ error: error.message });
+    }
+
+    if (error.message === 'User already owns this workspace' || error.message === 'New owner must be an active workspace member') {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -69,12 +101,16 @@ router.delete('/:id', async (req, res) => {
  */
 router.get('/:id/members', async (req, res) => {
   try {
-    // TODO: Check if user is member of workspace first
-    const members = workspaceService.getWorkspaceMembers(req.params.id);
+    const workspaceId = req.params.id;
+
+    if (!workspaceService.isMember(workspaceId, req.user.id)) {
+      return res.status(403).json({ error: 'Access denied. You are not a member of this workspace.' });
+    }
+
+    const members = workspaceService.getWorkspaceMembers(workspaceId);
     res.json(members);
   } catch (error) {
-    logger.error({ err: error }, 'Error fetching members');
-    res.status(500).json({ error: 'Failed to fetch members' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -103,8 +139,7 @@ router.delete('/:id/members/:userId', async (req, res) => {
     workspaceService.removeMember(workspaceId, targetUserId);
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error removing member');
-    res.status(500).json({ error: 'Failed to remove member' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -139,11 +174,10 @@ router.put('/:id/members/:userId', async (req, res) => {
     workspaceService.updateMemberRole(workspaceId, targetUserId, role);
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error updating member role');
     if (error.message === 'Invalid role' || error.message === 'Cannot change role of workspace owner') {
       return res.status(400).json({ error: error.message });
     }
-    res.status(500).json({ error: 'Failed to update member role' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -166,11 +200,10 @@ router.post('/:id/invite', async (req, res) => {
     const result = workspaceService.inviteUser(workspaceId, currentUserId, email, role);
     res.json(result);
   } catch (error) {
-    logger.error({ err: error }, 'Error inviting user');
     if (error.message === 'User is already a member of this workspace') {
       return res.status(400).json({ error: error.message });
     }
-    res.status(500).json({ error: 'Failed to invite user' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -192,8 +225,7 @@ router.get('/:id/invitations', async (req, res) => {
     const invitations = workspaceService.getPendingInvitations(workspaceId);
     res.json(invitations);
   } catch (error) {
-    logger.error({ err: error }, 'Error fetching invitations');
-    res.status(500).json({ error: 'Failed to fetch invitations' });
+    return sendErrorResponse(res, error, req);
   }
 });
 
@@ -219,8 +251,7 @@ router.delete('/:id/invitations/:inviteId', async (req, res) => {
     workspaceService.revokeInvitation(req.params.inviteId);
     res.json({ success: true });
   } catch (error) {
-    logger.error({ err: error }, 'Error revoking invitation');
-    res.status(500).json({ error: 'Failed to revoke invitation' });
+    return sendErrorResponse(res, error, req);
   }
 });
 

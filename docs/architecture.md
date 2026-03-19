@@ -62,10 +62,11 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
 - Pages:
   - `index.html` – Main dashboard (upload, job list, artifact viewer/editor).
   - `login.html` / `register.html` – Authentication.
-  - `admin-users.html` – Admin panel for user management (roles, status).
+  - `admin-users.html` – Admin/Superadmin panel for user management (roles, status, approvals).
   - `admin-jobs.html` – Admin view of all jobs across workspaces.
-  - `app-settings.html` – Application settings (LLM providers, API keys).
-  - `user-settings.html` – User profile (name, password).
+  - `app-settings.html` – Application settings plus superadmin-only reset controls.
+  - `user-settings.html` – User profile, privacy export, consent history, and self-deactivation.
+- `workspace-settings.html` – Workspace dashboard and membership management, including superadmin-only named-workspace ownership transfer.
 - Shared modules:
   - `js/header.js` – Header with user menu and workspace switcher.
   - `js/modal-utils.js` – Reusable confirmation modals.
@@ -87,8 +88,9 @@ Artifacts include metadata: `artifact_id`, `version`, `type`, `filename`, `creat
   - `/api/jobs` – Job CRUD, process name update (authenticated).
   - `/api/artifacts` – Artifact retrieval and content updates (authenticated).
   - `/api/workspaces` – Workspace CRUD (authenticated).
-  - `/api/settings` – App settings management (admin only, `src/api/settings.js`).
-  - `/api/admin` – User management, all-jobs overview (admin only, `src/api/admin-users.js`).
+  - `/api/settings` – App settings management (admin/superadmin only, `src/api/settings.js`).
+  - `/api/admin` – User management, approvals, all-jobs overview (admin/superadmin only, `src/api/admin.js`).
+  - `/api/superadmin` – Superadmin-only instance reset operations.
 
 The backend **does not perform heavy work synchronously**.  
 Instead, it:
@@ -188,16 +190,19 @@ The processing pipeline is implemented inside the worker process and consists of
 
 ### 3.6. Persistence
 
-- **Database**: **SQLite** (`better-sqlite3`) using WAL mode (`src/services/db.js`).
+- **Database**: **SQLite** with environment-specific drivers (`src/services/db.js`).
+  - Development/test: `better-sqlite3` with `data/processAce-dev.db` by default.
+  - Production: SQLCipher-compatible encrypted SQLite with `data/processAce.db` and a required `SQLITE_ENCRYPTION_KEY`.
   - Tables:
-    - `users` – id, name, email, password_hash, role, status, created_at.
-    - `workspaces` – id, name, owner_id, created_at.
+    - `users` – id, name, email, password_hash, role, status, created_at, last_login_at.
+    - `workspaces` – id, name, owner_id, created_at, workspace_kind, personal_owner_user_id.
     - `workspace_members` – workspace_id, user_id, role.
     - `workspace_invitations` – id, workspace_id, recipient_email, role, token, status, expires_at.
     - `evidence` – id, filename, originalName, mimeType, size, path, status, metadata, user_id, workspace_id.
     - `artifacts` – id, type, version, content, metadata, filename, user_id, workspace_id, llm_provider, llm_model.
     - `jobs` – id, type, data, status, result, error, process_name, user_id, workspace_id.
     - `app_settings` – key-value store for application configuration.
+    - `consent_records` – user consent type, granted flag, timestamp, and IP address.
   - Schema managed via initialization checks and ALTER TABLE migrations in `src/services/db.js`.
 - **File Storage**:
   - Local filesystem (`./uploads`) for raw evidence files.
@@ -212,18 +217,25 @@ The processing pipeline is implemented inside the worker process and consists of
 
 - **Auth Service** (`src/services/authService.js`):
   - Registration with email/password (password validated: 8+ chars, uppercase, lowercase, numbers).
-  - First registered user automatically gets `admin` role; subsequent users get `viewer`.
-  - Each new user gets a default workspace created automatically.
-  - Login returns JWT token set as HTTP-only cookie (`auth_token`).
-  - JWT expires in 24 hours; include user id, email, and role in payload.
+  - First registered user automatically gets `superadmin` role and `active` status; later self-registrations get `editor` role and `pending` status until approved.
+  - Each new user gets a default personal workspace created automatically (`workspace_kind = personal`, `personal_owner_user_id = owner_id`) and required consent records stored at registration time.
+  - Login returns JWT token set as HTTP-only cookie (`auth_token`) and updates `last_login_at`.
+  - JWT expires in 24 hours; include user id, email, role, and `jti` in payload.
+  - Users can self-export their personal data and self-deactivate. Self-deactivation preserves organizational data, transfers named workspaces to the primary active superadmin, and transfers personal workspaces as protected custodial records until reactivation.
+  - Reactivating an inactive user restores any transferred personal workspace back to that user as `My Workspace`.
+  - Superadmins can reset the full installation back to an empty bootstrap state.
 - **Middleware** (`src/middleware/auth.js`, `src/middleware/requireAdmin.js`):
   - `authenticateToken` – extracts and verifies JWT from cookies.
-  - `requireAdmin` – checks for `admin` role on protected admin routes.
+  - `requireAdmin` – checks for `admin` or `superadmin` role on protected admin routes.
+  - `requireSuperAdmin` – checks for `superadmin` role on destructive organizational controls.
 - **Roles**:
-  - **System Roles**: `admin` (can manage system settings/users), `user` (regular access).
+  - **System Roles**: `superadmin` (can manage privileged roles and reset the installation), `admin`, `editor`, `viewer`.
   - **Workspace Roles**: `owner` (full control), `editor` (can edit content), `viewer` (read-only).
-- **User Status**: `active`, `inactive` (inactive users cannot log in).
+- **User Status**: `active`, `inactive`, `pending`, `rejected`.
 - **Authorization**: Resources are scoped by `workspace_id`. Access is determined by the user's membership role in that workspace.
+- **Workspace Types**:
+  - `personal` – the user bootstrap workspace, protected from deletion and ownership transfer.
+  - `named` – standard collaborative workspaces, including superadmin-only ownership transfer to active members.
 
 ---
 
@@ -266,6 +278,8 @@ Example: "Text document → BPMN 2.0 + SIPOC + RACI + Doc"
 - Services (via `docker-compose.yml`):
   - `app` – API backend + worker + frontend (single Node.js process).
   - `redis` – Redis 7 Alpine for BullMQ job queue.
+- Production TLS overlay (`docker-compose.tls.yml`):
+  - `caddy` – reverse proxy and automatic HTTPS termination in front of `app`.
 - Volumes:
   - `./uploads` – mounted for evidence file persistence.
   - `./data` – mounted for SQLite database persistence.
@@ -276,6 +290,9 @@ Key properties:
 - No LLM is bundled; API keys are configured via the App Settings page.
 - Can run fully on-premise.
 - Supports both single-tenant deployments and, with commercial licensing, multi-tenant setups.
+- The base Docker stack now runs the `app` container as a non-root `appuser`.
+- Redis uses password authentication and is not exposed on a public host port in the base Compose stack.
+- The TLS overlay publishes only `80/443`; `app` and `redis` stay on the internal Compose network.
 
 ---
 
@@ -287,14 +304,21 @@ ProcessAce implements the following security measures:
 - **Password Security**: bcrypt hashing (10 salt rounds), complexity requirements enforced.
 - **API Key Encryption**: LLM API keys encrypted at rest with AES-256-CBC.
 - **Role-Based Access**: Admin-only endpoints for user management and settings.
-- **CSP Headers**: Helmet middleware with configured Content Security Policy.
+- **CSP Headers**: Helmet middleware with nonce-based Content Security Policy for inline scripts.
 - **Input Validation**: Server-side validation on all API endpoints.
+- **Upload Hardening**: Evidence uploads enforce an extension allowlist and a configurable maximum size.
+- **Session Hardening**: JWTs carry a `jti`, logouts revoke tokens through Redis, and protected requests re-check current user state from SQLite.
+- **Audit Trail**: Sensitive read operations emit `data_access` audit logs with actor/resource/correlation fields.
+- **PII Redaction**: Structured logs redact cookies, auth headers, passwords, API keys, emails, and token-like fields.
 
 Recommended practices for production:
 
-- Deploy behind TLS (reverse proxy).
-- Set `JWT_SECRET` and `ENCRYPTION_KEY` to strong, unique values.
+- Deploy behind TLS (the Caddy overlay is the default documented path).
+- Set `JWT_SECRET`, `ENCRYPTION_KEY`, `SQLITE_ENCRYPTION_KEY`, and `REDIS_PASSWORD` to strong, unique values.
+- Set `CORS_ALLOWED_ORIGINS` to the exact allowed frontend origin list.
 - Set `NODE_ENV=production` for secure cookies.
+- Ensure `data/` and `uploads/` bind mounts are writable by the container UID when running Docker on Linux hosts.
+- Migrate any legacy plaintext production database before enabling SQLCipher; the app will not auto-convert it in place.
 - Keep all dependencies and base images updated.
 
 ---

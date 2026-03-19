@@ -135,6 +135,8 @@ function setupLanguageSwitcher() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const isAdminRole = (role) => role === 'admin' || role === 'superadmin';
+
   // 1. Inject Header HTML
   injectHeader();
 
@@ -254,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (userDisplay) userDisplay.textContent = user.email;
 
       // Show Admin Links
-      if (user.role === 'admin') {
+      if (isAdminRole(user.role)) {
         if (adminLink) adminLink.classList.remove('hidden');
         if (adminJobsLink) adminJobsLink.classList.remove('hidden');
         if (appSettingsLink) appSettingsLink.classList.remove('hidden');

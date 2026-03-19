@@ -19,10 +19,10 @@ We chose the following approach:
 
 1. **JWT (JSON Web Tokens)** for stateless authentication, stored in **HTTP-only cookies** (not localStorage) to mitigate XSS risks.
 2. **bcrypt** (10 salt rounds) for password hashing.
-3. **Three roles**: `admin`, `editor`, `viewer`. The first registered user is automatically promoted to `admin`.
-4. **User status**: `active` / `inactive`. Inactive users are blocked at login.
-5. **Workspaces** for organizational grouping. Each user gets a default workspace on registration. Jobs and artifacts are scoped to `(user_id, workspace_id)`.
-6. **Middleware-based enforcement**: `authenticateToken` on all protected routes, `requireAdmin` on admin-only routes.
+3. **Four roles**: `superadmin`, `admin`, `editor`, `viewer`. The first registered user is automatically promoted to `superadmin`.
+4. **User status**: `active` / `inactive` / `pending` / `rejected`. Non-active users are blocked at login.
+5. **Workspaces** for organizational grouping. Each user gets a default personal workspace on registration. Jobs and artifacts are scoped to `(user_id, workspace_id)`.
+6. **Middleware-based enforcement**: `authenticateToken` on all protected routes, `requireAdmin` on admin routes, and `requireSuperAdmin` on privileged organizational controls.
 
 ### Alternatives Considered
 
@@ -36,4 +36,6 @@ We chose the following approach:
 - JWT secret must be configured via `JWT_SECRET` env var in production.
 - Password complexity is enforced server-side (8+ chars, uppercase, lowercase, numbers).
 - Admin pages (`admin-users.html`, `admin-jobs.html`, `app-settings.html`) are protected by `requireAdmin` middleware.
-- Database schema expanded: `users`, `workspaces`, `workspace_members` tables added.
+- Personal workspaces are protected records and are restored to the original user if that user is later reactivated.
+- Named workspace ownership can be transferred only by `superadmin` users and only to active existing members.
+- Database schema expanded: `users`, `workspaces`, `workspace_members` tables added and later extended with personal-workspace metadata.

@@ -42,6 +42,10 @@ globalThis.WorkspaceManager = (function () {
         if (validSavedWorkspace) {
           currentWorkspaceId = validSavedWorkspace.id;
           currentWorkspaceName = validSavedWorkspace.name;
+        } else if (workspacesCache.some((workspace) => workspace.is_default_workspace)) {
+          const defaultWorkspace = workspacesCache.find((workspace) => workspace.is_default_workspace);
+          currentWorkspaceId = defaultWorkspace.id;
+          currentWorkspaceName = defaultWorkspace.name;
         } else if (workspacesCache.length > 0) {
           currentWorkspaceId = workspacesCache[0].id;
           currentWorkspaceName = workspacesCache[0].name;

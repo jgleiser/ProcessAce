@@ -1045,6 +1045,61 @@
   border: 1px solid var(--error);
 }
 
+.consent-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.consent-history-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.consent-history-item:first-child {
+  padding-top: 0;
+}
+
+.consent-history-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.consent-history-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.consent-history-title {
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.consent-history-status {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.consent-history-status.is-granted {
+  color: var(--success);
+}
+
+.consent-history-status.is-revoked {
+  color: #ffb3ad;
+}
+
+.consent-history-meta {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 .model-pull-progress {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);

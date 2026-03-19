@@ -37,7 +37,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
   - **Narrative**: Download as Markdown or Print/Save as PDF.
 - **User Authentication & Workspaces**:
   - **Secure Login**: Email/password with JWT (HTTP-only cookies).
-  - **Role-Based Access**: Admin, Editor, and Viewer roles. First registered user becomes Admin.
+  - **Role-Based Access**: Admin, Editor, and Viewer roles. The first registered user becomes Admin; later self-registrations become pending Editors until approved by an Admin.
   - **Workspaces**: Create, switch, and share workspaces for organizing projects (Admin/Editor/Viewer roles).
   - **User Data Isolation**: Jobs and artifacts scoped per user and workspace.
 - **Multi-Provider LLM Support**:
@@ -46,7 +46,7 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 - **Robust Architecture**:
   - **Dockerized**: Easy deployment with Docker Compose (App + Redis).
   - **Async Processing**: Redis-backed job queue (BullMQ) for long-running generative tasks.
-  - **Persistence**: SQLite database (`better-sqlite3`, WAL mode).
+  - **Persistence**: SQLite (`better-sqlite3` in dev/test, SQLCipher-compatible encrypted SQLite in production).
 
 ---
 
@@ -71,8 +71,19 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
 
    ```bash
    cp .env.example .env
-   # Edit .env and set ENCRYPTION_KEY (required for secure API key storage)
+   # Edit .env and set JWT_SECRET, ENCRYPTION_KEY, SQLITE_ENCRYPTION_KEY, CORS_ALLOWED_ORIGINS, and REDIS_PASSWORD
    ```
+
+   Required for Docker startup:
+   - `JWT_SECRET`: signing secret for auth cookies
+   - `ENCRYPTION_KEY`: 32-byte hex key for encrypting stored provider API keys
+   - `SQLITE_ENCRYPTION_KEY`: production SQLCipher key for the app database
+   - `CORS_ALLOWED_ORIGINS`: comma-separated allowed origins, for example `http://localhost:3000`
+   - `REDIS_PASSWORD`: shared secret used by the app and Redis container
+
+   Optional:
+   - `MAX_UPLOAD_SIZE_MB`: maximum upload size in megabytes for evidence uploads (defaults to `100`)
+   - `CADDY_HOST` and `CADDY_EMAIL`: required only when using the TLS overlay (`docker-compose.tls.yml`)
 
 3. **Run with Docker Compose**:
 
@@ -81,14 +92,37 @@ ProcessAce turns raw **process evidence** into standard, tool-agnostic process d
    ```
 
    > **Note (Windows/Mac/WSL2):** If you encounter `SQLITE_IOERR_SHMOPEN` errors, ensure the environment variable `DISABLE_SQLITE_WAL=true` is set in `docker-compose.yml` (it is by default).
+   >
+   > **Note (Linux bind mounts):** The host `data/` and `uploads/` directories must be writable by the container runtime user because the app now runs as a non-root `appuser`.
+   >
+   > **Note (encrypted DB build in Docker):** You do not need to install SQLCipher manually on your Windows, macOS, or Linux host just to use Docker Compose. The image builds the production encrypted SQLite module inside the container. If you see encrypted-database load errors after updating, rebuild the image with `docker compose build --no-cache app` and then restart the stack.
+   >
+   > **Note (production DB encryption):** Production now expects SQLCipher and a `SQLITE_ENCRYPTION_KEY`. Existing plaintext production databases are not auto-migrated; follow the documented export/import migration flow before switching an existing instance.
 
 4. **Open the Web UI**: Navigate to `http://localhost:3000`.
 
-5. **Create an Account**: Go to `/register.html` to create your first user account (becomes Admin), then login.
+5. **Create an Account**: Go to `/register.html` to create your first user account (it becomes the active Admin account). Later self-registrations stay pending until an Admin approves them.
 
 6. **Configure LLM Provider**: Go to **App Settings** (`/app-settings.html`) to set your LLM provider and API key.
 
 7. **Test the Magic**: Drop the provided `samples/sample_process.txt` file into the upload zone on your dashboard to see your first BPMN diagram and SIPOC table generated instantly!
+
+### Production HTTPS
+
+Use the TLS overlay for production deployments so ProcessAce is served behind Caddy with automatic HTTPS:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d --build
+```
+
+Set these additional variables in `.env` before using the overlay:
+
+- `CADDY_HOST`: public hostname for the ProcessAce instance
+- `CADDY_EMAIL`: email address Caddy uses for ACME notifications
+
+When the TLS overlay is enabled, only Caddy publishes `80/443`; the app and Redis stay on the internal Compose network. See [docs/tls-setup.md](./docs/tls-setup.md) for the full setup, migration notes, and nginx/Traefik alternatives.
+
+For non-Docker production installs, you need the normal native Node.js build toolchain required by `better-sqlite3` modules on the target machine before running `npm ci` if no prebuilt binary is available for your platform.
 
 ---
 
@@ -123,6 +157,14 @@ docker compose up -d --build
 
 No bundled `ollama` container is started in this mode.
 
+The base stack still requires the standard security variables in `.env`:
+
+- `JWT_SECRET`
+- `ENCRYPTION_KEY`
+- `SQLITE_ENCRYPTION_KEY`
+- `CORS_ALLOWED_ORIGINS`
+- `REDIS_PASSWORD`
+
 ### Windows + AMD GPU Fallback
 
 Docker Desktop on Windows does not currently provide a stable AMD passthrough path for the bundled Ollama container. For Windows hosts with AMD GPUs, run Ollama on the host and point the app container to it:
@@ -131,6 +173,7 @@ Docker Desktop on Windows does not currently provide a stable AMD passthrough pa
 2. Set the following in `.env`:
 
    ```bash
+   CORS_ALLOWED_ORIGINS=http://localhost:3000
    OLLAMA_BASE_URL_DEFAULT=http://host.docker.internal:11434/v1
    OLLAMA_PULL_HOST=http://host.docker.internal:11434
    ```
@@ -221,6 +264,7 @@ See [`docs/architecture.md`](./docs/architecture.md) for a deep dive.
 - [**User Guide**](./docs/user_guide.md): How to use the application.
 - [**API Reference**](./docs/api_reference.md): REST API endpoint documentation.
 - [**Architecture**](./docs/architecture.md): System design and component details.
+- [**TLS Setup**](./docs/tls-setup.md): Production HTTPS deployment with the Caddy overlay.
 - [**Agent Guidelines**](./docs/agent-guidelines.md): Coding standards for AI agents.
 - [**Roadmap**](./docs/ROADMAP.md): Development phases and what's coming next.
 
