@@ -25,6 +25,29 @@ const getAudioDuration = (filePath) => {
 };
 
 /**
+ * Converts an audio/video file to a normalized MP3 file at 128kbps.
+ * @param {string} inputPath - Path to the input media file.
+ * @param {string} outputPath - Output MP3 path.
+ * @returns {Promise<string>} - Output path once conversion completes.
+ */
+const convertAudioToMp3 = (inputPath, outputPath) => {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .noVideo()
+      .audioCodec('libmp3lame')
+      .audioBitrate('128k')
+      .on('end', () => {
+        resolve(outputPath);
+      })
+      .on('error', (err) => {
+        logger.error({ err, inputPath, outputPath }, 'Failed to convert audio to normalized MP3');
+        reject(err);
+      })
+      .save(outputPath);
+  });
+};
+
+/**
  * Splits an audio file into smaller chunks based on a maximum file size in MB.
  * It does this by estimating the duration of a valid chunk based on constant bitrate assumption.
  * @param {string} filePath - Path to the original file
@@ -101,5 +124,6 @@ const splitAudioFile = async (filePath, maxSizeMB, outputDir) => {
 
 module.exports = {
   getAudioDuration,
+  convertAudioToMp3,
   splitAudioFile,
 };

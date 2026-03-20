@@ -56,7 +56,7 @@ globalThis.JobTracker = (function () {
       resetTranscriptAudioPlayer();
       return;
     }
-    audioPlayer.src = `/api/evidence/${evidenceId}/file`;
+    audioPlayer.src = `/api/evidence/${evidenceId}/file?variant=transcription`;
     audioPlayer.classList.remove('is-hidden');
     audioPlayer.load();
   }

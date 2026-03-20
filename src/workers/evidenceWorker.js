@@ -17,7 +17,7 @@ const LANGUAGE_INSTRUCTION =
   'Do NOT translate to English unless the source is already in English.';
 
 const processEvidence = async (job) => {
-  const { evidenceId, filename, processName, originalName, provider, model } = job.data;
+  const { evidenceId, filename, processName, originalName, provider, model, transcriptText } = job.data;
   logger.info({ jobId: job.id, evidenceId, provider, model }, 'Starting BPMN generation');
   let providerName = (provider || '').toLowerCase() || null;
   let modelName = model || null;
@@ -44,8 +44,11 @@ const processEvidence = async (job) => {
       throw new Error(`Evidence not found: ${evidenceId}`);
     }
 
-    // 2. Read file content
-    const fileContent = await fs.readFile(evidence.path, 'utf8');
+    // 2. Resolve textual input for generation.
+    // Transcript confirmation keeps evidence.path pointing to the original media file,
+    // so worker jobs can pass explicit transcriptText to avoid mutating evidence records.
+    const hasTranscriptText = typeof transcriptText === 'string' && transcriptText.trim().length > 0;
+    const fileContent = hasTranscriptText ? transcriptText : await fs.readFile(evidence.path, 'utf8');
 
     // 3. Get LLM config from settings (apiKey is stored encrypted in DB)
     const llmConfig = settingsService.getLLMConfig();

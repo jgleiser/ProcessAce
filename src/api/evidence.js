@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { saveEvidence, Evidence, getEvidence, updateEvidencePath } = require('../models/evidence');
+const { saveEvidence, Evidence, getEvidence } = require('../models/evidence');
 const { evidenceQueue } = require('../services/queueInstance');
 const settingsService = require('../services/settingsService');
 const workspaceService = require('../services/workspaceService');
@@ -36,6 +36,53 @@ const ALLOWED_UPLOAD_EXTENSIONS = new Set([
 ]);
 
 const isWithinUploadsDir = (absolutePath) => absolutePath === UPLOADS_DIR || absolutePath.startsWith(`${UPLOADS_DIR}${path.sep}`);
+
+const resolveTranscriptAudioVariant = async (evidence, logger) => {
+  const metadata = evidence.metadata && typeof evidence.metadata === 'object' ? evidence.metadata : {};
+  const transcriptionMetadata = metadata.transcription && typeof metadata.transcription === 'object' ? metadata.transcription : {};
+
+  const convertedAudioPath = typeof transcriptionMetadata.convertedAudioPath === 'string' ? transcriptionMetadata.convertedAudioPath.trim() : '';
+
+  if (!convertedAudioPath) {
+    return null;
+  }
+
+  const absoluteConvertedAudioPath = path.resolve(convertedAudioPath);
+  if (!isWithinUploadsDir(absoluteConvertedAudioPath)) {
+    logger.warn(
+      {
+        evidenceId: evidence.id,
+        convertedAudioPath,
+      },
+      'Ignoring transcription audio variant outside uploads directory',
+    );
+    return null;
+  }
+
+  try {
+    await fs.promises.access(absoluteConvertedAudioPath, fs.constants.R_OK);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      logger.warn(
+        {
+          evidenceId: evidence.id,
+          convertedAudioPath: absoluteConvertedAudioPath,
+        },
+        'Converted transcription audio file is missing, falling back to original evidence file',
+      );
+      return null;
+    }
+    throw err;
+  }
+
+  return {
+    absolutePath: absoluteConvertedAudioPath,
+    mimeType: transcriptionMetadata.convertedAudioMimeType || 'audio/mpeg',
+    filename:
+      transcriptionMetadata.convertedAudioFilename ||
+      `${path.basename(evidence.originalName || evidence.filename, path.extname(evidence.originalName || evidence.filename))}.mp3`,
+  };
+};
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -208,7 +255,20 @@ router.get(
         }
       }
 
-      const absolutePath = path.resolve(evidence.path);
+      let sourcePath = evidence.path;
+      let sourceMimeType = evidence.mimeType || 'application/octet-stream';
+      let sourceFilename = evidence.originalName || evidence.filename;
+
+      if (req.query.variant === 'transcription') {
+        const transcriptAudioVariant = await resolveTranscriptAudioVariant(evidence, req.log);
+        if (transcriptAudioVariant) {
+          sourcePath = transcriptAudioVariant.absolutePath;
+          sourceMimeType = transcriptAudioVariant.mimeType;
+          sourceFilename = transcriptAudioVariant.filename;
+        }
+      }
+
+      const absolutePath = path.resolve(sourcePath);
       if (!isWithinUploadsDir(absolutePath)) {
         return res.status(403).json({ error: 'Access denied' });
       }
@@ -216,8 +276,8 @@ router.get(
       const stat = await fs.promises.stat(absolutePath);
       const fileSize = stat.size;
 
-      const downloadName = sanitizeFilename(evidence.originalName || evidence.filename, `evidence-${id}`);
-      res.setHeader('Content-Type', evidence.mimeType || 'application/octet-stream');
+      const downloadName = sanitizeFilename(sourceFilename, `evidence-${id}`);
+      res.setHeader('Content-Type', sourceMimeType);
       res.setHeader('Content-Disposition', `inline; filename="${downloadName}"`);
       res.setHeader('Accept-Ranges', 'bytes');
 
@@ -271,14 +331,14 @@ router.get(
 
 /**
  * POST /api/evidence/:id/process-text
- * Accept edited transcript text, write to file, and enqueue process_evidence
+ * Accept edited transcript text and enqueue process_evidence without mutating evidence file pointers.
  */
 router.post('/:id/process-text', async (req, res) => {
   try {
     const { id } = req.params;
     const { text, processName, workspaceId } = req.body;
 
-    if (!text) {
+    if (typeof text !== 'string' || text.trim().length === 0) {
       return res.status(400).json({ error: 'Transcript text is required' });
     }
 
@@ -287,16 +347,6 @@ router.post('/:id/process-text', async (req, res) => {
       return res.status(404).json({ error: 'Evidence not found' });
     }
 
-    // Write text to a new temporary .txt file
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const newFilename = `transcript-${uniqueSuffix}.txt`;
-    const newPath = path.join('uploads', newFilename);
-
-    await fs.promises.writeFile(newPath, text, 'utf8');
-
-    // Update evidence path
-    await updateEvidencePath(id, newPath, newFilename);
-
     const { provider, model } = settingsService.getLLMConfig();
 
     // Enqueue standard processing job
@@ -304,9 +354,11 @@ router.post('/:id/process-text', async (req, res) => {
       'process_evidence',
       {
         evidenceId: evidence.id,
-        filename: newFilename,
+        filename: evidence.filename,
         originalName: evidence.originalName,
-        processName: processName || evidence.originalName.replace(/\.[^/.]+$/, ''),
+        processName:
+          processName || (evidence.originalName ? evidence.originalName.replace(/\.[^/.]+$/, '') : evidence.filename.replace(/\.[^/.]+$/, '')),
+        transcriptText: text,
         provider,
         model,
       },

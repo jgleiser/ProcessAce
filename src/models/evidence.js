@@ -102,10 +102,22 @@ const getEvidence = async (id) => {
 const deleteEvidence = async (id) => {
   const evidence = await getEvidence(id);
   if (evidence) {
+    const metadata = evidence.metadata && typeof evidence.metadata === 'object' ? evidence.metadata : {};
+    const transcriptionMetadata = metadata.transcription && typeof metadata.transcription === 'object' ? metadata.transcription : {};
+    const convertedAudioPath = typeof transcriptionMetadata.convertedAudioPath === 'string' ? transcriptionMetadata.convertedAudioPath.trim() : '';
+
     try {
       await require('fs').promises.unlink(evidence.path);
     } catch {
       // Ignore missing file
+    }
+
+    if (convertedAudioPath && convertedAudioPath !== evidence.path) {
+      try {
+        await require('fs').promises.unlink(convertedAudioPath);
+      } catch {
+        // Ignore missing file
+      }
     }
     deleteStmt.run(id);
     return true;
