@@ -2,7 +2,7 @@
  * Artifact Viewer
  * Handles viewing and editing artifacts (BPMN, SIPOC, RACI, Narrative) inside a modal.
  */
-/* global marked, BpmnJS, EasyMDE */
+/* global BpmnJS, EasyMDE */
 
 globalThis.ArtifactViewer = (function () {
   const t = () => (globalThis.i18n ? globalThis.i18n.t : (k) => k);
@@ -249,7 +249,7 @@ globalThis.ArtifactViewer = (function () {
       const cancelBtn = document.getElementById('btn-cancel-table');
       if (cancelBtn) cancelBtn.addEventListener('click', cancelTableEdit);
     } else if (type === 'doc') {
-      if (typeof marked === 'undefined') {
+      if (typeof globalThis.renderSafeMarkdown !== 'function') {
         modalBody.innerHTML = `<p class="text-error">${t()('artifacts.markedNotLoaded')}</p>`;
         return;
       }
@@ -265,7 +265,7 @@ globalThis.ArtifactViewer = (function () {
                          <button class="bpmn-btn" id="cancelDocEdit">${t()('common.cancel')}</button>
                     </div>
                 </div>
-                <div id="markdown-content" class="markdown-content">${marked.parse(content)}</div>
+                <div id="markdown-content" class="markdown-content">${globalThis.renderSafeMarkdown(content)}</div>
                 <textarea id="markdown-editor" class="hidden"></textarea>
             `;
 
@@ -617,7 +617,7 @@ globalThis.ArtifactViewer = (function () {
   function cancelDocEdit() {
     destroyDocEditor();
     const viewDiv = document.getElementById('markdown-content');
-    viewDiv.innerHTML = marked.parse(currentArtifactContent);
+    viewDiv.innerHTML = globalThis.renderSafeMarkdown(currentArtifactContent);
     viewDiv.style.display = 'block';
 
     document.getElementById('editDoc').style.display = 'inline-block';

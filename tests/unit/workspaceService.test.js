@@ -244,6 +244,11 @@ describe('WorkspaceService', () => {
       assert.strictEqual(result.status, 'created');
     });
 
+    it('should resolve recipient email case-insensitively', () => {
+      const result = workspaceService.inviteUser(adminWorkspaceId, adminUser.id, editorUser.email.toUpperCase(), 'viewer');
+      assert.strictEqual(result.email, editorUser.email);
+    });
+
     it('should throw when inviting non-registered user', () => {
       assert.throws(() => {
         workspaceService.inviteUser(adminWorkspaceId, adminUser.id, 'nonexistent@test.com', 'viewer');
@@ -260,12 +265,24 @@ describe('WorkspaceService', () => {
   describe('acceptInvitation', () => {
     let wsId;
     let inviteToken;
+    let outsiderUser;
 
     before(async () => {
       const ws = await workspaceService.createWorkspace('Invite Accept WS', adminUser.id);
       wsId = ws.id;
       const result = workspaceService.inviteUser(wsId, adminUser.id, editorUser.email, 'editor');
       inviteToken = result.token;
+      outsiderUser = await authService.registerUser('WS Outsider', `ws_outsider_${Date.now()}@test.com`, 'Password123');
+      db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(outsiderUser.id);
+    });
+
+    it('should reject accepting when authenticated user is not the invitation recipient', () => {
+      assert.throws(() => {
+        workspaceService.acceptInvitation(inviteToken, outsiderUser.id);
+      }, /Invitation does not belong to authenticated user/);
+
+      const inviteRow = db.prepare('SELECT status FROM workspace_invitations WHERE token = ?').get(inviteToken);
+      assert.strictEqual(inviteRow.status, 'pending');
     });
 
     it('should accept a valid invitation', () => {
@@ -286,15 +303,27 @@ describe('WorkspaceService', () => {
   // --- declineInvitation ---
   describe('declineInvitation', () => {
     let inviteToken;
+    let outsiderUser;
 
     before(async () => {
       const ws = await workspaceService.createWorkspace('Invite Decline WS', adminUser.id);
       const result = workspaceService.inviteUser(ws.id, adminUser.id, editorUser.email, 'viewer');
       inviteToken = result.token;
+      outsiderUser = await authService.registerUser('WS Decline Outsider', `ws_decline_outsider_${Date.now()}@test.com`, 'Password123');
+      db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(outsiderUser.id);
+    });
+
+    it('should reject declining when authenticated user is not the invitation recipient', () => {
+      assert.throws(() => {
+        workspaceService.declineInvitation(inviteToken, outsiderUser.id);
+      }, /Invitation does not belong to authenticated user/);
+
+      const inviteRow = db.prepare('SELECT status FROM workspace_invitations WHERE token = ?').get(inviteToken);
+      assert.strictEqual(inviteRow.status, 'pending');
     });
 
     it('should decline a valid invitation', () => {
-      const result = workspaceService.declineInvitation(inviteToken);
+      const result = workspaceService.declineInvitation(inviteToken, editorUser.id);
       assert.strictEqual(result.status, 'declined');
     });
   });

@@ -9,7 +9,7 @@ let totalPages = 1;
 let jobsData = []; // Store jobs for modal access
 const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
 
-/* global marked, BpmnJS */
+/* global BpmnJS */
 
 // DOM Elements
 const loadingState = document.getElementById('loadingState');
@@ -605,12 +605,12 @@ function renderArtifactContent(type, content, _artifactId) {
     artifactModalBody.innerHTML = html;
   } else if (type === 'doc') {
     setModalClasses(false);
-    if (typeof marked === 'undefined') {
+    if (typeof window.renderSafeMarkdown !== 'function') {
       artifactModalBody.innerHTML = '<p class="text-error">Error: Marked library not loaded.</p>';
       return;
     }
     artifactModalBody.innerHTML = `
-            <div id="markdown-content" class="markdown-content">${marked.parse(content)}</div>
+            <div id="markdown-content" class="markdown-content">${window.renderSafeMarkdown(content)}</div>
         `;
   } else {
     setModalClasses(false);
