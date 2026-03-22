@@ -11,12 +11,12 @@ const { auditMiddleware } = require('../middleware/auditMiddleware');
 const { AppError, sendErrorResponse } = require('../utils/errorResponse');
 const { sanitizeFilename } = require('../utils/sanitizeFilename');
 const { isAdminRole } = require('../utils/roles');
+const { UPLOADS_DIR } = require('../config/storagePaths');
 
 const router = express.Router();
 const parsedMaxUploadSizeMb = Number.parseInt(process.env.MAX_UPLOAD_SIZE_MB || '100', 10);
 const MAX_UPLOAD_SIZE_MB = Number.isFinite(parsedMaxUploadSizeMb) && parsedMaxUploadSizeMb > 0 ? parsedMaxUploadSizeMb : 100;
 const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
-const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
 const ALLOWED_UPLOAD_EXTENSIONS = new Set([
   '.mp3',
   '.m4a',
@@ -36,6 +36,8 @@ const ALLOWED_UPLOAD_EXTENSIONS = new Set([
 ]);
 
 const isWithinUploadsDir = (absolutePath) => absolutePath === UPLOADS_DIR || absolutePath.startsWith(`${UPLOADS_DIR}${path.sep}`);
+
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const resolveTranscriptAudioVariant = async (evidence, logger) => {
   const metadata = evidence.metadata && typeof evidence.metadata === 'object' ? evidence.metadata : {};
@@ -86,8 +88,8 @@ const resolveTranscriptAudioVariant = async (evidence, logger) => {
 
 // Configure storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+  destination: function (_req, _file, cb) {
+    cb(null, UPLOADS_DIR);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);

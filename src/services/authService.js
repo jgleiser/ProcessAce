@@ -8,6 +8,7 @@ const logger = require('../logging/logger');
 const tokenBlocklist = require('./tokenBlocklist');
 const { USER_ROLES, isAdminRole, isSuperAdminRole } = require('../utils/roles');
 const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../utils/workspaces');
+const { UPLOADS_DIR } = require('../config/storagePaths');
 
 const SALT_ROUNDS = 10;
 const JWT_EXPIRES_IN = '24h';
@@ -32,8 +33,6 @@ const APPROVABLE_STATUSES = new Set(['pending', 'rejected']);
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATIONS_MINUTES = [15, 30, 60];
 const CONSENT_TYPES = ['terms_of_service', 'data_processing'];
-const UPLOADS_DIR = path.resolve(process.cwd(), process.env.UPLOADS_DIR || 'uploads');
-
 const resolveJwtSecret = () => {
   if (process.env.JWT_SECRET) {
     return process.env.JWT_SECRET;
