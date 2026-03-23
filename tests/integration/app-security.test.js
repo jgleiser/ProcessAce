@@ -32,15 +32,15 @@ describe('App security integration tests', () => {
     assert.ok(!/script-src[^;]*'unsafe-inline'/.test(res.headers['content-security-policy']));
   });
 
-  it('injects the same nonce into dashboard importmap and module scripts', async () => {
+  it('serves dashboard HTML without nonce placeholders and with a nonce-bearing CSP header', async () => {
     const res = await request(server).get('/').expect(200);
 
     const nonceMatches = [...res.text.matchAll(/nonce="([^"]+)"/g)].map((match) => match[1]);
-    assert.ok(nonceMatches.length >= 2);
-    assert.strictEqual(new Set(nonceMatches).size, 1);
-    assert.match(res.text, /<script type="importmap" nonce="[^"]+">/);
-    assert.match(res.text, /<script type="module" nonce="[^"]+">/);
+    assert.strictEqual(nonceMatches.length, 0);
     assert.ok(!res.text.includes('__CSP_NONCE__'));
+    assert.match(res.headers['content-security-policy'], /script-src[^;]*'nonce-[^']+'/);
+    assert.ok(!/script-src[^;]*'unsafe-inline'/.test(res.headers['content-security-policy']));
+    assert.match(res.text, /<script src="js\/app\.js"><\/script>/);
   });
 
   it('serves the public about page with the shared footer assets', async () => {

@@ -8,6 +8,8 @@ const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const { generateCorrelationId, sendErrorResponse } = require('./utils/errorResponse');
+const { parseCorsOrigins } = require('./utils/corsOrigins');
+const { ensureCsrfTokenCookie, enforceCsrfProtection } = require('./middleware/csrf');
 
 const app = express();
 const publicDir = path.join(__dirname, 'public');
@@ -51,28 +53,6 @@ const serveHtmlWithNonce = async (req, res, next) => {
   }
 };
 
-// CORS Configuration
-const parseCorsOrigins = () => {
-  const envOrigins = process.env.CORS_ALLOWED_ORIGINS;
-
-  if (envOrigins) {
-    const parsedOrigins = envOrigins
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean);
-
-    if (parsedOrigins.length > 0) {
-      return parsedOrigins;
-    }
-  }
-
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('CORS_ALLOWED_ORIGINS must be set in production and contain at least one allowed origin.');
-  }
-
-  return ['http://localhost:3000', 'http://processace.local:3000'];
-};
-
 app.use(attachRequestContext);
 
 app.use(
@@ -100,6 +80,8 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(ensureCsrfTokenCookie);
+app.use(enforceCsrfProtection);
 
 // Request logging middleware
 app.use((req, res, next) => {

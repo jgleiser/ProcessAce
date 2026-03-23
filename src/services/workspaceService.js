@@ -14,6 +14,8 @@ const {
   isTransferredPersonalWorkspaceName,
 } = require('../utils/workspaces');
 
+const normalizeEmail = (email) => (typeof email === 'string' ? email.trim().toLowerCase() : '');
+
 class WorkspaceService {
   repairLegacyPersonalWorkspace(workspace) {
     if (!workspace) {
@@ -378,11 +380,16 @@ class WorkspaceService {
     const token = uuidv4();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+    const normalizedRecipientEmail = normalizeEmail(email);
+
+    if (!normalizedRecipientEmail) {
+      throw new Error('Recipient email is required');
+    }
 
     // Fixed syntax error
     try {
       // 1. Check if user exists (ENFORCED)
-      const recipientUser = db.prepare('SELECT id, email, name FROM users WHERE email = ?').get(email);
+      const recipientUser = db.prepare('SELECT id, email, name FROM users WHERE lower(email) = ?').get(normalizedRecipientEmail);
       if (!recipientUser) {
         throw new Error('User must be registered to be invited');
       }
@@ -396,8 +403,8 @@ class WorkspaceService {
 
       // Check if invite already exists, update it if so
       const existingInvite = db
-        .prepare('SELECT id FROM workspace_invitations WHERE workspace_id = ? AND recipient_email = ?')
-        .get(workspaceId, email);
+        .prepare('SELECT id FROM workspace_invitations WHERE workspace_id = ? AND lower(recipient_email) = ?')
+        .get(workspaceId, normalizedRecipientEmail);
 
       if (existingInvite) {
         db.prepare(
@@ -414,7 +421,7 @@ class WorkspaceService {
                     INSERT INTO workspace_invitations (id, workspace_id, inviter_id, recipient_email, role, token, created_at, expires_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 `,
-        ).run(id, workspaceId, inviterId, email, role, token, now.toISOString(), expiresAt);
+        ).run(id, workspaceId, inviterId, recipientUser.email, role, token, now.toISOString(), expiresAt);
       }
 
       // Create In-App Notification
@@ -438,7 +445,7 @@ class WorkspaceService {
         },
       );
 
-      return { token, email, expiresAt, status: existingInvite ? 'updated' : 'created' };
+      return { token, email: recipientUser.email, expiresAt, status: existingInvite ? 'updated' : 'created' };
     } catch (error) {
       logger.error({ err: error }, 'Error creating invitation');
       throw error;
@@ -467,6 +474,11 @@ class WorkspaceService {
    * @param {string} email
    */
   getUserInvitations(email) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      return [];
+    }
+
     return db
       .prepare(
         `
@@ -474,10 +486,10 @@ class WorkspaceService {
             FROM workspace_invitations wi
             JOIN workspaces w ON wi.workspace_id = w.id
             LEFT JOIN users u ON wi.inviter_id = u.id
-            WHERE wi.recipient_email = ? AND wi.status = 'pending'
+            WHERE lower(wi.recipient_email) = ? AND wi.status = 'pending'
         `,
       )
-      .all(email);
+      .all(normalizedEmail);
   }
 
   /**
@@ -519,17 +531,35 @@ class WorkspaceService {
    * @param {string} token
    * @param {string} userId
    */
+  getInvitationActor(userId) {
+    return db.prepare('SELECT id, email FROM users WHERE id = ?').get(userId);
+  }
+
+  ensureInvitationRecipient(invite, actor) {
+    if (!actor || !normalizeEmail(actor.email)) {
+      throw new Error('Authentication required');
+    }
+
+    if (normalizeEmail(invite.recipient_email) !== normalizeEmail(actor.email)) {
+      throw new Error('Invitation does not belong to authenticated user');
+    }
+  }
+
   acceptInvitation(token, userId) {
     const invite = this.getInvitation(token);
     if (!invite) throw new Error('Invalid invitation');
     if (invite.expired) throw new Error('Invitation expired');
+    const actor = this.getInvitationActor(userId);
+    this.ensureInvitationRecipient(invite, actor);
 
     const dbTx = db.transaction(() => {
-      // Add member
-      this.addMember(invite.workspace_id, userId, invite.role);
+      // Avoid duplicate member inserts while preserving existing member privileges.
+      if (!this.isMember(invite.workspace_id, userId)) {
+        this.addMember(invite.workspace_id, userId, invite.role);
+      }
 
       // Mark invite as accepted
-      db.prepare("UPDATE workspace_invitations SET status = 'accepted' WHERE id = ?").run(invite.id);
+      db.prepare("UPDATE workspace_invitations SET status = 'accepted' WHERE id = ? AND status = 'pending'").run(invite.id);
     });
 
     dbTx();
@@ -540,11 +570,13 @@ class WorkspaceService {
    * Decline an invitation
    * @param {string} token
    */
-  declineInvitation(token) {
+  declineInvitation(token, userId) {
     const invite = this.getInvitation(token);
     if (!invite) throw new Error('Invalid invitation');
+    const actor = this.getInvitationActor(userId);
+    this.ensureInvitationRecipient(invite, actor);
 
-    db.prepare("UPDATE workspace_invitations SET status = 'declined' WHERE id = ?").run(invite.id);
+    db.prepare("UPDATE workspace_invitations SET status = 'declined' WHERE id = ? AND status = 'pending'").run(invite.id);
     return { id: invite.id, status: 'declined' };
   }
 

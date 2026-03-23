@@ -8,6 +8,7 @@ const logger = require('../logging/logger');
 const tokenBlocklist = require('./tokenBlocklist');
 const { USER_ROLES, isAdminRole, isSuperAdminRole } = require('../utils/roles');
 const { DEFAULT_PERSONAL_WORKSPACE_NAME, WORKSPACE_KINDS } = require('../utils/workspaces');
+const { UPLOADS_DIR } = require('../config/storagePaths');
 
 const SALT_ROUNDS = 10;
 const JWT_EXPIRES_IN = '24h';
@@ -32,8 +33,7 @@ const APPROVABLE_STATUSES = new Set(['pending', 'rejected']);
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_DURATIONS_MINUTES = [15, 30, 60];
 const CONSENT_TYPES = ['terms_of_service', 'data_processing'];
-const UPLOADS_DIR = path.resolve(process.cwd(), process.env.UPLOADS_DIR || 'uploads');
-
+const MAX_USERS_PAGE_LIMIT = 100;
 const resolveJwtSecret = () => {
   if (process.env.JWT_SECRET) {
     return process.env.JWT_SECRET;
@@ -372,6 +372,14 @@ class AuthService {
   }
 
   getUsersPaginated(page = 1, limit = 10, filters = {}) {
+    if (!Number.isInteger(page) || page < 1) {
+      throw new Error('Invalid pagination parameters: page must be a positive integer.');
+    }
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_USERS_PAGE_LIMIT) {
+      throw new Error(`Invalid pagination parameters: limit must be between 1 and ${MAX_USERS_PAGE_LIMIT}.`);
+    }
+
     const offset = (page - 1) * limit;
 
     let whereClauses = [];
@@ -807,3 +815,4 @@ module.exports.RESET_CONFIRMATION_ERROR = RESET_CONFIRMATION_ERROR;
 module.exports.SUPERADMIN_ACCOUNT_MANAGEMENT_ERROR = SUPERADMIN_ACCOUNT_MANAGEMENT_ERROR;
 module.exports.SUPERADMIN_ROLE_REQUIRED_ERROR = SUPERADMIN_ROLE_REQUIRED_ERROR;
 module.exports.USER_ROLES = USER_ROLES;
+module.exports.MAX_USERS_PAGE_LIMIT = MAX_USERS_PAGE_LIMIT;

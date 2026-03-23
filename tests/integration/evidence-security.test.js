@@ -9,6 +9,7 @@ process.env.JWT_SECRET = 'test-jwt-secret';
 process.env.NODE_ENV = 'test';
 process.env.MOCK_LLM = 'true';
 process.env.MAX_UPLOAD_SIZE_MB = '1';
+process.env.UPLOADS_DIR = 'tmp/test-uploads-evidence-security';
 process.env.ENCRYPTION_KEY = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2';
 process.env.LOG_LEVEL = 'silent';
 
@@ -24,9 +25,9 @@ describe('Evidence security integration tests', () => {
   let originalQueueAdd;
   let safeEvidenceId;
 
-  const uploadsDir = path.resolve(process.cwd(), 'uploads');
+  const uploadsDir = path.resolve(process.cwd(), process.env.UPLOADS_DIR);
   const safeEvidenceFilename = 'phase2-evidence-security.txt';
-  const safeEvidencePath = path.join('uploads', safeEvidenceFilename);
+  const safeEvidencePath = path.join(process.env.UPLOADS_DIR, safeEvidenceFilename);
 
   const user = {
     name: 'Evidence User',
@@ -64,9 +65,7 @@ describe('Evidence security integration tests', () => {
 
   after(() => {
     evidenceQueue.add = originalQueueAdd;
-    if (fs.existsSync(path.join(uploadsDir, safeEvidenceFilename))) {
-      fs.unlinkSync(path.join(uploadsDir, safeEvidenceFilename));
-    }
+    fs.rmSync(uploadsDir, { recursive: true, force: true });
     server.close();
   });
 
@@ -85,6 +84,19 @@ describe('Evidence security integration tests', () => {
 
     assert.strictEqual(res.body.error, 'File too large. Maximum upload size is 1MB.');
     assert.ok(res.body.correlationId);
+  });
+
+  it('stores uploaded files under the configured uploads directory', async () => {
+    const uploadRes = await agent
+      .post('/api/evidence/upload')
+      .attach('file', Buffer.from('configured path test', 'utf8'), 'configured-path-test.txt')
+      .expect(202);
+
+    const savedEvidence = db.prepare('SELECT path FROM evidence WHERE id = ?').get(uploadRes.body.evidenceId);
+    const resolvedEvidencePath = path.resolve(savedEvidence.path);
+
+    assert.ok(resolvedEvidencePath.startsWith(`${uploadsDir}${path.sep}`));
+    assert.strictEqual(fs.existsSync(resolvedEvidencePath), true);
   });
 
   it('rejects evidence file paths that escape the uploads root', async () => {

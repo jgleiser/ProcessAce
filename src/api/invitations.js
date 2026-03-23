@@ -70,6 +70,9 @@ router.post('/:token/accept', authenticateToken, async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.error({ err: error }, 'Error accepting invitation');
+    if (error.message === 'Invitation does not belong to authenticated user') {
+      return res.status(403).json({ error: error.message });
+    }
     if (error.message === 'Invalid invitation' || error.message === 'Invitation expired') {
       return res.status(400).json({ error: error.message });
     }
@@ -85,14 +88,17 @@ router.post('/:token/decline', authenticateToken, async (req, res) => {
   try {
     const { token } = req.params;
 
-    if (!req.user) {
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const result = workspaceService.declineInvitation(token);
+    const result = workspaceService.declineInvitation(token, req.user.id);
     res.json(result);
   } catch (error) {
     logger.error({ err: error }, 'Error declining invitation');
+    if (error.message === 'Invitation does not belong to authenticated user') {
+      return res.status(403).json({ error: error.message });
+    }
     if (error.message === 'Invalid invitation') {
       return res.status(400).json({ error: error.message });
     }

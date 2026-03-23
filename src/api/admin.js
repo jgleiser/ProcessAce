@@ -13,6 +13,18 @@ const router = express.Router();
 router.use(authenticateToken);
 router.use(requireAdmin);
 
+const parsePositiveInteger = (rawValue, fallback) => {
+  if (typeof rawValue === 'undefined') {
+    return fallback;
+  }
+
+  if (typeof rawValue !== 'string' || !/^\d+$/.test(rawValue)) {
+    return NaN;
+  }
+
+  return Number(rawValue);
+};
+
 /**
  * GET /api/admin/users
  * Get all users (admin only)
@@ -24,8 +36,16 @@ router.get('/users', (req, res) => {
     res.set('Expires', '0');
     res.set('Pragma', 'no-cache');
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parsePositiveInteger(req.query.page, 1);
+    const limit = parsePositiveInteger(req.query.limit, 10);
+
+    if (!Number.isInteger(page) || page < 1) {
+      return res.status(400).json({ error: 'Invalid pagination parameters: page must be a positive integer.' });
+    }
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > authService.MAX_USERS_PAGE_LIMIT) {
+      return res.status(400).json({ error: `Invalid pagination parameters: limit must be between 1 and ${authService.MAX_USERS_PAGE_LIMIT}.` });
+    }
 
     // Extract filters
     const filters = {
@@ -59,6 +79,10 @@ router.get('/users', (req, res) => {
       },
     });
   } catch (error) {
+    if (error.message.startsWith('Invalid pagination parameters:')) {
+      return res.status(400).json({ error: error.message });
+    }
+
     logger.error({ err: error }, 'Error fetching users');
     res.status(500).json({ error: 'Failed to fetch users' });
   }
