@@ -2,6 +2,26 @@
 
 All notable changes to ProcessAce will be documented in this file.
 
+## [1.3.2] - 2026-03-23
+
+### Added
+
+- CSRF protection middleware for state-changing API requests, including cookie-backed token issuance and client-side automatic header propagation.
+- Centralized storage-path configuration for evidence uploads to reduce path drift across API handlers.
+- CI dependency-audit workflow gate to fail builds on known vulnerable packages.
+- Security regression tests for CSRF coverage, invitation hardening, evidence upload constraints, and admin users pagination validation.
+
+### Changed
+
+- Invitation acceptance now binds tokens to the intended recipient account and enforces ownership checks during acceptance.
+- Markdown rendering in dashboard/admin artifact views now routes through shared HTML sanitization before insertion in the DOM.
+- Admin users pagination now validates and clamps page and limit parameters before querying.
+
+### Fixed
+
+- Removed a personal workspace ownership-transfer bypass edge case by hardening workspace ownership checks.
+- Corrected dashboard CSP nonce test expectations to match current script injection behavior in the secured UI shell.
+
 ## [1.3.1] - 2026-03-19
 
 ### Changed
